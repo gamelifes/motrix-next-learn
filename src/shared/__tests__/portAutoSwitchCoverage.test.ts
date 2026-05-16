@@ -43,6 +43,19 @@ describe('port auto-switch coverage', () => {
     expect(httpApiBlock).not.toContain('recover_extension_api_port')
   })
 
+  it('keeps extension API port recovery out of the engine restart lifecycle', () => {
+    const source = readProjectFile('src-tauri/src/services/port_guard.rs')
+    expect(source).toContain('const ENGINE_PORT_KINDS: [PortKind; 3] = [PortKind::Rpc, PortKind::Bt, PortKind::Dht];')
+    const enginePortBlock = sliceBetween(
+      source,
+      'pub(crate) fn reconcile_engine_ports(app: &AppHandle) -> Result<Vec<PortSwitch>, AppError>',
+      'pub(crate) fn reconcile_bt_ports(app: &AppHandle) -> Result<Vec<PortSwitch>, AppError>',
+    )
+
+    expect(enginePortBlock).toContain('for kind in ENGINE_PORT_KINDS')
+    expect(enginePortBlock).not.toContain('PortKind::ExtensionApi')
+  })
+
   it('syncs preferences from disk after backend startup port reconciliation', () => {
     const storeSource = readProjectFile('src/stores/preference.ts')
     const mainSource = readProjectFile('src/main.ts')

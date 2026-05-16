@@ -23,6 +23,8 @@ struct PortRange {
     end: u16,
 }
 
+const ENGINE_PORT_KINDS: [PortKind; 3] = [PortKind::Rpc, PortKind::Bt, PortKind::Dht];
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct PortSwitch {
@@ -92,7 +94,7 @@ fn choose_available_port(kind: PortKind, reserved: &BTreeSet<u16>) -> Option<u16
     (range.start..=range.end).find(|port| !reserved.contains(port) && port_available(*port))
 }
 
-pub(crate) fn reconcile_exposed_ports(app: &AppHandle) -> Result<Vec<PortSwitch>, AppError> {
+pub(crate) fn reconcile_engine_ports(app: &AppHandle) -> Result<Vec<PortSwitch>, AppError> {
     let prefs_store = app
         .store("config.json")
         .map_err(|e| AppError::Store(format!("Failed to open config.json: {e}")))?;
@@ -107,12 +109,7 @@ pub(crate) fn reconcile_exposed_ports(app: &AppHandle) -> Result<Vec<PortSwitch>
     let mut switches = Vec::new();
     let auto_switch = auto_switch_enabled(app);
 
-    for kind in [
-        PortKind::Rpc,
-        PortKind::ExtensionApi,
-        PortKind::Bt,
-        PortKind::Dht,
-    ] {
+    for kind in ENGINE_PORT_KINDS {
         let port = next.get(kind);
         if port_available(port) {
             continue;
@@ -430,6 +427,15 @@ mod tests {
                 end: 29999
             }
         );
+    }
+
+    #[test]
+    fn engine_port_reconciliation_excludes_extension_api() {
+        assert_eq!(
+            ENGINE_PORT_KINDS,
+            [PortKind::Rpc, PortKind::Bt, PortKind::Dht]
+        );
+        assert!(!ENGINE_PORT_KINDS.contains(&PortKind::ExtensionApi));
     }
 
     #[test]

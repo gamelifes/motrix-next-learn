@@ -110,7 +110,7 @@ pub fn start_engine(app: &tauri::AppHandle, config: &serde_json::Value) -> Resul
             .map_err(|e| format!("Failed to create download directory '{}': {}", dir, e))?;
     }
 
-    if let Err(e) = port_guard::reconcile_exposed_ports(app) {
+    if let Err(e) = port_guard::reconcile_engine_ports(app) {
         log::warn!("port_guard: startup reconciliation failed: {e}");
     }
 
@@ -330,7 +330,7 @@ pub fn restart_engine(app: &tauri::AppHandle, _config: &serde_json::Value) -> Re
         std::thread::sleep(std::time::Duration::from_millis(500));
     }
 
-    if let Err(e) = port_guard::reconcile_exposed_ports(app) {
+    if let Err(e) = port_guard::reconcile_engine_ports(app) {
         log::warn!("port_guard: restart reconciliation failed: {e}");
     }
 
