@@ -197,7 +197,7 @@ window.addEventListener('unhandledrejection', (e) => {
           'rpc-listen-port': String(port),
         },
       })
-      // start_engine_command ONLY spawns the Aria2 Next sidecar.
+      // start_engine_command ONLY spawns the bundled engine sidecar.
       // Credential update + option sync happen in wait_for_engine
       // (after Aria2 Next is confirmed ready).
       await invoke('start_engine_command')

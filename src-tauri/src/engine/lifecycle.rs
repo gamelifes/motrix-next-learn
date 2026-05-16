@@ -11,7 +11,7 @@ use crate::services::port_guard;
 static BT_PORT_RECOVERY_IN_FLIGHT: std::sync::atomic::AtomicBool =
     std::sync::atomic::AtomicBool::new(false);
 
-const ENGINE_SIDECAR_NAME: &str = "aria2-next";
+const ENGINE_SIDECAR_NAME: &str = "motrix-next-engine";
 
 fn recover_bt_port_conflict(app: &tauri::AppHandle) {
     if BT_PORT_RECOVERY_IN_FLIGHT.swap(true, Ordering::SeqCst) {

@@ -6,10 +6,10 @@ use tauri::AppHandle;
 
 use super::config::get_system_config;
 
-/// Starts the Aria2 Next engine process with current system configuration.
+/// Starts the bundled Motrix Next engine process with current system configuration.
 /// Runs on a background thread to avoid blocking the WebView main thread.
 ///
-/// NOTE: This ONLY spawns the Aria2 Next sidecar. It does NOT wait for
+/// NOTE: This ONLY spawns the bundled engine sidecar. It does NOT wait for
 /// readiness or sync options. The frontend must call `wait_for_engine`
 /// afterwards, which handles: probe → credential update → option sync.
 #[tauri::command]
@@ -24,7 +24,7 @@ pub async fn start_engine_command(app: AppHandle) -> Result<(), AppError> {
     .map_err(|e| AppError::Engine(e.to_string()))?
 }
 
-/// Gracefully stops the running Aria2 Next engine process.
+/// Gracefully stops the running bundled engine process.
 /// Runs on a background thread to avoid blocking the WebView main thread.
 #[tauri::command]
 pub async fn stop_engine_command(app: AppHandle) -> Result<(), AppError> {
@@ -34,7 +34,7 @@ pub async fn stop_engine_command(app: AppHandle) -> Result<(), AppError> {
         .map_err(|e| AppError::Engine(e.to_string()))?
 }
 
-/// Stops and restarts the Aria2 Next engine with current system configuration.
+/// Stops and restarts the bundled engine with current system configuration.
 /// Runs on a background thread to avoid blocking the WebView main thread
 /// during the kill → sleep → cleanup → spawn sequence.
 ///

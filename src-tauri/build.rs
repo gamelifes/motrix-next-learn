@@ -12,7 +12,7 @@ fn main() {
         let _ = Command::new("sh")
             .args([
                 "-c",
-                "xattr -cr target/debug/aria2-next* target/release/aria2-next* 2>/dev/null || true",
+                "xattr -cr target/debug/motrix-next-engine* target/release/motrix-next-engine* 2>/dev/null || true",
             ])
             .status();
     }

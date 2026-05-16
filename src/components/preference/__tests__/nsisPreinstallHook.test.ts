@@ -1,15 +1,15 @@
 /**
  * @fileoverview Structural test: NSIS hooks.nsh must contain a PREINSTALL
- * hook that kills the Aria2 Next sidecar before the installer copies files.
+ * hook that kills the bundled engine sidecar before the installer copies files.
  *
  * Problem: On Windows, the NSIS updater overwrites files in-place. If
- * the Aria2 Next sidecar is still running, Windows' mandatory file locking prevents
+ * the bundled engine sidecar is still running, Windows' mandatory file locking prevents
  * the installer from replacing it → update failure (the Rust backend
  * should have already stopped the engine, but this NSIS hook is a
  * defense-in-depth safety net).
  *
  * Verification strategy: Read the hooks.nsh file and assert it contains
- * the PREINSTALL macro with a taskkill command targeting aria2-next.exe.
+ * the PREINSTALL macro with a taskkill command targeting motrix-next-engine.exe.
  */
 import { describe, it, expect, beforeAll } from 'vitest'
 import * as fs from 'node:fs'
@@ -17,7 +17,7 @@ import * as path from 'node:path'
 
 const HOOKS_NSH = path.resolve(__dirname, '..', '..', '..', '..', 'src-tauri', 'nsis', 'hooks.nsh')
 
-describe('NSIS PREINSTALL hook for Aria2 Next cleanup', () => {
+describe('NSIS PREINSTALL hook for bundled engine cleanup', () => {
   let hooksSrc: string
 
   beforeAll(() => {
@@ -43,7 +43,7 @@ describe('NSIS PREINSTALL hook for Aria2 Next cleanup', () => {
 
     const macroBody = hooksSrc.slice(preinstallStart, macroEnd)
     expect(macroBody).toContain('taskkill')
-    expect(macroBody).toContain('aria2-next.exe')
+    expect(macroBody).toContain('motrix-next-engine.exe')
   })
 
   it('still contains POSTINSTALL hook for icon cache flush', () => {

@@ -12,7 +12,7 @@ pub enum AppError {
     /// Persistent store read/write failure (user.json, system.json).
     #[error("Store error: {0}")]
     Store(String),
-    /// Engine lifecycle error (start, stop, restart of Aria2 Next sidecar).
+    /// Engine lifecycle error (start, stop, restart of the bundled engine sidecar).
     #[error("Engine error: {0}")]
     Engine(String),
     /// File system I/O error.

@@ -1,4 +1,4 @@
-/// Builds the CLI argument list for spawning the Aria2 Next sidecar process.
+/// Builds the CLI argument list for spawning the bundled Motrix Next engine sidecar.
 ///
 /// Whitelists only valid aria2c options from the config object and handles
 /// the `keep-seeding` app-level flag. Options managed exclusively by

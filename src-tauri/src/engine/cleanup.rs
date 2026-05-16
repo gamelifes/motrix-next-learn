@@ -4,13 +4,13 @@
 /// killed when reclaiming the RPC port — never arbitrary processes that
 /// happen to occupy the same port.
 ///
-/// Matches the current `aria2-next` sidecar plus legacy names used by older builds.
+/// Matches only the current `motrix-next-engine` sidecar process.
 ///
 /// On Windows, the equivalent check is inlined via `tasklist` CSV output
 /// (see the `#[cfg(windows)]` block in `cleanup_port`).
 #[cfg(any(unix, test))]
 fn is_supported_engine_process(comm: &str) -> bool {
-    comm.contains("aria2-next")
+    comm.contains("motrix-next-engine")
 }
 
 /// Kill only supported engine processes occupying the given port, so a new engine can bind to it.
@@ -148,10 +148,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn is_supported_engine_process_matches_aria2_next() {
-        assert!(is_supported_engine_process("aria2-next"));
+    fn is_supported_engine_process_matches_motrix_next_engine() {
+        assert!(is_supported_engine_process("motrix-next-engine"));
         assert!(is_supported_engine_process(
-            "/Applications/MotrixNext.app/Contents/Resources/aria2-next"
+            "/Applications/MotrixNext.app/Contents/Resources/motrix-next-engine"
         ));
     }
 

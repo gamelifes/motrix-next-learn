@@ -176,10 +176,10 @@ FunctionEnd
   _motrix_skip_migration:
 
   ; Defense-in-depth: kill any lingering sidecar before file copy.
-  ; Tauri bundles externalBin as aria2-next.exe.
+  ; Tauri bundles externalBin as motrix-next-engine.exe.
   ; On Windows, a running .exe is locked by the OS and cannot be
   ; overwritten.  taskkill exits 128 if the process is absent.
-  nsExec::Exec 'taskkill /F /IM aria2-next.exe'
+  nsExec::Exec 'taskkill /F /IM motrix-next-engine.exe'
 !macroend
 
 !macro NSIS_HOOK_POSTINSTALL

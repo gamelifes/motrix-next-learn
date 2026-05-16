@@ -1,11 +1,11 @@
 /**
  * @fileoverview Structural tests: every relaunch() call MUST be preceded by
- * stop_engine_command to kill the Aria2 Next sidecar before the NSIS installer
+ * stop_engine_command to kill the bundled engine sidecar before the NSIS installer
  * takes over on Windows.
  *
  * Problem: On Windows, relaunch() launches the NSIS installer which forcefully
- * terminates the main Tauri process. NSIS has no knowledge of the Aria2 Next
- * sidecar child process. If aria2-next.exe is still running, Windows' mandatory
+ * terminates the main Tauri process. NSIS has no knowledge of the bundled engine
+ * sidecar child process. If motrix-next-engine.exe is still running, Windows' mandatory
  * file locking prevents NSIS from overwriting it → update failure.
  *
  * Fix: Every code path that calls relaunch() must first call

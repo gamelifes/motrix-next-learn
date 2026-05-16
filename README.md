@@ -165,7 +165,7 @@ This removes the quarantine flag that macOS Gatekeeper applies to unsigned apps.
 
 <br>
 
-Motrix Next relies on [Aria2 Next](https://github.com/AnInsomniacy/aria2-next) as a sidecar process — a separate aria2-compatible `aria2c` executable that Tauri launches at runtime. The sidecar binaries are built and released from the aria2-next repository for all 6 supported desktop targets. This architecture means:
+Motrix Next relies on [Aria2 Next](https://github.com/AnInsomniacy/aria2-next) as its download engine and launches it through a bundled `motrix-next-engine` sidecar process at runtime. The sidecar binaries are built and released from the aria2-next repository for all 6 supported desktop targets. This architecture means:
 
 - The **Aria2 Next sidecar binary must exist alongside the main executable** — it cannot be embedded into a single `.exe`.
 - **Deep links** (`magnet://`, `thunder://`) and **file associations** (`.torrent`) require Windows registry entries that only an installer can configure.
