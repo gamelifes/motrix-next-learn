@@ -6,9 +6,6 @@
 ///
 /// Matches only the current `motrix-next-engine` sidecar process.
 ///
-/// On Windows, the equivalent check is inlined via `tasklist` CSV output
-/// (see the `#[cfg(windows)]` block in `cleanup_port`).
-#[cfg(any(unix, test))]
 fn is_supported_engine_process(comm: &str) -> bool {
     comm.contains("motrix-next-engine")
 }
