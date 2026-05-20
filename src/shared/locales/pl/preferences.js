@@ -329,7 +329,7 @@ export default {
   'file-category-auto-archive-hint':
     'Nierozpoznane typy są zapisywane w domyślnej ścieżce i automatycznie archiwizowane po pobraniu',
   'auto-submit-from-extension': 'Pomiń potwierdzenie pobrań z rozszerzenia',
-  'silent-auto-submit-from-extension': 'Nie pokazuj głównego okna dla pobrań z rozszerzenia',
+  'silent-auto-submit-from-extension': 'Nie aktywuj głównego okna przy odbieraniu pobrań',
   'auto-select-all-files-from-extension': 'Domyślnie pobieraj wszystkie pliki torrent i magnet',
   'extension-api-port': 'Port API rozszerzenia',
   'extension-api-secret-tip': 'Wprowadź ten klucz w ustawieniach rozszerzenia przeglądarki w celu uwierzytelnienia.',

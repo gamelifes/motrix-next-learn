@@ -327,7 +327,7 @@ export default {
   'file-category-auto-archive-hint':
     'Unrecognized types are saved to the default path and auto-archived after download',
   'auto-submit-from-extension': 'Skip confirmation for extension downloads',
-  'silent-auto-submit-from-extension': 'Do not show the main window for extension downloads',
+  'silent-auto-submit-from-extension': 'Do not focus the main window when receiving downloads',
   'auto-select-all-files-from-extension': 'Download all torrent and magnet files by default',
   'extension-api-port': 'Extension API Port',
   'extension-api-secret-tip': 'Enter this secret in the browser extension settings to authenticate.',

@@ -323,7 +323,7 @@ export default {
   'file-category-auto-archive': 'จัดเก็บอัตโนมัติ',
   'file-category-auto-archive-hint': 'ไฟล์ที่ไม่รู้จักจะถูกบันทึกไว้ในเส้นทางเริ่มต้นและจัดเก็บอัตโนมัติหลังดาวน์โหลด',
   'auto-submit-from-extension': 'ข้ามการยืนยันสำหรับการดาวน์โหลดจากส่วนขยาย',
-  'silent-auto-submit-from-extension': 'ไม่แสดงหน้าต่างหลักสำหรับการดาวน์โหลดจากส่วนขยาย',
+  'silent-auto-submit-from-extension': 'ไม่โฟกัสหน้าต่างหลักเมื่อรับการดาวน์โหลด',
   'auto-select-all-files-from-extension': 'ดาวน์โหลดไฟล์ torrent และ magnet ทั้งหมดเป็นค่าเริ่มต้น',
   'extension-api-port': 'พอร์ต API ส่วนขยาย',
   'extension-api-secret-tip': 'ป้อนคีย์นี้ในการตั้งค่าส่วนขยายเบราว์เซอร์เพื่อยืนยันตัวตน',

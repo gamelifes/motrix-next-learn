@@ -328,7 +328,7 @@ export default {
   'file-category-auto-archive-hint':
     'A fel nem ismert típusok az alapértelmezett útvonalra kerülnek, és letöltés után automatikusan archiválódnak',
   'auto-submit-from-extension': 'Bővítményletöltések megerősítésének kihagyása',
-  'silent-auto-submit-from-extension': 'Ne jelenjen meg a főablak bővítményletöltéseknél',
+  'silent-auto-submit-from-extension': 'Letöltések fogadásakor ne kerüljön fókuszba a főablak',
   'auto-select-all-files-from-extension': 'Minden torrent- és magnet-fájl letöltése alapértelmezés szerint',
   'extension-api-port': 'Bővítmény API port',
   'extension-api-secret-tip': 'Adja meg ezt a kulcsot a böngészőbővítmény beállításaiban a hitelesítéshez.',

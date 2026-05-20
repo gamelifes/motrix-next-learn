@@ -318,7 +318,7 @@ export default {
   'file-category-auto-archive': '自动归档',
   'file-category-auto-archive-hint': '无法识别的类型将保存到默认路径，下载完成后自动归档',
   'auto-submit-from-extension': '扩展下载跳过确认',
-  'silent-auto-submit-from-extension': '扩展下载不显示主窗口',
+  'silent-auto-submit-from-extension': '接收下载时不激活主窗口',
   'auto-select-all-files-from-extension': '种子和磁力默认下载全部文件',
   'extension-api-port': '扩展 API 端口',
   'extension-api-secret-tip': '在浏览器扩展设置中输入此密钥以进行身份验证。',

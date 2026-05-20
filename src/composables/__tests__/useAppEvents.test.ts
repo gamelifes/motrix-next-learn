@@ -316,6 +316,42 @@ describe('useAppEvents', () => {
     })
   })
 
+  it('keeps the external input start handler registered after listener setup', async () => {
+    const { deps, appStore, message } = createDeps()
+    const { setupListeners } = mountComposable(deps)
+
+    await setupListeners()
+    invokeMock.mockClear()
+    const lastCall = appStore.setExternalInputStartHandler.mock.lastCall
+    const handler = lastCall?.[0] as ((taskNames: string[]) => void) | null | undefined
+
+    expect(typeof handler).toBe('function')
+
+    handler?.(['file.zip'])
+
+    expect(message.info).toHaveBeenCalledWith('task.download-start-message')
+    expect(invokeMock).toHaveBeenCalledWith('send_task_start_notification', {
+      taskNames: ['file.zip'],
+    })
+  })
+
+  it('keeps the external input error handler registered after listener setup', async () => {
+    const { deps, appStore, message } = createDeps()
+    const { setupListeners } = mountComposable(deps)
+
+    await setupListeners()
+    const lastCall = appStore.setExternalInputErrorHandler.mock.lastCall
+    const handler = lastCall?.[0] as ((error: unknown) => void) | null | undefined
+
+    expect(typeof handler).toBe('function')
+
+    handler?.({ Aria2: 'aria2 RPC error [1]: Unsupported URI scheme' })
+
+    expect(message.error).toHaveBeenCalledWith('task.error-aria2-next [1]: Unsupported URI scheme', {
+      closable: true,
+    })
+  })
+
   it('shows a toast when local ports are auto-switched', async () => {
     const { deps, message } = createDeps()
     const { setupListeners } = mountComposable(deps)

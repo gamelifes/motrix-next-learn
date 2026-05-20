@@ -328,7 +328,7 @@ export default {
   'file-category-auto-archive-hint':
     'Неразпознатите типове се записват в пътя по подразбиране и автоматично се архивират след изтегляне',
   'auto-submit-from-extension': 'Пропускай потвърждението за изтегляния от разширението',
-  'silent-auto-submit-from-extension': 'Не показвай главния прозорец за изтегляния от разширението',
+  'silent-auto-submit-from-extension': 'Не активирай главния прозорец при получаване на изтегляне',
   'auto-select-all-files-from-extension': 'Изтегляй всички torrent и magnet файлове по подразбиране',
   'extension-api-port': 'Порт на API за разширението',
   'extension-api-secret-tip': 'Въведете този ключ в настройките на разширението за удостоверяване.',

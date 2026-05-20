@@ -330,7 +330,7 @@ export default {
   'file-category-auto-archive-hint':
     'Unbekannte Dateitypen werden im Standard-Pfad gespeichert und nach dem Download automatisch archiviert',
   'auto-submit-from-extension': 'Bestätigung für Erweiterungsdownloads überspringen',
-  'silent-auto-submit-from-extension': 'Hauptfenster bei Erweiterungsdownloads nicht anzeigen',
+  'silent-auto-submit-from-extension': 'Hauptfenster beim Empfangen eines Downloads nicht aktivieren',
   'auto-select-all-files-from-extension': 'Alle Torrent- und Magnet-Dateien standardmäßig laden',
   'extension-api-port': 'Erweiterungs-API-Port',
   'extension-api-secret-tip':

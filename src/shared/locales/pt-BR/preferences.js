@@ -330,7 +330,7 @@ export default {
   'file-category-auto-archive-hint':
     'Tipos não reconhecidos são salvos no caminho padrão e arquivados automaticamente após o download',
   'auto-submit-from-extension': 'Ignorar confirmação para downloads da extensão',
-  'silent-auto-submit-from-extension': 'Não mostrar a janela principal para downloads da extensão',
+  'silent-auto-submit-from-extension': 'Não focar a janela principal ao receber downloads',
   'auto-select-all-files-from-extension': 'Baixar todos os arquivos torrent e magnet por padrão',
   'extension-api-port': 'Porta da API da extensão',
   'extension-api-secret-tip': 'Insira esta chave nas configurações da extensão do navegador para autenticação.',

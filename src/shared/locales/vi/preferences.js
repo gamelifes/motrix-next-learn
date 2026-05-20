@@ -326,7 +326,7 @@ export default {
   'file-category-auto-archive-hint':
     'Các loại không nhận dạng được sẽ được lưu vào đường dẫn mặc định và tự động lưu trữ sau khi tải xuống',
   'auto-submit-from-extension': 'Bỏ qua xác nhận cho tải xuống từ tiện ích',
-  'silent-auto-submit-from-extension': 'Không hiển thị cửa sổ chính cho tải xuống từ tiện ích',
+  'silent-auto-submit-from-extension': 'Không lấy tiêu điểm cửa sổ chính khi nhận tải xuống',
   'auto-select-all-files-from-extension': 'Mặc định tải xuống mọi tệp torrent và magnet',
   'extension-api-port': 'Cổng API tiện ích',
   'extension-api-secret-tip': 'Nhập khóa này vào cài đặt tiện ích mở rộng trình duyệt để xác thực.',

@@ -661,6 +661,11 @@ describe('useAppStore', () => {
       prefStore.config.autoSubmitFromExtension = true
       const onStart = vi.fn()
       store.setExternalInputStartHandler(onStart)
+      submitManualUrisMock.mockResolvedValueOnce({
+        submittedTaskNames: ['file.zip'],
+        magnetGids: [],
+        magnetFailures: [],
+      })
 
       store.handleDeepLinkUrls([buildDeepLink('https://example.com/file.zip')])
       await new Promise((resolve) => setTimeout(resolve, 0))
@@ -668,7 +673,7 @@ describe('useAppStore', () => {
       // Auto-submitted: pendingBatch should be empty, dialog should NOT open
       expect(store.pendingBatch).toHaveLength(0)
       expect(store.addTaskVisible).toBe(false)
-      expect(onStart).toHaveBeenCalledWith(['https://example.com/file.zip'])
+      expect(onStart).toHaveBeenCalledWith(['file.zip'])
     })
 
     it('auto-submits magnet URI when enabled', async () => {

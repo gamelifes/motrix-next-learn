@@ -327,7 +327,7 @@ export default {
   'file-category-auto-archive-hint':
     'انواع ناشناخته در مسیر پیش‌فرض ذخیره و پس از دانلود به‌صورت خودکار بایگانی می‌شوند',
   'auto-submit-from-extension': 'رد کردن تأیید دانلودهای افزونه',
-  'silent-auto-submit-from-extension': 'پنجره اصلی برای دانلودهای افزونه نمایش داده نشود',
+  'silent-auto-submit-from-extension': 'هنگام دریافت دانلود، پنجره اصلی فعال نشود',
   'auto-select-all-files-from-extension': 'دانلود همه فایل‌های تورنت و مگنت به‌صورت پیش‌فرض',
   'extension-api-port': 'پورت API افزونه',
   'extension-api-secret-tip': 'این کلید را در تنظیمات افزونه مرورگر برای احراز هویت وارد کنید.',

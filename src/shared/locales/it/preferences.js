@@ -331,7 +331,7 @@ export default {
   'file-category-auto-archive-hint':
     'I tipi non riconosciuti vengono salvati nel percorso predefinito e archiviati automaticamente dopo il download',
   'auto-submit-from-extension': "Salta la conferma per i download dell'estensione",
-  'silent-auto-submit-from-extension': "Non mostrare la finestra principale per i download dell'estensione",
+  'silent-auto-submit-from-extension': 'Non attivare la finestra principale alla ricezione dei download',
   'auto-select-all-files-from-extension': 'Scarica tutti i file torrent e magnet per impostazione predefinita',
   'extension-api-port': 'Porta API estensione',
   'extension-api-secret-tip':

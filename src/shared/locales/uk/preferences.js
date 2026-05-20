@@ -328,7 +328,7 @@ export default {
   'file-category-auto-archive-hint':
     'Нерозпізнані типи зберігаються за шляхом за замовчуванням і автоматично архівуються після завантаження',
   'auto-submit-from-extension': 'Пропускати підтвердження для завантажень розширення',
-  'silent-auto-submit-from-extension': 'Не показувати головне вікно для завантажень розширення',
+  'silent-auto-submit-from-extension': 'Не фокусувати головне вікно під час отримання завантажень',
   'auto-select-all-files-from-extension': 'Типово завантажувати всі файли torrent і magnet',
   'extension-api-port': 'Порт API розширення',
   'extension-api-secret-tip': 'Введіть цей ключ у налаштуваннях розширення браузера для автентифікації.',

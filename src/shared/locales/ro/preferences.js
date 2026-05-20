@@ -329,7 +329,7 @@ export default {
   'file-category-auto-archive-hint':
     'Tipurile nerecunoscute sunt salvate în calea implicită și arhivate automat după descărcare',
   'auto-submit-from-extension': 'Omite confirmarea pentru descărcările extensiei',
-  'silent-auto-submit-from-extension': 'Nu afișa fereastra principală pentru descărcările extensiei',
+  'silent-auto-submit-from-extension': 'Nu focaliza fereastra principală la primirea descărcărilor',
   'auto-select-all-files-from-extension': 'Descarcă implicit toate fișierele torrent și magnet',
   'extension-api-port': 'Port API extensie',
   'extension-api-secret-tip': 'Introduceți această cheie în setările extensiei browserului pentru autentificare.',

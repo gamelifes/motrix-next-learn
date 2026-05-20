@@ -324,7 +324,7 @@ export default {
   'file-category-auto-archive': 'أرشفة تلقائية',
   'file-category-auto-archive-hint': 'الأنواع غير المعروفة تُحفظ في المسار الافتراضي وتُؤرشف تلقائياً بعد التنزيل',
   'auto-submit-from-extension': 'تخطي تأكيد تنزيلات الإضافة',
-  'silent-auto-submit-from-extension': 'عدم إظهار النافذة الرئيسية لتنزيلات الإضافة',
+  'silent-auto-submit-from-extension': 'عدم تنشيط النافذة الرئيسية عند استلام تنزيل',
   'auto-select-all-files-from-extension': 'تنزيل كل ملفات التورنت والمغناطيس افتراضيًا',
   'extension-api-port': 'منفذ API للإضافة',
   'extension-api-secret-tip': 'أدخل هذا المفتاح في إعدادات إضافة المتصفح للمصادقة.',

@@ -330,7 +330,7 @@ export default {
   'file-category-auto-archive-hint':
     "Els tipus no reconeguts es desen a la ruta per defecte i s'arxiven automàticament després de la descàrrega",
   'auto-submit-from-extension': "Omet la confirmació de baixades de l'extensió",
-  'silent-auto-submit-from-extension': "No mostris la finestra principal per a baixades de l'extensió",
+  'silent-auto-submit-from-extension': 'No activis la finestra principal en rebre una baixada',
   'auto-select-all-files-from-extension': 'Baixa tots els fitxers torrent i magnet per defecte',
   'extension-api-port': "Port de l'API de l'extensió",
   'extension-api-secret-tip':

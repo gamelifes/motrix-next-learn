@@ -158,24 +158,28 @@ export function useAppEvents(deps: AppEventsDeps): AppEventsReturn {
 
   onUnmounted(teardown)
 
-  appStore.setExternalInputErrorHandler?.((error) => {
-    message.error(
-      getErrorMessage(error, {
-        fallback: t('task.error-unknown'),
-        labels: { Aria2: t('task.error-aria2-next') },
-      }),
-      { closable: true },
-    )
-  })
-  registerCleanup(() => appStore.setExternalInputErrorHandler?.(null))
-
-  appStore.setExternalInputStartHandler?.((taskNames) => {
-    handleTaskStart(taskNames, {
-      messageInfo: message.info,
-      t,
+  function setupExternalInputHandlers() {
+    appStore.setExternalInputErrorHandler?.((error) => {
+      message.error(
+        getErrorMessage(error, {
+          fallback: t('task.error-unknown'),
+          labels: { Aria2: t('task.error-aria2-next') },
+        }),
+        { closable: true },
+      )
     })
-  })
-  registerCleanup(() => appStore.setExternalInputStartHandler?.(null))
+    registerCleanup(() => appStore.setExternalInputErrorHandler?.(null))
+
+    appStore.setExternalInputStartHandler?.((taskNames) => {
+      handleTaskStart(taskNames, {
+        messageInfo: message.info,
+        t,
+      })
+    })
+    registerCleanup(() => appStore.setExternalInputStartHandler?.(null))
+  }
+
+  setupExternalInputHandlers()
 
   async function runExternalInputWindowStage(
     traceId: string,
@@ -670,6 +674,7 @@ export function useAppEvents(deps: AppEventsDeps): AppEventsReturn {
   // ─── Orchestrator ─────────────────────────────────────────────────
   async function setupListeners() {
     teardown()
+    setupExternalInputHandlers()
 
     await setupEngineWatchers()
     setupNavGuard()

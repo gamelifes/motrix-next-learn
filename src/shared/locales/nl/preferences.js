@@ -330,7 +330,7 @@ export default {
   'file-category-auto-archive-hint':
     'Niet-herkende typen worden opgeslagen in het standaardpad en automatisch gearchiveerd na het downloaden',
   'auto-submit-from-extension': 'Bevestiging voor extensiedownloads overslaan',
-  'silent-auto-submit-from-extension': 'Hoofdvenster niet tonen voor extensiedownloads',
+  'silent-auto-submit-from-extension': 'Hoofdvenster niet focussen bij ontvangen downloads',
   'auto-select-all-files-from-extension': 'Alle torrent- en magnetbestanden standaard downloaden',
   'extension-api-port': 'Extensie API-poort',
   'extension-api-secret-tip': 'Voer deze sleutel in bij de instellingen van de browserextensie voor authenticatie.',

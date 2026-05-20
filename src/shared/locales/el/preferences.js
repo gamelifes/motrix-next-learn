@@ -333,7 +333,7 @@ export default {
   'file-category-auto-archive-hint':
     'Οι μη αναγνωρισμένοι τύποι αποθηκεύονται στην προεπιλεγμένη διαδρομή και αρχειοθετούνται αυτόματα μετά τη λήψη',
   'auto-submit-from-extension': 'Παράκαμψη επιβεβαίωσης για λήψεις επέκτασης',
-  'silent-auto-submit-from-extension': 'Να μην εμφανίζεται το κύριο παράθυρο για λήψεις επέκτασης',
+  'silent-auto-submit-from-extension': 'Να μην ενεργοποιείται το κύριο παράθυρο κατά τη λήψη αιτήματος λήψης',
   'auto-select-all-files-from-extension': 'Λήψη όλων των αρχείων torrent και magnet από προεπιλογή',
   'extension-api-port': 'Θύρα API επέκτασης',
   'extension-api-secret-tip':

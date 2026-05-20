@@ -329,7 +329,7 @@ export default {
   'file-category-auto-archive-hint':
     'Tanınmayan türler varsayılan yola kaydedilir ve indirdikten sonra otomatik olarak arşivlenir',
   'auto-submit-from-extension': 'Uzantı indirmelerinde onayı atla',
-  'silent-auto-submit-from-extension': 'Uzantı indirmelerinde ana pencereyi gösterme',
+  'silent-auto-submit-from-extension': 'İndirmeler alınırken ana pencereye odaklanma',
   'auto-select-all-files-from-extension': 'Torrent ve magnet dosyalarının tümünü varsayılan olarak indir',
   'extension-api-port': 'Uzantı API Portu',
   'extension-api-secret-tip': 'Kimlik doğrulaması için bu anahtarı tarayıcı eklentisi ayarlarına girin.',

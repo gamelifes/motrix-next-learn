@@ -334,7 +334,7 @@ export default {
   'file-category-auto-archive-hint':
     'Les types non reconnus sont enregistrés dans le chemin par défaut et archivés automatiquement après le téléchargement',
   'auto-submit-from-extension': "Ignorer la confirmation pour les téléchargements de l'extension",
-  'silent-auto-submit-from-extension': "Ne pas afficher la fenêtre principale pour les téléchargements de l'extension",
+  'silent-auto-submit-from-extension': 'Ne pas activer la fenêtre principale à la réception de téléchargements',
   'auto-select-all-files-from-extension': 'Télécharger tous les fichiers torrent et magnet par défaut',
   'extension-api-port': "Port API de l'extension",
   'extension-api-secret-tip':

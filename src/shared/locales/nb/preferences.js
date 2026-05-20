@@ -326,7 +326,7 @@ export default {
   'file-category-auto-archive': 'automatisk arkivering',
   'file-category-auto-archive-hint': 'Ukjente typer lagres i standardstien og arkiveres automatisk etter nedlasting',
   'auto-submit-from-extension': 'Hopp over bekreftelse for utvidelsesnedlastinger',
-  'silent-auto-submit-from-extension': 'Ikke vis hovedvinduet for utvidelsesnedlastinger',
+  'silent-auto-submit-from-extension': 'Ikke fokuser hovedvinduet ved mottak av nedlastinger',
   'auto-select-all-files-from-extension': 'Last ned alle torrent- og magnetfiler som standard',
   'extension-api-port': 'Utvidelse API-port',
   'extension-api-secret-tip': 'Skriv inn denne nøkkelen i nettleserutvidelsens innstillinger for autentisering.',
