@@ -511,8 +511,6 @@ async function handleSubmit() {
       handleTaskStart(taskNames, {
         messageInfo: message.info,
         t,
-        taskNotification: preferenceStore.config.taskNotification !== false,
-        notifyOnStart: preferenceStore.config.notifyOnStart === true,
       })
 
       if (preferenceStore.config.newTaskShowDownloading !== false) {

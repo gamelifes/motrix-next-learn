@@ -32,6 +32,8 @@ interface PendingDeepLinksPayload {
   silent: boolean
 }
 
+type DeepLinkEventPayload = string[] | PendingDeepLinksPayload
+
 type PendingFrontendActionChannel = 'menu-event' | 'tray-menu-action'
 
 interface PendingFrontendAction {
@@ -87,8 +89,6 @@ interface AppEventsDeps {
       dhtListenPort?: number
       ed2kListenPort?: number
       lightweightMode?: boolean
-      taskNotification?: boolean
-      notifyOnStart?: boolean
     }
     updatePreference?: (cfg: Record<string, unknown>) => void
   }
@@ -173,8 +173,6 @@ export function useAppEvents(deps: AppEventsDeps): AppEventsReturn {
     handleTaskStart(taskNames, {
       messageInfo: message.info,
       t,
-      taskNotification: preferenceStore.config.taskNotification === true,
-      notifyOnStart: preferenceStore.config.notifyOnStart === true,
     })
   })
   registerCleanup(() => appStore.setExternalInputStartHandler?.(null))
@@ -632,10 +630,15 @@ export function useAppEvents(deps: AppEventsDeps): AppEventsReturn {
     }
   }
 
+  function normalizeDeepLinkPayload(payload: DeepLinkEventPayload): PendingDeepLinksPayload {
+    return Array.isArray(payload) ? { urls: payload, silent: false } : payload
+  }
+
   async function setupExternalInputListeners() {
     const unlistenDeepLink = registerCleanup(
-      await listen<string[]>('deep-link-open', async (event) => {
-        await processIncomingDeepLinks(event.payload)
+      await listen<DeepLinkEventPayload>('deep-link-open', async (event) => {
+        const payload = normalizeDeepLinkPayload(event.payload)
+        await processIncomingDeepLinks(payload.urls, { silent: payload.silent })
       }),
     )
 
@@ -681,9 +684,9 @@ export function useAppEvents(deps: AppEventsDeps): AppEventsReturn {
     // Normal startups return an empty array — this is a no-op.
     try {
       const { invoke } = await import('@tauri-apps/api/core')
-      const pending = await invoke<PendingDeepLinksPayload>('take_pending_deep_links')
-      const pendingUrls = Array.isArray(pending) ? pending : pending.urls
-      const silent = Array.isArray(pending) ? false : pending.silent === true
+      const pending = normalizeDeepLinkPayload(await invoke<DeepLinkEventPayload>('take_pending_deep_links'))
+      const pendingUrls = pending.urls
+      const silent = pending.silent === true
       if (pendingUrls.length > 0) {
         logger.info(
           'AppEvents',

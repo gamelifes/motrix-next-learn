@@ -111,8 +111,6 @@ function createDeps() {
       rpcListenPort: 16800,
       rpcSecret: '',
       lightweightMode: false,
-      taskNotification: true,
-      notifyOnStart: true,
     },
   })
   const message = {
@@ -289,6 +287,20 @@ describe('useAppEvents', () => {
     expect(appStore.handleDeepLinkUrls).toHaveBeenCalledWith([
       'motrixnext://new?url=https%3A%2F%2Fexample.com%2Ffile.zip',
     ])
+  })
+
+  it('routes silent live deep-link events without showing or focusing the window', async () => {
+    const deepLink = 'motrixnext://new?url=https%3A%2F%2Fexample.com%2Ffile.zip'
+    const { deps, appStore } = createDeps()
+    const { setupListeners } = mountComposable(deps)
+
+    await setupListeners()
+    await eventCallbacks['deep-link-open']?.({ payload: { urls: [deepLink], silent: true } })
+
+    expect(windowApiMock.unminimize).not.toHaveBeenCalled()
+    expect(windowApiMock.show).not.toHaveBeenCalled()
+    expect(windowApiMock.setFocus).not.toHaveBeenCalled()
+    expect(appStore.handleDeepLinkUrls).toHaveBeenCalledWith([deepLink])
   })
 
   it('shows localized readable text for external input auto-submit errors', async () => {

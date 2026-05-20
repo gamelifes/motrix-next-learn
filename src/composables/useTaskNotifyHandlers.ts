@@ -16,11 +16,11 @@
  * from the notification — without navigating through the task list.
  */
 import type { VNodeChild } from 'vue'
+import { invoke } from '@tauri-apps/api/core'
 import type { Aria2Task } from '@shared/types'
 import { getTaskDisplayName } from '@shared/utils'
 import { logger } from '@shared/logger'
 import { isMetadataTask } from '@/composables/useTaskLifecycle'
-import { notifyOs } from '@/composables/useOsNotification'
 import { renderCompletionToast } from '@/composables/useNotificationToast'
 
 /** Dependency interface for testability. */
@@ -91,9 +91,6 @@ export function handleTaskError(_task: Aria2Task, errorText: string): void {
 export interface StartNotifyDeps {
   messageInfo: (content: string) => void
   t: (key: string, params?: Record<string, unknown>) => string
-  taskNotification: boolean
-  /** Fine-grained: OS notification on download start. */
-  notifyOnStart: boolean
 }
 
 /**
@@ -102,7 +99,8 @@ export interface StartNotifyDeps {
  * For single tasks:  "Started downloading movie.mp4"
  * For batch tasks:   "Started downloading movie.mp4 and 2 other task(s)"
  *
- * Toast always fires; OS notification gated by `taskNotification` + `notifyOnStart`.
+ * Toast always fires; OS notification is delegated to Rust so lightweight mode
+ * uses the same backend-owned native path as completion/error notifications.
  */
 export function handleTaskStart(taskNames: string[], deps: StartNotifyDeps): void {
   if (taskNames.length === 0) return
@@ -117,8 +115,8 @@ export function handleTaskStart(taskNames: string[], deps: StartNotifyDeps): voi
         })
 
   deps.messageInfo(body)
-  if (deps.taskNotification && deps.notifyOnStart) {
-    notifyOs('MotrixNext', body)
-  }
+  Promise.resolve(invoke('send_task_start_notification', { taskNames })).catch((error) =>
+    logger.debug('TaskNotify.start', `native notification failed: ${error}`),
+  )
   logger.info('TaskNotify.start', `count=${taskNames.length} first="${firstName}"`)
 }

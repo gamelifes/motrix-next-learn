@@ -848,6 +848,8 @@ pub fn run() {
             commands::update_menu_labels,
             commands::update_progress_bar,
             commands::update_dock_badge,
+            commands::send_task_start_notification,
+            commands::send_app_system_notification,
             commands::check_for_update,
             commands::download_update,
             commands::apply_update,

@@ -2,7 +2,10 @@
 
 use super::config::RuntimeConfig;
 use super::monitor::{events, TaskEvent};
-use super::notification_i18n::{format_error_message, format_task_message, texts_for_locale};
+use super::notification_i18n::{
+    format_batch_task_message, format_error_message, format_task_message, texts_for_locale,
+};
+use crate::error::AppError;
 use tauri::Manager;
 
 #[cfg(target_os = "linux")]
@@ -122,6 +125,7 @@ fn trim_linux_notifications_to_limit(
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TaskNotificationKind {
+    Start,
     Complete,
     BtComplete,
     Error,
@@ -172,6 +176,7 @@ fn notification_enabled(kind: TaskNotificationKind, config: &RuntimeConfig) -> b
     }
 
     match kind {
+        TaskNotificationKind::Start => config.notify_on_start,
         TaskNotificationKind::Complete | TaskNotificationKind::BtComplete => {
             config.notify_on_complete
         }
@@ -199,6 +204,7 @@ pub fn build_task_notification(
     let task_name = event.name.as_str();
 
     let (title, body) = match kind {
+        TaskNotificationKind::Start => return None,
         TaskNotificationKind::Complete => (
             texts.download_complete_title.to_string(),
             format_task_message(texts.download_complete_body, task_name),
@@ -226,6 +232,83 @@ pub fn build_task_notification(
         body,
         locale,
     })
+}
+
+pub fn build_task_start_notification(
+    task_names: &[String],
+    config: &RuntimeConfig,
+) -> Option<TaskNotificationContent> {
+    if !notification_enabled(TaskNotificationKind::Start, config) {
+        return None;
+    }
+
+    let first_name = task_names
+        .iter()
+        .map(|name| name.trim())
+        .find(|name| !name.is_empty())?;
+    let requested_locale = if config.locale == "auto" {
+        sys_locale::get_locale().unwrap_or_else(|| "en-US".to_string())
+    } else {
+        config.locale.clone()
+    };
+    let locale = super::notification_i18n::resolve_supported_locale(&requested_locale);
+    let texts = texts_for_locale(locale);
+    let body = if task_names.len() == 1 {
+        format_task_message(texts.download_start_body, first_name)
+    } else {
+        format_batch_task_message(
+            texts.download_batch_start_body,
+            first_name,
+            task_names.len().saturating_sub(1),
+        )
+    };
+
+    Some(TaskNotificationContent {
+        kind: TaskNotificationKind::Start,
+        title: texts.download_start_title.to_string(),
+        body,
+        locale,
+    })
+}
+
+pub fn send_task_start_notification_from_names(
+    app: &tauri::AppHandle,
+    task_names: &[String],
+    config: &RuntimeConfig,
+) -> Result<bool, AppError> {
+    let Some(content) = build_task_start_notification(task_names, config) else {
+        log::debug!("notification:skip reason=preference-disabled type=Start");
+        return Ok(false);
+    };
+
+    send_native_notification(app, &content)?;
+    log::info!(
+        "notification:submitted type={:?} locale={} webview_alive={}",
+        content.kind,
+        content.locale,
+        app.get_webview_window("main").is_some()
+    );
+    Ok(true)
+}
+
+pub fn send_app_notification(
+    app: &tauri::AppHandle,
+    title: &str,
+    body: &str,
+) -> Result<(), AppError> {
+    let title = title.trim();
+    let body = body.trim();
+    if title.is_empty() || body.is_empty() {
+        return Ok(());
+    }
+
+    let content = TaskNotificationContent {
+        kind: TaskNotificationKind::Start,
+        title: title.to_string(),
+        body: body.to_string(),
+        locale: "frontend",
+    };
+    send_native_notification(app, &content)
 }
 
 pub fn send_task_notification(
@@ -268,6 +351,15 @@ pub fn send_task_notification(
             );
         }
     }
+}
+
+pub fn send_native_notification(
+    app: &tauri::AppHandle,
+    content: &TaskNotificationContent,
+) -> Result<(), AppError> {
+    send_platform_notification(app, content)
+        .map(|_| ())
+        .map_err(AppError::Io)
 }
 
 #[cfg(target_os = "linux")]
@@ -374,6 +466,7 @@ mod tests {
             locale: "en-US".to_string(),
             task_notification: true,
             notify_on_complete: true,
+            notify_on_start: true,
             ..RuntimeConfig::default()
         }
     }
@@ -436,6 +529,48 @@ mod tests {
         config.task_notification = false;
         assert!(build_task_notification(events::TASK_COMPLETE, &event(), &config).is_none());
         assert!(build_task_notification(events::TASK_ERROR, &event(), &config).is_none());
+        assert!(build_task_start_notification(&["file.zip".to_string()], &config).is_none());
+    }
+
+    #[test]
+    fn builds_localised_start_notification() {
+        let content = build_task_start_notification(&["file.zip".to_string()], &cfg()).unwrap();
+        assert_eq!(content.kind, TaskNotificationKind::Start);
+        assert_eq!(content.title, "Download Started");
+        assert_eq!(content.body, "Started downloading \"file.zip\"");
+        assert_eq!(content.locale, "en-US");
+    }
+
+    #[test]
+    fn builds_localised_batch_start_notification() {
+        let content = build_task_start_notification(
+            &[
+                "file.zip".to_string(),
+                "b.iso".to_string(),
+                "c.torrent".to_string(),
+            ],
+            &cfg(),
+        )
+        .unwrap();
+        assert_eq!(content.kind, TaskNotificationKind::Start);
+        assert_eq!(content.title, "Download Started");
+        assert_eq!(
+            content.body,
+            "Started downloading \"file.zip\" and 2 other task(s)"
+        );
+    }
+
+    #[test]
+    fn skips_start_when_start_notifications_are_disabled() {
+        let mut config = cfg();
+        config.notify_on_start = false;
+        assert!(build_task_start_notification(&["file.zip".to_string()], &config).is_none());
+    }
+
+    #[test]
+    fn skips_start_when_task_names_are_empty() {
+        assert!(build_task_start_notification(&[], &cfg()).is_none());
+        assert!(build_task_start_notification(&["  ".to_string()], &cfg()).is_none());
     }
 
     #[cfg(target_os = "linux")]

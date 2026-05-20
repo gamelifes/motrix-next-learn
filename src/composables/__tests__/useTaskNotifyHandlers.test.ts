@@ -20,10 +20,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { Aria2Task } from '@shared/types'
 
-// ── Mock OS notification helper ──────────────────────────────────────
-const mockNotifyOs = vi.fn((_title: string, _body: string): Promise<void> => Promise.resolve())
-vi.mock('../useOsNotification', () => ({
-  notifyOs: (...args: [string, string]) => mockNotifyOs(...args),
+// ── Mock backend notification command ────────────────────────────────
+const mockInvoke = vi.fn((_command: string, _args?: Record<string, unknown>): Promise<void> => Promise.resolve())
+vi.mock('@tauri-apps/api/core', () => ({
+  invoke: (...args: [string, Record<string, unknown>?]) => mockInvoke(...args),
 }))
 
 // ── Mock renderCompletionToast ───────────────────────────────────────
@@ -208,7 +208,7 @@ describe('handleTaskError', () => {
     vi.clearAllMocks()
   })
 
-  it('logs error notification path without sending frontend OS notification', () => {
+  it('logs error notification path without sending start notification', () => {
     const task = makeTask({
       status: 'error',
       errorCode: '6',
@@ -217,7 +217,7 @@ describe('handleTaskError', () => {
 
     handleTaskError(task, 'test-file.zip: Network problem')
 
-    expect(mockNotifyOs).not.toHaveBeenCalled()
+    expect(mockInvoke).not.toHaveBeenCalled()
   })
 })
 
@@ -235,8 +235,6 @@ function makeStartDeps(overrides: Partial<StartNotifyDeps> = {}): StartNotifyDep
       }
       return key
     }) as unknown as StartNotifyDeps['t'],
-    taskNotification: true,
-    notifyOnStart: true,
     ...overrides,
   }
 }
@@ -255,13 +253,15 @@ describe('handleTaskStart', () => {
     expect(deps.messageInfo).toHaveBeenCalledWith('Started downloading movie.mp4')
   })
 
-  it('sends OS notification for single task', () => {
+  it('delegates single-task OS notification to Rust', () => {
     const deps = makeStartDeps()
 
     handleTaskStart(['movie.mp4'], deps)
 
-    expect(mockNotifyOs).toHaveBeenCalledOnce()
-    expect(mockNotifyOs).toHaveBeenCalledWith('MotrixNext', 'Started downloading movie.mp4')
+    expect(mockInvoke).toHaveBeenCalledOnce()
+    expect(mockInvoke).toHaveBeenCalledWith('send_task_start_notification', {
+      taskNames: ['movie.mp4'],
+    })
   })
 
   it('sends aggregated toast for batch tasks', () => {
@@ -273,30 +273,14 @@ describe('handleTaskStart', () => {
     expect(deps.messageInfo).toHaveBeenCalledWith('Started downloading a.zip and 2 other task(s)')
   })
 
-  it('sends aggregated OS notification for batch tasks', () => {
+  it('delegates batch OS notification to Rust', () => {
     const deps = makeStartDeps()
 
     handleTaskStart(['a.zip', 'b.torrent', 'c.iso'], deps)
 
-    expect(mockNotifyOs).toHaveBeenCalledWith('MotrixNext', 'Started downloading a.zip and 2 other task(s)')
-  })
-
-  it('sends toast but skips OS notification when taskNotification is false', () => {
-    const deps = makeStartDeps({ taskNotification: false })
-
-    handleTaskStart(['movie.mp4'], deps)
-
-    expect(deps.messageInfo).toHaveBeenCalledOnce()
-    expect(mockNotifyOs).not.toHaveBeenCalled()
-  })
-
-  it('sends toast but skips OS notification when notifyOnStart is false', () => {
-    const deps = makeStartDeps({ notifyOnStart: false })
-
-    handleTaskStart(['movie.mp4'], deps)
-
-    expect(deps.messageInfo).toHaveBeenCalledOnce()
-    expect(mockNotifyOs).not.toHaveBeenCalled()
+    expect(mockInvoke).toHaveBeenCalledWith('send_task_start_notification', {
+      taskNames: ['a.zip', 'b.torrent', 'c.iso'],
+    })
   })
 
   it('skips all when taskNames is empty', () => {
@@ -305,6 +289,6 @@ describe('handleTaskStart', () => {
     handleTaskStart([], deps)
 
     expect(deps.messageInfo).not.toHaveBeenCalled()
-    expect(mockNotifyOs).not.toHaveBeenCalled()
+    expect(mockInvoke).not.toHaveBeenCalled()
   })
 })

@@ -59,8 +59,6 @@ const mockPreferenceStore = {
     proxy: { enable: false, server: '', scope: [], bypass: '' },
     fileCategoryEnabled: false,
     fileCategories: [],
-    taskNotification: false,
-    notifyOnStart: false,
   },
 }
 
@@ -638,8 +636,6 @@ describe('useAddTaskSubmit', () => {
     mockPreferenceStore.config.newTaskShowDownloading = true
     mockPreferenceStore.config.fileCategoryEnabled = false
     mockPreferenceStore.config.fileCategories = []
-    mockPreferenceStore.config.taskNotification = false
-    mockPreferenceStore.config.notifyOnStart = false
   })
 
   it('keeps AddTask open when a magnet submission fails', async () => {

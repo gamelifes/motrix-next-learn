@@ -143,7 +143,11 @@ fn route_external_inputs_with_intent(
     let frontend_ready = is_frontend_ready(app);
     if window_was_alive && frontend_ready {
         wake_main_window(app, source, silent);
-        match app.emit("deep-link-open", &urls) {
+        let payload = PendingDeepLinksPayload {
+            urls: urls.clone(),
+            silent,
+        };
+        match app.emit("deep-link-open", payload) {
             Ok(()) => return,
             Err(e) => {
                 log::warn!("deep_link:emit-failed source={source} error={e}");

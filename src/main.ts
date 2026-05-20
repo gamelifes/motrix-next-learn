@@ -283,11 +283,10 @@ window.addEventListener('unhandledrejection', (e) => {
       if (hijacked.length === 0) return
 
       // 1. OS-level notification
-      const { notifyOs } = await import('@/composables/useOsNotification')
-      await notifyOs(
-        i18n.global.t('app.protocol-hijacked-title'),
-        i18n.global.t('app.protocol-hijacked-body', { protocols: hijacked.join(', ') }),
-      )
+      await invoke('send_app_system_notification', {
+        title: i18n.global.t('app.protocol-hijacked-title'),
+        body: i18n.global.t('app.protocol-hijacked-body', { protocols: hijacked.join(', ') }),
+      })
 
       // 2. Signal UI to show dialog (consumed by MainLayout/useAppEvents)
       //    Does NOT modify config — user keeps control of their toggles.

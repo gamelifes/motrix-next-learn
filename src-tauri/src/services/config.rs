@@ -58,6 +58,9 @@ pub struct RuntimeConfig {
     /// Whether completed downloads should trigger native system notifications.
     #[serde(default = "default_true")]
     pub notify_on_complete: bool,
+    /// Whether newly started downloads should trigger native system notifications.
+    #[serde(default = "default_true")]
+    pub notify_on_start: bool,
     /// Port for the embedded HTTP API (browser extension communication).
     #[serde(default = "default_extension_api_port")]
     pub extension_api_port: u16,
@@ -103,6 +106,7 @@ impl Default for RuntimeConfig {
             keep_awake: false,
             task_notification: true,
             notify_on_complete: true,
+            notify_on_start: true,
             extension_api_port: default_extension_api_port(),
         }
     }
@@ -160,6 +164,7 @@ mod tests {
         assert!(!cfg.keep_awake); // default OFF — opt-in only
         assert!(cfg.task_notification); // default ON
         assert!(cfg.notify_on_complete); // default ON
+        assert!(cfg.notify_on_start); // default ON
     }
 
     // ── Deserialization from AppConfig-shaped JSON ───────────────────
@@ -177,6 +182,7 @@ mod tests {
             "maxOverallUploadLimit": "512K",
             "taskNotification": false,
             "notifyOnComplete": false,
+            "notifyOnStart": false,
             "traySpeedometer": true,
             "dockBadgeSpeed": false,
             "showProgressBar": true,
@@ -208,6 +214,7 @@ mod tests {
         assert!(cfg.keep_awake);
         assert!(!cfg.task_notification);
         assert!(!cfg.notify_on_complete);
+        assert!(!cfg.notify_on_start);
     }
 
     #[test]
