@@ -1,4 +1,4 @@
-name: Sign Windows Release
+name: SignPath Windows Release
 
 on:
   workflow_dispatch:
