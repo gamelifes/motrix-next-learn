@@ -2,12 +2,6 @@ name: SignPath Windows Release
 
 on:
   workflow_dispatch:
-    inputs:
-      tag:
-        description: Release tag to sign. Use "latest" to sign the latest GitHub Release.
-        required: false
-        default: latest
-        type: string
 
 permissions:
   actions: read
@@ -17,55 +11,52 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  resolve-release:
-    name: Resolve release
+  resolve-releases:
+    name: Resolve releases
     runs-on: ubuntu-latest
     outputs:
-      tag: ${{ steps.release.outputs.tag }}
-      version: ${{ steps.release.outputs.version }}
+      releases: ${{ steps.releases.outputs.releases }}
     steps:
-      - name: Resolve release tag
-        id: release
+      - name: Resolve latest stable and prerelease
+        id: releases
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REQUESTED_TAG: ${{ inputs.tag }}
         run: |
           set -euo pipefail
 
-          if [ -n "$REQUESTED_TAG" ] && [ "$REQUESTED_TAG" != "latest" ]; then
-            TAG="$REQUESTED_TAG"
-            gh release view "$TAG" -R "${{ github.repository }}" >/dev/null
-          else
-            TAG=$(gh release list \
-              -R "${{ github.repository }}" \
-              --exclude-drafts \
-              --limit 1 \
-              --json tagName \
-              -q '.[0].tagName')
-          fi
+          releases=$(gh release list \
+            -R "${{ github.repository }}" \
+            --exclude-drafts \
+            --limit 50 \
+            --json tagName,isPrerelease,publishedAt)
 
-          if [ -z "$TAG" ]; then
-            echo "No release tag found." >&2
+          targets=$(jq -c '
+            [
+              (map(select(.isPrerelease == false)) | sort_by(.publishedAt) | reverse | first | select(. != null) | { tag: .tagName, version: (.tagName | sub("^v"; "")), channel: "stable" }),
+              (map(select(.isPrerelease == true)) | sort_by(.publishedAt) | reverse | first | select(. != null) | { tag: .tagName, version: (.tagName | sub("^v"; "")), channel: "prerelease" })
+            ]
+          ' <<< "$releases")
+
+          if [ "$(jq 'length' <<< "$targets")" -eq 0 ]; then
+            echo "No published releases found." >&2
             exit 1
           fi
 
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
-          echo "Resolved release tag: $TAG"
+          echo "releases=$targets" >> "$GITHUB_OUTPUT"
+          echo "Resolved releases: $targets"
 
   sign:
-    name: Sign ${{ matrix.label }}
-    needs: resolve-release
+    name: Sign ${{ matrix.release.channel }} ${{ matrix.installer.arch }}
+    needs: resolve-releases
     runs-on: windows-latest
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - label: windows-x64
-            arch: x64
+        release: ${{ fromJSON(needs.resolve-releases.outputs.releases) }}
+        installer:
+          - arch: x64
             asset_suffix: x64-setup.exe
-          - label: windows-arm64
-            arch: arm64
+          - arch: arm64
             asset_suffix: arm64-setup.exe
 
     steps:
@@ -85,9 +76,9 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ needs.resolve-release.outputs.tag }}
-          VERSION: ${{ needs.resolve-release.outputs.version }}
-          ASSET_SUFFIX: ${{ matrix.asset_suffix }}
+          TAG: ${{ matrix.release.tag }}
+          VERSION: ${{ matrix.release.version }}
+          ASSET_SUFFIX: ${{ matrix.installer.asset_suffix }}
         run: |
           $ErrorActionPreference = "Stop"
           $asset = "MotrixNext_${env:VERSION}_${env:ASSET_SUFFIX}"
@@ -100,7 +91,7 @@ jobs:
         id: unsigned-artifact
         uses: actions/upload-artifact@v6
         with:
-          name: signpath-${{ needs.resolve-release.outputs.tag }}-${{ matrix.arch }}-unsigned
+          name: signpath-${{ matrix.release.tag }}-${{ matrix.installer.arch }}-unsigned
           path: signpath-input/*.exe
           if-no-files-found: error
           retention-days: 1
@@ -157,7 +148,7 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ needs.resolve-release.outputs.tag }}
+          TAG: ${{ matrix.release.tag }}
         run: |
           set -euo pipefail
 
@@ -195,12 +186,16 @@ jobs:
 
   refresh-updater-json:
     name: Refresh updater JSON
-    needs: [resolve-release, sign]
+    needs: [resolve-releases, sign]
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        release: ${{ fromJSON(needs.resolve-releases.outputs.releases) }}
     steps:
       - uses: actions/checkout@v5
 
       - name: Generate and upload channel-specific updater JSON
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./scripts/refresh-updater-json.sh "${{ needs.resolve-release.outputs.tag }}"
+        run: ./scripts/refresh-updater-json.sh "${{ matrix.release.tag }}"
