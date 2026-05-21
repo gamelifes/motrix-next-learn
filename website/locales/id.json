@@ -10,7 +10,7 @@
   "showcase.dark": "Mode gelap",
   "story.title": "Mengapa Motrix Next?",
   "story.engine.label": "Mesin",
-  "story.engine": "Motrix Next menggunakan {aria2Next} sebagai mesin unduhannya, fork aria2-compatible yang dipelihara dan dimodernisasi untuk toolchain, dependensi, dan alur rilis saat ini. Ia mempertahankan antarmuka asli aria2 sambil memodernisasi arsitektur serta memperbaiki bug dan masalah upstream yang sudah lama ada.",
+  "story.engine": "Motrix Next menggunakan {aria2Next} sebagai mesin unduhannya, fork aria2 yang dipelihara dan tetap mempertahankan antarmuka asli sambil memperbaiki masalah lama, berpindah ke CMake, menambahkan dukungan ED2K native, dan memperbarui dependensi modern.",
   "story.p1": "Motrix oleh agalwood adalah salah satu manajer unduhan open source terbaik — UI bersih, berbasis aria2, lintas platform. Menginspirasi ribuan pengguna dan pengembang.",
   "story.p2": "Proyek asli sebagian besar tidak aktif sejak 2023. Tumpukan Electron + Vue 2 + Vuex + Element UI mengumpulkan utang teknis, membuat pemeliharaan, perluasan, dan pengemasan semakin sulit.",
   "rewrite.title": "Ditulis ulang sepenuhnya dari awal.",

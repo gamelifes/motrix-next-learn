@@ -10,7 +10,7 @@
   "showcase.dark": "Koyu mod",
   "story.title": "Neden Motrix Next?",
   "story.engine.label": "Motor",
-  "story.engine": "Motrix Next, indirme motoru olarak {aria2Next} kullanır; güncel toolchain'ler, bağımlılıklar ve release workflow'ları için modernize edilmiş, bakımı sürdürülen aria2-compatible bir fork. Orijinal aria2 arayüzlerini korurken mimariyi modernize eder ve uzun süredir var olan bug'ları ve upstream issue'ları düzeltir.",
+  "story.engine": "Motrix Next, indirme motoru olarak {aria2Next} kullanır; özgün arayüzleri korurken uzun süredir var olan sorunları düzelten, CMake'e geçen, yerel ED2K desteği ekleyen ve modern bağımlılıkları güncelleyen, bakımı sürdürülen bir aria2 forkudur.",
   "story.p1": "agalwood'un Motrix'i mevcut en iyi açık kaynaklı indirme yöneticilerinden biriydi — temiz arayüz, aria2 destekli, çoklu platform. Binlerce kullanıcı ve geliştiriciyi ilham etti.",
   "story.p2": "Orijinal proje 2023'ten beri büyük ölçüde aktif değil. Electron + Vue 2 + Vuex + Element UI yığını teknik borç biriktirerek bakım, genişletme ve paketlemeyi giderek zorlaştırdı.",
   "rewrite.title": "Sıfırdan tam bir yeniden yazım.",

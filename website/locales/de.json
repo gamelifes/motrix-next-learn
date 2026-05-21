@@ -10,7 +10,7 @@
   "showcase.dark": "Dunkler Modus",
   "story.title": "Warum Motrix Next?",
   "story.engine.label": "Engine",
-  "story.engine": "Motrix Next verwendet {aria2Next} als Download-Engine, einen gepflegten, aria2-kompatiblen Fork, der für aktuelle Toolchains, Abhängigkeiten und Release-Workflows modernisiert wurde. Er bewahrt die ursprünglichen aria2-Schnittstellen, modernisiert zugleich die Architektur und behebt langjährige Fehler und Upstream-Probleme.",
+  "story.engine": "Motrix Next verwendet {aria2Next} als Download-Engine, einen gepflegten aria2-Fork, der die ursprünglichen Schnittstellen beibehält, langjährige Probleme behebt, auf CMake umstellt, native ED2K-Unterstützung ergänzt und moderne Abhängigkeiten aktualisiert.",
   "story.p1": "Motrix von agalwood war einer der besten Open-Source-Download-Manager — saubere Benutzeroberfläche, aria2-basiert, plattformübergreifend. Es inspirierte Tausende von Nutzern und Entwicklern.",
   "story.p2": "Das Originalprojekt ist seit 2023 weitgehend inaktiv. Der Electron + Vue 2 + Vuex + Element UI Stack hat technische Schulden angehäuft, was Wartung, Erweiterung und Paketierung zunehmend erschwert.",
   "rewrite.title": "Komplett neu geschrieben.",

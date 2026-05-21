@@ -10,7 +10,7 @@
   "showcase.dark": "Mod întunecat",
   "story.title": "De ce Motrix Next?",
   "story.engine.label": "Motor",
-  "story.engine": "Motrix Next folosește {aria2Next} ca motor de descărcare, un fork întreținut și compatibil cu aria2, modernizat pentru toolchain-uri, dependențe și fluxuri de release actuale. Păstrează interfețele originale aria2, în timp ce modernizează arhitectura și repară bug-uri și probleme upstream vechi.",
+  "story.engine": "Motrix Next folosește {aria2Next} ca motor de descărcare, un fork aria2 întreținut care păstrează interfețele originale în timp ce repară probleme vechi, trece la CMake, adaugă suport ED2K nativ și actualizează dependențe moderne.",
   "story.p1": "Motrix de la agalwood a fost unul dintre cei mai buni manageri de descărcare open source — interfață curată, bazat pe aria2, cross-platform. A inspirat mii de utilizatori și dezvoltatori.",
   "story.p2": "Proiectul original este în mare parte inactiv din 2023. Stiva Electron + Vue 2 + Vuex + Element UI a acumulat datorie tehnică, făcând întreținerea, extinderea și ambalarea din ce în ce mai dificile.",
   "rewrite.title": "Rescris complet de la zero.",

@@ -10,7 +10,7 @@
   "showcase.dark": "Donkere modus",
   "story.title": "Waarom Motrix Next?",
   "story.engine.label": "Engine",
-  "story.engine": "Motrix Next gebruikt {aria2Next} als download-engine, een onderhouden, aria2-compatibele fork die is gemoderniseerd voor actuele toolchains, afhankelijkheden en release-workflows. De oorspronkelijke aria2-interfaces blijven behouden, terwijl de architectuur wordt gemoderniseerd en langlopende bugs en upstream-issues worden opgelost.",
+  "story.engine": "Motrix Next gebruikt {aria2Next} als download-engine, een onderhouden aria2-fork die de oorspronkelijke interfaces behoudt terwijl langlopende problemen worden opgelost, naar CMake wordt overgestapt, native ED2K-ondersteuning wordt toegevoegd en moderne afhankelijkheden worden bijgewerkt.",
   "story.p1": "Motrix van agalwood was een van de beste open-source downloadmanagers — schone interface, aangedreven door aria2, cross-platform. Het inspireerde duizenden gebruikers en ontwikkelaars.",
   "story.p2": "Het oorspronkelijke project is grotendeels inactief sinds 2023. De Electron + Vue 2 + Vuex + Element UI stack heeft technische schuld opgebouwd, waardoor onderhoud, uitbreiding en packaging steeds moeilijker werd.",
   "rewrite.title": "Volledig herschreven vanaf nul.",

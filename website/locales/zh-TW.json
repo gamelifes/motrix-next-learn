@@ -10,7 +10,7 @@
   "showcase.dark": "深色模式",
   "story.title": "為什麼選擇 Motrix Next？",
   "story.engine.label": "引擎",
-  "story.engine": "Motrix Next 使用 {aria2Next} 作為下載引擎，這是一個持續維護、相容 aria2 的分支，面向現代工具鏈、依賴庫和發布流程做了現代化更新。它保留 aria2 原有的互動方式，同時現代化架構，並修復長期累積的 bug 和上游 issue。",
+  "story.engine": "Motrix Next 使用 {aria2Next} 作為下載引擎。Aria2 Next 是一個持續維護的 aria2 分支，保留原有介面，同時修復長期存在的問題，遷移到 CMake，加入原生 ED2K 支援，並更新現代依賴。",
   "story.p1": "agalwood 開發的 Motrix 是最優秀的開源下載管理器之一 — 介面簡潔、aria2 驅動、跨平台。它啟發了無數使用者和開發者。",
   "story.p2": "原專案自 2023 年起基本停止維護。Electron + Vue 2 + Vuex + Element UI 技術棧累積了大量技術債務，越來越難以維護、擴展和打包。",
   "rewrite.title": "從零開始的完整重寫。",

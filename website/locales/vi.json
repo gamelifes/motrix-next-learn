@@ -10,7 +10,7 @@
   "showcase.dark": "Chế độ tối",
   "story.title": "Tại sao chọn Motrix Next?",
   "story.engine.label": "Engine",
-  "story.engine": "Motrix Next sử dụng {aria2Next} làm engine tải xuống, một fork tương thích với aria2 được duy trì và hiện đại hóa cho toolchain, dependency và release workflow hiện nay. Nó giữ nguyên các giao diện gốc của aria2, đồng thời hiện đại hóa kiến trúc và sửa các bug cùng issue upstream tồn đọng lâu dài.",
+  "story.engine": "Motrix Next sử dụng {aria2Next} làm engine tải xuống, một fork aria2 được duy trì, giữ nguyên các giao diện gốc trong khi sửa các vấn đề tồn đọng lâu dài, chuyển sang CMake, thêm hỗ trợ ED2K gốc và cập nhật các dependency hiện đại.",
   "story.p1": "Motrix của agalwood là một trong những trình quản lý tải xuống mã nguồn mở tốt nhất — giao diện sạch, chạy bằng aria2, đa nền tảng. Đã truyền cảm hứng cho hàng ngàn người dùng và nhà phát triển.",
   "story.p2": "Dự án gốc hầu như không hoạt động từ năm 2023. Stack Electron + Vue 2 + Vuex + Element UI tích lũy nợ kỹ thuật, khiến việc bảo trì, mở rộng và đóng gói ngày càng khó khăn.",
   "rewrite.title": "Viết lại hoàn toàn từ đầu.",

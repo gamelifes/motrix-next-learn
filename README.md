@@ -30,7 +30,7 @@
 ## Why Motrix Next?
 
 > [!NOTE]
-> Motrix Next uses [Aria2 Next](https://github.com/AnInsomniacy/aria2-next) as its download engine, a maintained fork of aria2 modernized for current toolchains, dependencies, and release workflows. It preserves the original aria2 interfaces while modernizing the architecture and fixing long-standing bugs and upstream issues.
+> Motrix Next uses [Aria2 Next](https://github.com/AnInsomniacy/aria2-next) as its download engine, a maintained aria2 fork that preserves the original interfaces while fixing long-standing issues, moving to CMake, adding native ED2K support, and updating modern dependencies.
 
 [Motrix](https://github.com/agalwood/Motrix) by [agalwood](https://github.com/agalwood) was one of the best open-source download managers available — clean UI, aria2-powered, cross-platform. It inspired thousands of users and developers alike.
 

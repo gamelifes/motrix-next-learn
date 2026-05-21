@@ -10,7 +10,7 @@
   "showcase.dark": "Sötét mód",
   "story.title": "Miért Motrix Next?",
   "story.engine.label": "Motor",
-  "story.engine": "A Motrix Next a {aria2Next} motort használja letöltési motorként, egy karbantartott, aria2-kompatibilis forkot, amelyet a mai toolchainekhez, függőségekhez és kiadási workflow-khoz modernizáltak. Megőrzi az eredeti aria2 interfészeket, miközben modernizálja az architektúrát, és javítja a régóta fennálló hibákat és upstream issue-kat.",
+  "story.engine": "A Motrix Next a {aria2Next} letöltőmotort használja, egy karbantartott aria2 forkot, amely megőrzi az eredeti interfészeket, miközben javítja a régóta fennálló problémákat, CMake-re vált, natív ED2K-támogatást ad hozzá, és frissíti a modern függőségeket.",
   "story.p1": "Az agalwood által fejlesztett Motrix az egyik legjobb nyílt forráskódú letöltéskezelő volt — letisztult felület, aria2-alapú, platformfüggetlen. Több ezer felhasználót és fejlesztőt inspirált.",
   "story.p2": "Az eredeti projekt 2023 óta nagyrészt inaktív. Az Electron + Vue 2 + Vuex + Element UI technológiai halom technikai adósságot halmozott fel, egyre nehezebbé téve a karbantartást, bővítést és csomagolást.",
   "rewrite.title": "Teljes újraírás az alapoktól.",
