@@ -63,4 +63,39 @@ describe('renderCompletionToast', () => {
     // VNode should be an object with type and children (Vue h() output)
     expect(typeof vnode).toBe('object')
   })
+
+  it('keeps completion toast actions visible while truncating the message body', () => {
+    const onOpenFile = vi.fn()
+    const onShowInFolder = vi.fn()
+    const result = renderCompletionToast({
+      body: 'very-long-file-name.zip completed',
+      t,
+      onOpenFile,
+      onShowInFolder,
+    })
+
+    expect(typeof result).toBe('function')
+    const vnode = (result as () => { props?: { style?: Record<string, string> }; children?: unknown[] })()
+    const children = vnode.children as Array<{ props?: { style?: Record<string, string> } }>
+    const body = children[0]
+    const actions = children[1]
+
+    expect(vnode.props?.style).toMatchObject({
+      maxWidth: '720px',
+      minWidth: '0',
+    })
+    expect(body.props?.style).toMatchObject({
+      flex: '1 1 auto',
+      minWidth: '0',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+    })
+    expect(actions.props?.style).toMatchObject({
+      display: 'inline-flex',
+      flex: '0 0 auto',
+      flexWrap: 'nowrap',
+      whiteSpace: 'nowrap',
+    })
+  })
 })

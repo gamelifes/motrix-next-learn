@@ -48,8 +48,10 @@ export function renderCompletionToast(options: CompletionToastOptions): string |
         style: {
           display: 'flex',
           alignItems: 'center',
-          gap: '20px',
-          width: '100%',
+          gap: '16px',
+          width: 'calc(100vw - 96px)',
+          maxWidth: '720px',
+          minWidth: '0',
         },
       },
       [
@@ -57,7 +59,7 @@ export function renderCompletionToast(options: CompletionToastOptions): string |
           'span',
           {
             style: {
-              flex: '1',
+              flex: '1 1 auto',
               minWidth: '0',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -72,7 +74,9 @@ export function renderCompletionToast(options: CompletionToastOptions): string |
             style: {
               display: 'inline-flex',
               gap: '8px',
-              flexShrink: '0',
+              flex: '0 0 auto',
+              flexWrap: 'nowrap',
+              whiteSpace: 'nowrap',
             },
           },
           [
