@@ -385,6 +385,7 @@ export default {
   'ed2k-search-completed': 'ED2K-søk fullført med {count} resultat(er)',
   'ed2k-search-empty': 'ED2K-søk fullført uten resultater',
   'ed2k-search-cancelled': 'ED2K-søk avbrutt',
+  'ed2k-search-cancelled-with-results': 'ED2K-søk stoppet med {count} resultat(er)',
   'ed2k-search-cleanup-failed': 'Opprydding av ED2K-søk mislyktes',
   'ed2k-search-started': 'ED2K-søk startet',
   'ed2k-search-ready': 'Klar til å søke i opptil {total} s',

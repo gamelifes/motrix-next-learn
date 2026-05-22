@@ -386,6 +386,7 @@ export default {
   'ed2k-search-completed': 'ED2K search completed with {count} result(s)',
   'ed2k-search-empty': 'ED2K search completed with no results',
   'ed2k-search-cancelled': 'ED2K search cancelled',
+  'ed2k-search-cancelled-with-results': 'جستجوی ED2K با {count} نتیجه متوقف شد',
   'ed2k-search-cleanup-failed': 'ED2K search cleanup failed',
   'ed2k-search-started': 'جستجوی ED2K شروع شد',
   'ed2k-search-ready': 'آماده جستجو تا {total} ثانیه',

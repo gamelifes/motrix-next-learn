@@ -388,6 +388,7 @@ export default {
   'ed2k-search-completed': 'Pencarian ED2K selesai dengan {count} hasil',
   'ed2k-search-empty': 'Pencarian ED2K selesai tanpa hasil',
   'ed2k-search-cancelled': 'Pencarian ED2K dibatalkan',
+  'ed2k-search-cancelled-with-results': 'Pencarian ED2K dihentikan dengan {count} hasil',
   'ed2k-search-cleanup-failed': 'Pembersihan pencarian ED2K gagal',
   'ed2k-search-started': 'Pencarian ED2K dimulai',
   'ed2k-search-ready': 'Siap mencari hingga {total} dtk',

@@ -388,6 +388,7 @@ export default {
   'ed2k-search-completed': 'ED2K araması {count} sonuçla tamamlandı',
   'ed2k-search-empty': 'ED2K araması sonuç olmadan tamamlandı',
   'ed2k-search-cancelled': 'ED2K araması iptal edildi',
+  'ed2k-search-cancelled-with-results': 'ED2K araması {count} sonuçla durduruldu',
   'ed2k-search-cleanup-failed': 'ED2K arama temizliği başarısız',
   'ed2k-search-started': 'ED2K araması başlatıldı',
   'ed2k-search-ready': '{total} sn kadar aramaya hazır',

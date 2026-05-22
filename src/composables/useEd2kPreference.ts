@@ -115,7 +115,9 @@ export function randomEd2kPort(): number {
 }
 
 export function getEd2kSearchToastKey(outcome: Ed2kSearchOutcome, resultCount: number): string {
-  if (outcome === 'cancelled') return 'preferences.ed2k-search-cancelled'
+  if (outcome === 'cancelled') {
+    return resultCount > 0 ? 'preferences.ed2k-search-cancelled-with-results' : 'preferences.ed2k-search-cancelled'
+  }
   if (outcome === 'failed') return 'preferences.ed2k-search-failed'
   return resultCount > 0 ? 'preferences.ed2k-search-completed' : 'preferences.ed2k-search-empty'
 }

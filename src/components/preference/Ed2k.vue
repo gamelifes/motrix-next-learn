@@ -245,6 +245,7 @@ async function handleSearch() {
     }
     const toastKey = getEd2kSearchToastKey(outcome, resultCount)
     if (outcome === 'failed') message.error(t(toastKey))
+    else if (outcome === 'cancelled' && resultCount > 0) message.success(t(toastKey, { count: resultCount }))
     else if (outcome === 'cancelled' || resultCount === 0) message.warning(t(toastKey, { count: resultCount }))
     else message.success(t(toastKey, { count: resultCount }))
     searchState.value = 'idle'

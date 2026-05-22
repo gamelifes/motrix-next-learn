@@ -387,6 +387,7 @@ export default {
   'ed2k-search-completed': 'Az ED2K keresés befejeződött {count} találattal',
   'ed2k-search-empty': 'Az ED2K keresés találat nélkül befejeződött',
   'ed2k-search-cancelled': 'Az ED2K keresés megszakítva',
+  'ed2k-search-cancelled-with-results': 'Az ED2K keresés leállt {count} találattal',
   'ed2k-search-cleanup-failed': 'Az ED2K keresés takarítása sikertelen',
   'ed2k-search-started': 'ED2K-keresés elindítva',
   'ed2k-search-ready': 'Keresésre kész legfeljebb {total} mp-ig',

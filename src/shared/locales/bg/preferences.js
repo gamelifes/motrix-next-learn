@@ -387,6 +387,7 @@ export default {
   'ed2k-search-completed': 'ED2K search completed with {count} result(s)',
   'ed2k-search-empty': 'ED2K search completed with no results',
   'ed2k-search-cancelled': 'ED2K search cancelled',
+  'ed2k-search-cancelled-with-results': 'ED2K търсенето спря с {count} резултата',
   'ed2k-search-cleanup-failed': 'ED2K search cleanup failed',
   'ed2k-search-started': 'ED2K търсенето започна',
   'ed2k-search-ready': 'Готово за търсене до {total} сек',

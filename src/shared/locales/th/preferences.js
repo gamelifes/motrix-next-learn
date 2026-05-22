@@ -382,6 +382,7 @@ export default {
   'ed2k-search-completed': 'ค้นหา ED2K เสร็จแล้ว พบ {count} รายการ',
   'ed2k-search-empty': 'ค้นหา ED2K เสร็จแล้ว ไม่พบผลลัพธ์',
   'ed2k-search-cancelled': 'ยกเลิกการค้นหา ED2K แล้ว',
+  'ed2k-search-cancelled-with-results': 'หยุดค้นหา ED2K พร้อมผลลัพธ์ {count} รายการ',
   'ed2k-search-cleanup-failed': 'ล้างข้อมูลการค้นหา ED2K ไม่สำเร็จ',
   'ed2k-search-started': 'เริ่มค้นหา ED2K แล้ว',
   'ed2k-search-ready': 'พร้อมค้นหาได้นานสุด {total} วินาที',

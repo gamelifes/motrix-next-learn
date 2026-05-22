@@ -150,7 +150,8 @@ describe('getEd2kSearchToastKey', () => {
   it('returns specific terminal toast keys for ED2K search outcomes', () => {
     expect(getEd2kSearchToastKey('completed', 4)).toBe('preferences.ed2k-search-completed')
     expect(getEd2kSearchToastKey('completed', 0)).toBe('preferences.ed2k-search-empty')
-    expect(getEd2kSearchToastKey('cancelled', 2)).toBe('preferences.ed2k-search-cancelled')
+    expect(getEd2kSearchToastKey('cancelled', 2)).toBe('preferences.ed2k-search-cancelled-with-results')
+    expect(getEd2kSearchToastKey('cancelled', 0)).toBe('preferences.ed2k-search-cancelled')
     expect(getEd2kSearchToastKey('failed', 0)).toBe('preferences.ed2k-search-failed')
   })
 })

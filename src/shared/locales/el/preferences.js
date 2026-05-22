@@ -394,6 +394,7 @@ export default {
   'ed2k-search-completed': 'Η αναζήτηση ED2K ολοκληρώθηκε με {count} αποτέλεσμα(τα)',
   'ed2k-search-empty': 'Η αναζήτηση ED2K ολοκληρώθηκε χωρίς αποτελέσματα',
   'ed2k-search-cancelled': 'Η αναζήτηση ED2K ακυρώθηκε',
+  'ed2k-search-cancelled-with-results': 'Η αναζήτηση ED2K σταμάτησε με {count} αποτελέσματα',
   'ed2k-search-cleanup-failed': 'Αποτυχία καθαρισμού αναζήτησης ED2K',
   'ed2k-search-started': 'Η αναζήτηση ED2K ξεκίνησε',
   'ed2k-search-ready': 'Έτοιμο για αναζήτηση έως {total} δ',

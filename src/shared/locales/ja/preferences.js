@@ -388,6 +388,7 @@ export default {
   'ed2k-search-completed': 'ED2K 検索が完了しました。結果 {count} 件',
   'ed2k-search-empty': 'ED2K 検索が完了しました。結果はありません',
   'ed2k-search-cancelled': 'ED2K 検索をキャンセルしました',
+  'ed2k-search-cancelled-with-results': 'ED2K 検索を停止しました。{count} 件の結果があります',
   'ed2k-search-cleanup-failed': 'ED2K 検索のクリーンアップに失敗しました',
   'ed2k-search-started': 'ED2K 検索を開始しました',
   'ed2k-search-ready': '最大 {total} 秒検索できます',

@@ -387,6 +387,7 @@ export default {
   'ed2k-search-completed': 'Поиск ED2K завершён, результатов: {count}',
   'ed2k-search-empty': 'Поиск ED2K завершён без результатов',
   'ed2k-search-cancelled': 'Поиск ED2K отменён',
+  'ed2k-search-cancelled-with-results': 'Поиск ED2K остановлен, найдено {count} результатов',
   'ed2k-search-cleanup-failed': 'Не удалось очистить поиск ED2K',
   'ed2k-search-started': 'Поиск ED2K запущен',
   'ed2k-search-ready': 'Готово к поиску до {total} с',

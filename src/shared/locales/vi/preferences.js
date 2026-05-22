@@ -385,6 +385,7 @@ export default {
   'ed2k-search-completed': 'Tìm kiếm ED2K hoàn tất với {count} kết quả',
   'ed2k-search-empty': 'Tìm kiếm ED2K hoàn tất nhưng không có kết quả',
   'ed2k-search-cancelled': 'Đã hủy tìm kiếm ED2K',
+  'ed2k-search-cancelled-with-results': 'Đã dừng tìm kiếm ED2K với {count} kết quả',
   'ed2k-search-cleanup-failed': 'Không thể dọn tìm kiếm ED2K',
   'ed2k-search-started': 'Đã bắt đầu tìm kiếm ED2K',
   'ed2k-search-ready': 'Sẵn sàng tìm trong tối đa {total} giây',

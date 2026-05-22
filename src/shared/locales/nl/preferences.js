@@ -389,6 +389,7 @@ export default {
   'ed2k-search-completed': 'ED2K-zoekopdracht voltooid met {count} resultaat/resultaten',
   'ed2k-search-empty': 'ED2K-zoekopdracht voltooid zonder resultaten',
   'ed2k-search-cancelled': 'ED2K-zoekopdracht geannuleerd',
+  'ed2k-search-cancelled-with-results': 'ED2K-zoekopdracht gestopt met {count} resultaat/resultaten',
   'ed2k-search-cleanup-failed': 'Opschonen van ED2K-zoekopdracht mislukt',
   'ed2k-search-started': 'ED2K-zoekopdracht gestart',
   'ed2k-search-ready': 'Klaar om tot {total} s te zoeken',

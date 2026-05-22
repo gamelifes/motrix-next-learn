@@ -389,6 +389,7 @@ export default {
   'ed2k-search-completed': 'Căutarea ED2K s-a încheiat cu {count} rezultat(e)',
   'ed2k-search-empty': 'Căutarea ED2K s-a încheiat fără rezultate',
   'ed2k-search-cancelled': 'Căutarea ED2K a fost anulată',
+  'ed2k-search-cancelled-with-results': 'Căutarea ED2K s-a oprit cu {count} rezultate',
   'ed2k-search-cleanup-failed': 'Curățarea căutării ED2K a eșuat',
   'ed2k-search-started': 'Căutarea ED2K a pornit',
   'ed2k-search-ready': 'Gata de căutare până la {total} s',

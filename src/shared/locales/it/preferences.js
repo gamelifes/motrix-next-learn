@@ -392,6 +392,7 @@ export default {
   'ed2k-search-completed': 'Ricerca ED2K completata con {count} risultato/i',
   'ed2k-search-empty': 'Ricerca ED2K completata senza risultati',
   'ed2k-search-cancelled': 'Ricerca ED2K annullata',
+  'ed2k-search-cancelled-with-results': 'Ricerca ED2K interrotta con {count} risultati',
   'ed2k-search-cleanup-failed': 'Pulizia ricerca ED2K non riuscita',
   'ed2k-search-started': 'Ricerca ED2K avviata',
   'ed2k-search-ready': 'Pronto a cercare fino a {total} s',

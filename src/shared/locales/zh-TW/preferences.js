@@ -376,6 +376,7 @@ export default {
   'ed2k-search-completed': 'ED2K 搜尋完成，找到 {count} 個結果',
   'ed2k-search-empty': 'ED2K 搜尋完成，未找到結果',
   'ed2k-search-cancelled': 'ED2K 搜尋已取消',
+  'ed2k-search-cancelled-with-results': 'ED2K 搜尋已停止，保留 {count} 個結果',
   'ed2k-search-cleanup-failed': 'ED2K 搜尋清理失敗',
   'ed2k-search-started': 'ED2K 搜尋已開始',
   'ed2k-search-ready': '可搜尋最長 {total} 秒',

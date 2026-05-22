@@ -383,6 +383,7 @@ export default {
   'ed2k-search-completed': 'ED2K 검색 완료, 결과 {count}개',
   'ed2k-search-empty': 'ED2K 검색 완료, 결과 없음',
   'ed2k-search-cancelled': 'ED2K 검색 취소됨',
+  'ed2k-search-cancelled-with-results': 'ED2K 검색이 중지되었으며 {count}개 결과가 있습니다',
   'ed2k-search-cleanup-failed': 'ED2K 검색 정리 실패',
   'ed2k-search-started': 'ED2K 검색이 시작되었습니다',
   'ed2k-search-ready': '최대 {total}초 동안 검색 준비됨',
