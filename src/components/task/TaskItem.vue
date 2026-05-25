@@ -28,7 +28,6 @@ import {
   CloudUploadOutline,
   CheckmarkCircleOutline,
   TrashOutline,
-  InformationCircleOutline,
 } from '@vicons/ionicons5'
 import TaskItemActions from './TaskItemActions.vue'
 import type { Aria2Task } from '@shared/types'
@@ -259,19 +258,12 @@ onBeforeUnmount(() => {
           <Transition name="name-crossfade" mode="out-in">
             <span :key="taskFullName">{{ taskFullName }}</span>
           </Transition>
-          <div
-            class="tags-wrapper"
-            :class="{ 'has-tags': isSeeder || isMetadataFetching || finishedTag || fileMissing }"
-          >
+          <div class="tags-wrapper" :class="{ 'has-tags': isSeeder || finishedTag || fileMissing }">
             <div class="tags-inner">
-              <div v-if="isSeeder || isMetadataFetching || finishedTag || fileMissing" class="task-tags">
+              <div v-if="isSeeder || finishedTag || fileMissing" class="task-tags">
                 <span v-if="isSeeder" class="seeding-tag">
                   <NIcon :size="13"><CloudUploadOutline /></NIcon>
                   {{ t('task.seeding') || 'Seeding' }}
-                </span>
-                <span v-else-if="isMetadataFetching" class="metadata-tag">
-                  <NIcon :size="13"><InformationCircleOutline /></NIcon>
-                  {{ t('task.bt-metadata-fetching') || 'Fetching torrent metadata' }}
                 </span>
                 <span v-else-if="finishedTag" class="status-tag" :style="{ color: finishedTag.color }">
                   <NIcon :size="13"><component :is="finishedTag.icon" /></NIcon>
@@ -314,11 +306,16 @@ onBeforeUnmount(() => {
         :processing="isActive"
       />
       <div class="task-progress-info">
-        <div class="progress-left" :class="{ 'info-hidden': !hasSizeInfo }">
-          <span>
-            {{ completedSize }}
-            <span v-if="Number(task.totalLength) > 0"> / {{ totalSize }}</span>
-          </span>
+        <div class="progress-left" :class="{ 'info-hidden': !hasSizeInfo && !isMetadataFetching }">
+          <Transition name="metadata-hint" mode="out-in">
+            <span v-if="isMetadataFetching" key="metadata" class="metadata-hint">
+              {{ t('task.bt-metadata-fetching') || 'Fetching torrent' }}
+            </span>
+            <span v-else key="size">
+              {{ completedSize }}
+              <span v-if="Number(task.totalLength) > 0"> / {{ totalSize }}</span>
+            </span>
+          </Transition>
         </div>
         <div class="progress-right" :class="{ 'info-hidden': !isActive }">
           <span class="speed-text" :class="{ 'info-hidden': remaining <= 0 }">
@@ -496,6 +493,8 @@ onBeforeUnmount(() => {
   font-variant-numeric: tabular-nums;
 }
 .progress-left {
+  display: inline-flex;
+  align-items: center;
   white-space: nowrap;
   transition: opacity 0.4s cubic-bezier(0.2, 0, 0, 1);
 }
@@ -514,6 +513,22 @@ onBeforeUnmount(() => {
   line-height: 14px;
   white-space: nowrap;
   transition: opacity 0.25s cubic-bezier(0.2, 0, 0, 1);
+}
+.metadata-hint {
+  color: var(--m3-status-active);
+  font-size: 12px;
+  line-height: 14px;
+}
+.metadata-hint-enter-active,
+.metadata-hint-leave-active {
+  transition:
+    opacity 0.28s cubic-bezier(0.2, 0, 0, 1),
+    transform 0.28s cubic-bezier(0.2, 0, 0, 1);
+}
+.metadata-hint-enter-from,
+.metadata-hint-leave-to {
+  opacity: 0;
+  transform: translateY(2px);
 }
 
 /* ── Pure CSS show/hide (polling-safe) ────────────────────────────── */
@@ -551,16 +566,6 @@ onBeforeUnmount(() => {
   gap: 3px;
   font-size: 13px;
   color: var(--m3-success);
-  opacity: 0.9;
-  vertical-align: middle;
-  animation: m3-tag-enter 0.35s cubic-bezier(0.05, 0.7, 0.1, 1);
-}
-.metadata-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 13px;
-  color: var(--m3-status-active);
   opacity: 0.9;
   vertical-align: middle;
   animation: m3-tag-enter 0.35s cubic-bezier(0.05, 0.7, 0.1, 1);

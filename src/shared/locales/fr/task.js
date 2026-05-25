@@ -258,7 +258,7 @@ export default {
   'status-error': 'Erreur',
   'status-removed': 'Supprimé',
   'status-seeding': 'Partage',
-  'bt-metadata-fetching': 'Récupération des métadonnées du torrent',
+  'bt-metadata-fetching': 'Récupération du torrent',
   'no-paused-tasks': 'Aucune tâche en pause',
   'no-active-tasks': 'Aucune tâche active',
   failed: 'tâche(s) impossible(s) à ajouter',

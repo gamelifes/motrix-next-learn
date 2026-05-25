@@ -142,7 +142,7 @@ describe('TaskItem', () => {
     })
   })
 
-  it('shows a metadata resolving tag for magnet metadata tasks', () => {
+  it('shows metadata fetching text in the bottom-left progress area', () => {
     const task = createTask('/downloads/KNOPPIX_V9.1CD-2021-01-25-EN.iso')
     task.status = 'active'
     task.totalLength = '0'
@@ -166,6 +166,8 @@ describe('TaskItem', () => {
       props: { task },
     })
 
-    expect(wrapper.text()).toContain('task.bt-metadata-fetching')
+    const progressLeft = wrapper.find('.progress-left')
+    expect(progressLeft.text()).toContain('task.bt-metadata-fetching')
+    expect(wrapper.find('.metadata-tag').exists()).toBe(false)
   })
 })

@@ -256,7 +256,7 @@ export default {
   'status-error': 'خطا',
   'status-removed': 'حذف شده',
   'status-seeding': 'اشتراک‌گذاری',
-  'bt-metadata-fetching': 'در حال دریافت فراداده تورنت',
+  'bt-metadata-fetching': 'دریافت تورنت',
   'no-paused-tasks': 'هیچ وظیفه متوقفی وجود ندارد',
   'no-active-tasks': 'هیچ وظیفه فعالی وجود ندارد',
   failed: 'وظیفه(ها) اضافه نشد',

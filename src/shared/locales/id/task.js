@@ -257,7 +257,7 @@ export default {
   'status-error': 'Kesalahan',
   'status-removed': 'Dihapus',
   'status-seeding': 'Berbagi',
-  'bt-metadata-fetching': 'Mengambil metadata torrent',
+  'bt-metadata-fetching': 'Mengambil torrent',
   'no-paused-tasks': 'Tidak ada tugas yang dijeda',
   'no-active-tasks': 'Tidak ada tugas aktif',
   failed: 'tugas tidak dapat ditambahkan',

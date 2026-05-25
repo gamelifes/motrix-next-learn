@@ -257,7 +257,7 @@ export default {
   'status-error': 'Ошибка',
   'status-removed': 'Удалено',
   'status-seeding': 'Раздача',
-  'bt-metadata-fetching': 'Получение метаданных торрента',
+  'bt-metadata-fetching': 'Получение торрента',
   'no-paused-tasks': 'Нет приостановленных задач',
   'no-active-tasks': 'Нет активных задач',
   failed: 'задач(а/и) не удалось добавить',

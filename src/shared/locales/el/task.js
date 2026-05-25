@@ -258,7 +258,7 @@ export default {
   'status-error': 'Σφάλμα',
   'status-removed': 'Αφαιρέθηκε',
   'status-seeding': 'Διαμοιρασμός',
-  'bt-metadata-fetching': 'Λήψη μεταδεδομένων torrent',
+  'bt-metadata-fetching': 'Λήψη torrent',
   'no-paused-tasks': 'Δεν υπάρχουν εργασίες σε παύση',
   'no-active-tasks': 'Δεν υπάρχουν ενεργές εργασίες',
   failed: 'εργασία(-ες) δεν μπόρεσε(-αν) να προστεθεί(-ούν)',

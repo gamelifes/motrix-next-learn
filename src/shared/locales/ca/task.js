@@ -257,7 +257,7 @@ export default {
   'status-error': 'Error',
   'status-removed': 'Eliminat',
   'status-seeding': 'Compartint',
-  'bt-metadata-fetching': 'Obtenint metadades del torrent',
+  'bt-metadata-fetching': 'Obtenint torrent',
   'no-paused-tasks': 'No hi ha tasques en pausa',
   'no-active-tasks': 'No hi ha tasques actives',
   failed: 'tasques no afegides',

@@ -257,7 +257,7 @@ export default {
   'status-error': 'Hata',
   'status-removed': 'Kaldırıldı',
   'status-seeding': 'Paylaşılıyor',
-  'bt-metadata-fetching': 'Torrent meta verileri alınıyor',
+  'bt-metadata-fetching': 'Torrent alınıyor',
   'no-paused-tasks': 'Duraklatılmış görev yok',
   'no-active-tasks': 'Aktif görev yok',
   failed: 'görev(ler) eklenemedi',

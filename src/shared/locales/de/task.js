@@ -258,7 +258,7 @@ export default {
   'status-error': 'Fehler',
   'status-removed': 'Entfernt',
   'status-seeding': 'Seeding',
-  'bt-metadata-fetching': 'Torrent-Metadaten werden geladen',
+  'bt-metadata-fetching': 'Torrent laden',
   'no-paused-tasks': 'Keine pausierten Aufgaben',
   'no-active-tasks': 'Keine aktiven Aufgaben',
   failed: 'Aufgabe(n) konnte(n) nicht hinzugefügt werden',

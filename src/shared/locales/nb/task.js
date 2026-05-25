@@ -256,7 +256,7 @@ export default {
   'status-error': 'Feil',
   'status-removed': 'Fjernet',
   'status-seeding': 'Deling',
-  'bt-metadata-fetching': 'Henter torrentmetadata',
+  'bt-metadata-fetching': 'Henter torrent',
   'no-paused-tasks': 'Ingen oppgaver på pause',
   'no-active-tasks': 'Ingen aktive oppgaver',
   failed: 'oppgave(r) kunne ikke legges til',

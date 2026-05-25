@@ -257,7 +257,7 @@ export default {
   'status-error': 'エラー',
   'status-removed': '削除済み',
   'status-seeding': 'シード中',
-  'bt-metadata-fetching': 'Torrent メタデータを取得中',
+  'bt-metadata-fetching': 'Torrent 取得中',
   'no-paused-tasks': '一時停止中のタスクはありません',
   'no-active-tasks': '進行中のタスクはありません',
   failed: '件のタスクを追加できませんでした',

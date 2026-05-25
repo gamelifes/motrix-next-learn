@@ -256,7 +256,7 @@ export default {
   'status-error': 'خطأ',
   'status-removed': 'محذوف',
   'status-seeding': 'مشاركة',
-  'bt-metadata-fetching': 'جارٍ جلب بيانات التورنت',
+  'bt-metadata-fetching': 'جلب التورنت',
   'no-paused-tasks': 'لا توجد مهام متوقفة مؤقتاً',
   'no-active-tasks': 'لا توجد مهام نشطة',
   failed: 'مهمة (مهام) لم يتم إضافتها',

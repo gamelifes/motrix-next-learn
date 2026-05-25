@@ -256,7 +256,7 @@ export default {
   'status-error': '錯誤',
   'status-removed': '已刪除',
   'status-seeding': '做種中',
-  'bt-metadata-fetching': '正在取得種子資訊',
+  'bt-metadata-fetching': '取得種子中',
   'no-paused-tasks': '沒有暫停中的任務',
   'no-active-tasks': '沒有進行中的任務',
   failed: '個任務無法新增',
