@@ -21,6 +21,7 @@ import type { AppConfig } from '@shared/types'
 
 const baseForm: Ed2kForm = {
   ed2kListenPort: 4662,
+  ed2kUdpListenPort: 4672,
   ed2kServer: '',
   ed2kServerList: '',
   ed2kNodeList: '',
@@ -34,6 +35,7 @@ describe('buildEd2kForm', () => {
     const form = buildEd2kForm({} as AppConfig)
 
     expect(form.ed2kListenPort).toBe(4662)
+    expect(form.ed2kUdpListenPort).toBe(4672)
     expect(form.ed2kServer).toBe('')
     expect(form.ed2kServerList).toBe('')
     expect(form.ed2kNodeList).toBe('')
@@ -65,6 +67,7 @@ describe('buildEd2kSystemConfig', () => {
 
     expect(config).toEqual({
       'ed2k-listen-port': '4662',
+      'ed2k-udp-listen-port': '4672',
       'ed2k-server': 'server-one.example:4661,server-two.example:4661',
       'ed2k-server-list': '/lists/server.met',
       'ed2k-node-list': '/lists/nodes.dat',
@@ -87,6 +90,7 @@ describe('transformEd2kForStore', () => {
 
     expect(result).toEqual({
       ed2kListenPort: 4662,
+      ed2kUdpListenPort: 4672,
       ed2kServer: 'server-one.example:4661,server-two.example:4661',
       ed2kServerList: '/lists/server.met',
       ed2kNodeList: '/lists/nodes.dat',
@@ -100,11 +104,14 @@ describe('transformEd2kForStore', () => {
 describe('validateEd2kForm', () => {
   it('accepts port 0 so Aria2 Next can ask the OS for an available port', () => {
     expect(validateEd2kForm({ ...baseForm, ed2kListenPort: 0 })).toBeNull()
+    expect(validateEd2kForm({ ...baseForm, ed2kUdpListenPort: 0 })).toBeNull()
   })
 
   it('rejects invalid listen ports', () => {
     expect(validateEd2kForm({ ...baseForm, ed2kListenPort: -1 })).toBe('preferences.ed2k-invalid-listen-port')
     expect(validateEd2kForm({ ...baseForm, ed2kListenPort: 65536 })).toBe('preferences.ed2k-invalid-listen-port')
+    expect(validateEd2kForm({ ...baseForm, ed2kUdpListenPort: -1 })).toBe('preferences.ed2k-invalid-listen-port')
+    expect(validateEd2kForm({ ...baseForm, ed2kUdpListenPort: 65536 })).toBe('preferences.ed2k-invalid-listen-port')
   })
 
   it('rejects invalid upload slot counts', () => {

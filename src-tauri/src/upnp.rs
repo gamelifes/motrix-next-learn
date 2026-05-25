@@ -110,13 +110,14 @@ async fn unmap_port(
 
 // ─── Lifecycle ───────────────────────────────────────────────────────
 
-/// Start mapping the BT, DHT, and optional ED2K ports.  Idempotent: stops any existing
+/// Start mapping the BT, DHT, and optional ED2K ports. Idempotent: stops any existing
 /// mapping first.
 pub async fn start_mapping(
     state: &UpnpState,
     bt_port: u16,
     dht_port: u16,
     ed2k_port: Option<u16>,
+    ed2k_udp_port: Option<u16>,
 ) -> Result<serde_json::Value, String> {
     let _guard = state.op_lock.lock().await;
     // Stop any existing mapping first (idempotent).
@@ -125,7 +126,7 @@ pub async fn start_mapping(
     let gw = discover_gateway().await?;
     let local_ip = detect_local_ip(&gw.addr);
 
-    // Map BT listen port (TCP), DHT listen port (UDP), and ED2K listen port (TCP).
+    // Map BT listen port (TCP), DHT listen port (UDP), and ED2K listen ports (TCP/UDP).
     // Use allSettled-style: report per-port results without short-circuiting.
     let bt_result = map_port(&gw, local_ip, bt_port, PortMappingProtocol::TCP).await;
     let dht_result = map_port(&gw, local_ip, dht_port, PortMappingProtocol::UDP).await;
@@ -133,6 +134,13 @@ pub async fn start_mapping(
         Some(port) => Some((
             port,
             map_port(&gw, local_ip, port, PortMappingProtocol::TCP).await,
+        )),
+        None => None,
+    };
+    let ed2k_udp_result = match ed2k_udp_port.filter(|port| *port > 0) {
+        Some(port) => Some((
+            port,
+            map_port(&gw, local_ip, port, PortMappingProtocol::UDP).await,
         )),
         None => None,
     };
@@ -175,13 +183,29 @@ pub async fn start_mapping(
         }
     }
 
+    if let Some((port, result)) = ed2k_udp_result {
+        match result {
+            Ok(()) => mapped.push(MappedPort {
+                internal: port,
+                protocol: PortMappingProtocol::UDP,
+            }),
+            Err(e) => {
+                log::warn!("upnp:map-failed port={port} proto=UDP err={e}");
+                errors.push(e);
+            }
+        }
+    }
+
     if mapped.is_empty() {
         return Err(errors.join("; "));
     }
 
     log::info!(
         "upnp:mapped ports={:?}",
-        mapped.iter().map(|p| p.internal).collect::<Vec<_>>()
+        mapped
+            .iter()
+            .map(|p| format!("{}:{:?}", p.internal, p.protocol))
+            .collect::<Vec<_>>()
     );
 
     // Spawn the renewal background task.
@@ -249,7 +273,10 @@ async fn stop_mapping_inner(state: &UpnpState) {
         }
         log::info!(
             "upnp:unmapped ports={:?}",
-            ports.iter().map(|p| p.internal).collect::<Vec<_>>()
+            ports
+                .iter()
+                .map(|p| format!("{}:{:?}", p.internal, p.protocol))
+                .collect::<Vec<_>>()
         );
     }
 }
@@ -301,8 +328,9 @@ async fn renewal_loop(ports: Vec<MappedPort>) {
         for port in &ports {
             if let Err(e) = map_port(&gw, local_ip, port.internal, port.protocol).await {
                 log::warn!(
-                    "[UPnP] renewal: failed to renew port {}: {e}",
-                    port.internal
+                    "[UPnP] renewal: failed to renew port {} ({:?}): {e}",
+                    port.internal,
+                    port.protocol
                 );
             }
         }

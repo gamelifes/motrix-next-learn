@@ -121,8 +121,11 @@ const { form, isDirty, handleSave, handleReset, resetSnapshot } = usePreferenceF
     return true
   },
   afterSave: async (f, prevConfig) => {
-    if (preferenceStore.config.enableUpnp && f.ed2kListenPort !== prevConfig.ed2kListenPort) {
-      await syncUpnpState(f.ed2kListenPort)
+    if (
+      preferenceStore.config.enableUpnp &&
+      (f.ed2kListenPort !== prevConfig.ed2kListenPort || f.ed2kUdpListenPort !== prevConfig.ed2kUdpListenPort)
+    ) {
+      await syncUpnpState(f.ed2kListenPort, f.ed2kUdpListenPort)
     }
 
     if (needsRestart.value) {
@@ -141,12 +144,17 @@ function onPortDice() {
   form.value.ed2kListenPort = randomEd2kPort()
 }
 
-async function syncUpnpState(ed2kPort: number) {
+function onUdpPortDice() {
+  form.value.ed2kUdpListenPort = randomEd2kPort()
+}
+
+async function syncUpnpState(ed2kPort: number, ed2kUdpPort: number) {
   try {
     await invoke('start_upnp_mapping', {
       btPort: Number(preferenceStore.config.listenPort) || 21301,
       dhtPort: Number(preferenceStore.config.dhtListenPort) || 26701,
       ed2kPort: ed2kPort > 0 ? ed2kPort : null,
+      ed2kUdpPort: ed2kUdpPort > 0 ? ed2kUdpPort : null,
     })
   } catch (e) {
     logger.warn('UPnP', `ED2K sync failed: ${e}`)
@@ -381,6 +389,17 @@ onMounted(() => {
         <NInputGroup>
           <NInputNumber v-model:value="form.ed2kListenPort" :min="0" :max="65535" style="width: 160px" />
           <NButton secondary @click="onPortDice">
+            <template #icon>
+              <NIcon><DiceOutline /></NIcon>
+            </template>
+            {{ t('preferences.ed2k-random-port') }}
+          </NButton>
+        </NInputGroup>
+      </NFormItem>
+      <NFormItem :label="t('preferences.ed2k-udp-listen-port')">
+        <NInputGroup>
+          <NInputNumber v-model:value="form.ed2kUdpListenPort" :min="0" :max="65535" style="width: 160px" />
+          <NButton secondary @click="onUdpPortDice">
             <template #icon>
               <NIcon><DiceOutline /></NIcon>
             </template>

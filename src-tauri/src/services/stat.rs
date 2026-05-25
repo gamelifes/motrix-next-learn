@@ -556,10 +556,7 @@ async fn stat_loop(
                                 .iter()
                                 .filter_map(|t| t.total_length.parse::<u64>().ok())
                                 .sum();
-                            let completed: u64 = tasks
-                                .iter()
-                                .map(visible_completed_length)
-                                .sum();
+                            let completed: u64 = tasks.iter().map(visible_completed_length).sum();
                             let pct = if total > 0 {
                                 Some((completed as f64 / total as f64 * 100.0) as u64)
                             } else {
@@ -590,10 +587,7 @@ async fn stat_loop(
                                 .iter()
                                 .filter_map(|t| t.total_length.parse::<u64>().ok())
                                 .sum();
-                            let completed: u64 = tasks
-                                .iter()
-                                .map(visible_completed_length)
-                                .sum();
+                            let completed: u64 = tasks.iter().map(visible_completed_length).sum();
                             let progress = if total > 0 {
                                 completed as f64 / total as f64
                             } else {

@@ -46,7 +46,7 @@ describe('port auto-switch coverage', () => {
   it('keeps extension API port recovery out of the engine restart lifecycle', () => {
     const source = readProjectFile('src-tauri/src/services/port_guard.rs')
     expect(source).toMatch(
-      /const ENGINE_PORT_KINDS: \[PortKind; 4\]\s*=\s*\[\s*PortKind::Rpc,\s*PortKind::Bt,\s*PortKind::Dht,\s*PortKind::Ed2k,?\s*\];/,
+      /const ENGINE_PORT_KINDS: \[PortKind; 5\]\s*=\s*\[\s*PortKind::Rpc,\s*PortKind::Bt,\s*PortKind::Dht,\s*PortKind::Ed2k,\s*PortKind::Ed2kUdp,?\s*\];/,
     )
     const enginePortBlock = sliceBetween(
       source,

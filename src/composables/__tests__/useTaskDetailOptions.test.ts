@@ -404,7 +404,7 @@ describe('useTaskDetailOptions', () => {
       })
     })
 
-    it('sends aria2 native HTTP auth options when Basic Auth changes', async () => {
+    it('sends aria2 HTTP auth options when Basic Auth changes', async () => {
       const mocks = createMocks()
       const { form, applyOptions } = setup(mocks)
       await nextTick()

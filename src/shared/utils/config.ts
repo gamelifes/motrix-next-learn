@@ -145,34 +145,7 @@ const NON_HOT_RELOADABLE = new Set([
   'log-level',
 ])
 
-const REMOVED_ENGINE_KEYS = new Set([
-  'async-dns',
-  'bt-load-saved-metadata',
-  'bt-hash-check-seed',
-  'bt-metadata-only',
-  'bt-prioritize-piece',
-  'bt-remove-unselected-file',
-  'bt-save-metadata',
-  'bt-seed-unverified',
-  'bt-tracker-connect-timeout',
-  'bt-tracker-timeout',
-  'dht-entry-point6',
-  'enable-dht6',
-  'follow-metalink',
-  'follow-torrent',
-  'ftp-reuse-connection',
-  'http-auth-challenge',
-  'metalink-base-uri',
-  'metalink-enable-unique-protocol',
-  'metalink-language',
-  'metalink-location',
-  'metalink-os',
-  'metalink-preferred-protocol',
-  'metalink-version',
-  'ssh-host-key-md',
-  'peer-agent',
-  'peer-id-prefix',
-])
+const SUPPORTED_ENGINE_KEYS = new Set(systemKeys)
 
 /**
  * Filters a system config object to only keys that aria2 accepts via
@@ -181,7 +154,7 @@ const REMOVED_ENGINE_KEYS = new Set([
  */
 export const filterHotReloadableKeys = (config: Record<string, string>): Record<string, string> =>
   Object.fromEntries(
-    Object.entries(config).filter(([key]) => !NON_HOT_RELOADABLE.has(key) && !REMOVED_ENGINE_KEYS.has(key)),
+    Object.entries(config).filter(([key]) => SUPPORTED_ENGINE_KEYS.has(key) && !NON_HOT_RELOADABLE.has(key)),
   )
 
 export const checkIsNeedRun = (enable: boolean, lastTime: number, interval: number): boolean => {

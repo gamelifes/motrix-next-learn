@@ -230,7 +230,6 @@ export const DEFAULT_APP_CONFIG = {
   seedRatio: 2, // old Motrix=2, Transmission=2; 2:1 supports BT ecosystem health
   seedTime: 2880, // old Motrix=2880 (48h); generous default for healthy swarm contribution
   keepSeeding: false, // qBT stops at ratio; safer default for new users
-  forceSave: true, // persist completed/seeding BT tasks in session file (aria2 skips FINISHED tasks without this)
   btForceEncryption: false, // qBT default "Allow", not "Force"; forcing reduces peers
   pauseMetadata: true, // pause follow-up download after metadata — let user select files first
   continue: true, // aria2 default=true; resume incomplete downloads
@@ -277,6 +276,7 @@ export const DEFAULT_APP_CONFIG = {
     bt: true,
     dht: true,
     ed2k: true,
+    ed2kUdp: true,
   },
   // extensionApiSecret is intentionally ABSENT from defaults.
   // rpcSecret is intentionally ABSENT from defaults.
@@ -287,6 +287,7 @@ export const DEFAULT_APP_CONFIG = {
   listenPort: 21301,
   dhtListenPort: 26701,
   ed2kListenPort: 4662,
+  ed2kUdpListenPort: 4672,
   ed2kServer: '',
   ed2kServerList: '',
   ed2kNodeList: '',

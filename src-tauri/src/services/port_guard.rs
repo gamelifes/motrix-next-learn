@@ -16,6 +16,7 @@ pub(crate) enum PortKind {
     Bt,
     Dht,
     Ed2k,
+    Ed2kUdp,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -48,10 +49,16 @@ struct PortRecoveryPolicy {
     bt: bool,
     dht: bool,
     ed2k: bool,
+    ed2k_udp: bool,
 }
 
-const ENGINE_PORT_KINDS: [PortKind; 4] =
-    [PortKind::Rpc, PortKind::Bt, PortKind::Dht, PortKind::Ed2k];
+const ENGINE_PORT_KINDS: [PortKind; 5] = [
+    PortKind::Rpc,
+    PortKind::Bt,
+    PortKind::Dht,
+    PortKind::Ed2k,
+    PortKind::Ed2kUdp,
+];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -98,6 +105,7 @@ fn default_recovery_policy(enabled: bool) -> PortRecoveryPolicy {
         bt: true,
         dht: true,
         ed2k: true,
+        ed2k_udp: true,
     }
 }
 
@@ -136,6 +144,13 @@ fn spec_for(kind: PortKind) -> PortSpec {
             system_key: "ed2k-listen-port",
             fallback: 4662,
             transport: PortTransport::Tcp,
+            allows_zero: true,
+        },
+        PortKind::Ed2kUdp => PortSpec {
+            prefs_key: "ed2kUdpListenPort",
+            system_key: "ed2k-udp-listen-port",
+            fallback: 4672,
+            transport: PortTransport::Udp,
             allows_zero: true,
         },
     }
@@ -192,6 +207,7 @@ fn recovery_policy_from_preferences(prefs: &serde_json::Value) -> PortRecoveryPo
         bt: read_bool("bt", defaults.bt),
         dht: read_bool("dht", defaults.dht),
         ed2k: read_bool("ed2k", defaults.ed2k),
+        ed2k_udp: read_bool("ed2kUdp", defaults.ed2k_udp),
     }
 }
 
@@ -203,6 +219,7 @@ fn recovery_enabled_for(policy: PortRecoveryPolicy, kind: PortKind) -> bool {
             PortKind::Bt => policy.bt,
             PortKind::Dht => policy.dht,
             PortKind::Ed2k => policy.ed2k,
+            PortKind::Ed2kUdp => policy.ed2k_udp,
         }
 }
 
@@ -418,6 +435,7 @@ struct PortSnapshot {
     bt: u16,
     dht: u16,
     ed2k: u16,
+    ed2k_udp: u16,
 }
 
 impl PortSnapshot {
@@ -448,14 +466,26 @@ impl PortSnapshot {
                 spec_for(PortKind::Ed2k).prefs_key,
                 spec_for(PortKind::Ed2k).fallback,
             ),
+            ed2k_udp: read_u16(
+                prefs,
+                spec_for(PortKind::Ed2kUdp).prefs_key,
+                spec_for(PortKind::Ed2kUdp).fallback,
+            ),
         }
     }
 
     fn all_ports(self) -> BTreeSet<u16> {
-        [self.rpc, self.extension_api, self.bt, self.dht, self.ed2k]
-            .into_iter()
-            .filter(|port| *port > 0)
-            .collect()
+        [
+            self.rpc,
+            self.extension_api,
+            self.bt,
+            self.dht,
+            self.ed2k,
+            self.ed2k_udp,
+        ]
+        .into_iter()
+        .filter(|port| *port > 0)
+        .collect()
     }
 
     fn get(self, kind: PortKind) -> u16 {
@@ -465,6 +495,7 @@ impl PortSnapshot {
             PortKind::Bt => self.bt,
             PortKind::Dht => self.dht,
             PortKind::Ed2k => self.ed2k,
+            PortKind::Ed2kUdp => self.ed2k_udp,
         }
     }
 
@@ -475,6 +506,7 @@ impl PortSnapshot {
             PortKind::Bt => self.bt = port,
             PortKind::Dht => self.dht = port,
             PortKind::Ed2k => self.ed2k = port,
+            PortKind::Ed2kUdp => self.ed2k_udp = port,
         }
     }
 }
@@ -505,6 +537,7 @@ fn persist_snapshot<R: tauri::Runtime>(
     obj.insert("listenPort".into(), json!(snapshot.bt));
     obj.insert("dhtListenPort".into(), json!(snapshot.dht));
     obj.insert("ed2kListenPort".into(), json!(snapshot.ed2k));
+    obj.insert("ed2kUdpListenPort".into(), json!(snapshot.ed2k_udp));
     obj.insert("autoChangeConflictingPorts".into(), json!(true));
 
     prefs_store.set("preferences", prefs.clone());
@@ -516,6 +549,7 @@ fn persist_snapshot<R: tauri::Runtime>(
     system_store.set("listen-port", json!(snapshot.bt.to_string()));
     system_store.set("dht-listen-port", json!(snapshot.dht.to_string()));
     system_store.set("ed2k-listen-port", json!(snapshot.ed2k.to_string()));
+    system_store.set("ed2k-udp-listen-port", json!(snapshot.ed2k_udp.to_string()));
     system_store
         .save()
         .map_err(|e| AppError::Store(format!("Failed to save system.json: {e}")))?;
@@ -559,7 +593,13 @@ mod tests {
     fn engine_port_reconciliation_excludes_extension_api() {
         assert_eq!(
             ENGINE_PORT_KINDS,
-            [PortKind::Rpc, PortKind::Bt, PortKind::Dht, PortKind::Ed2k]
+            [
+                PortKind::Rpc,
+                PortKind::Bt,
+                PortKind::Dht,
+                PortKind::Ed2k,
+                PortKind::Ed2kUdp,
+            ]
         );
         assert!(!ENGINE_PORT_KINDS.contains(&PortKind::ExtensionApi));
     }
@@ -605,7 +645,8 @@ mod tests {
                 "extensionApi": true,
                 "bt": true,
                 "dht": false,
-                "ed2k": true
+                "ed2k": true,
+                "ed2kUdp": false
             }
         });
 
@@ -621,6 +662,7 @@ mod tests {
         assert!(!recovery_enabled_for(policy, PortKind::Rpc));
         assert!(recovery_enabled_for(policy, PortKind::ExtensionApi));
         assert!(!recovery_enabled_for(policy, PortKind::Dht));
+        assert!(!recovery_enabled_for(policy, PortKind::Ed2kUdp));
     }
 
     #[test]

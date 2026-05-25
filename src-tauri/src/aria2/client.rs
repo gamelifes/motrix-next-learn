@@ -1,6 +1,6 @@
 //! Aria2 JSON-RPC HTTP client.
 //!
-//! Provides a managed `Aria2Client` that communicates with the local aria2c
+//! Provides a managed `Aria2Client` that communicates with the local Aria2 Next
 //! sidecar over HTTP JSON-RPC.  Designed for internal Rust-side use by
 //! monitors, tray actions, and the exit handler — NOT yet exposed to the
 //! frontend (that happens in Task 8).

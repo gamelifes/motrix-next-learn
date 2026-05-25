@@ -15,7 +15,7 @@
  * Both functions are side-effect-free apart from the in-place mutation
  * of the input array (Array.prototype.sort semantics).
  */
-import { getTaskName } from '@shared/utils/task'
+import { getTaskName, getTaskVisibleCompletedLength } from '@shared/utils/task'
 import type { Aria2Task, HistoryRecord } from '@shared/types'
 
 // ── Sort field types ────────────────────────────────────────────────
@@ -76,7 +76,7 @@ function taskSortValue(
       return Number(task.totalLength) || 0
     case 'progress': {
       const total = Number(task.totalLength) || 0
-      return total > 0 ? Number(task.completedLength) / total : 0
+      return total > 0 ? getTaskVisibleCompletedLength(task) / total : 0
     }
     case 'speed':
       return Number(task.downloadSpeed) || 0

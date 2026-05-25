@@ -54,7 +54,7 @@ window.addEventListener('unhandledrejection', (e) => {
   const appStore = useAppStore()
   const historyStore = useHistoryStore()
 
-  /** Rust-side health check: probes aria2c HTTP RPC with retries.
+  /** Rust-side health check: probes Aria2 Next HTTP RPC with retries.
    *  Also updates Aria2Client credentials so invoke() commands work. */
   async function waitForEngine(): Promise<boolean> {
     const { invoke } = await import('@tauri-apps/api/core')
@@ -382,6 +382,7 @@ window.addEventListener('unhandledrejection', (e) => {
             btPort: Number(config.listenPort) || 21301,
             dhtPort: Number(config.dhtListenPort) || 26701,
             ed2kPort: Number(config.ed2kListenPort) > 0 ? Number(config.ed2kListenPort) : null,
+            ed2kUdpPort: Number(config.ed2kUdpListenPort) > 0 ? Number(config.ed2kUdpListenPort) : null,
           }),
         )
         .catch((e) => logger.warn('UPnP', 'startup mapping failed: ' + e))

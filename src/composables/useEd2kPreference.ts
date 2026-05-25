@@ -19,6 +19,7 @@ export type Ed2kSearchOutcome = 'completed' | 'cancelled' | 'failed'
 export interface Ed2kForm {
   [key: string]: unknown
   ed2kListenPort: number
+  ed2kUdpListenPort: number
   ed2kServer: string
   ed2kServerList: string
   ed2kNodeList: string
@@ -48,6 +49,7 @@ function normalizePathLines(value: string): string[] {
 export function buildEd2kForm(config: AppConfig): Ed2kForm {
   return {
     ed2kListenPort: Number(config.ed2kListenPort ?? D.ed2kListenPort),
+    ed2kUdpListenPort: Number(config.ed2kUdpListenPort ?? D.ed2kUdpListenPort),
     ed2kServer: convertCommaToLine(config.ed2kServer ?? D.ed2kServer),
     ed2kServerList: config.ed2kServerList ?? D.ed2kServerList,
     ed2kNodeList: config.ed2kNodeList ?? D.ed2kNodeList,
@@ -60,6 +62,7 @@ export function buildEd2kForm(config: AppConfig): Ed2kForm {
 export function buildEd2kSystemConfig(f: Ed2kForm): Record<string, string> {
   return {
     'ed2k-listen-port': String(f.ed2kListenPort),
+    'ed2k-udp-listen-port': String(f.ed2kUdpListenPort),
     'ed2k-server': convertLineToComma(joinLines(f.ed2kServer)),
     'ed2k-server-list': String(f.ed2kServerList).trim(),
     'ed2k-node-list': String(f.ed2kNodeList).trim(),
@@ -71,6 +74,7 @@ export function buildEd2kSystemConfig(f: Ed2kForm): Record<string, string> {
 export function transformEd2kForStore(f: Ed2kForm): Partial<AppConfig> {
   return {
     ed2kListenPort: Number(f.ed2kListenPort),
+    ed2kUdpListenPort: Number(f.ed2kUdpListenPort),
     ed2kServer: convertLineToComma(joinLines(f.ed2kServer)),
     ed2kServerList: String(f.ed2kServerList).trim(),
     ed2kNodeList: String(f.ed2kNodeList).trim(),
@@ -92,6 +96,9 @@ export function validateServerLines(value: string): boolean {
 
 export function validateEd2kForm(f: Ed2kForm): string | null {
   if (!Number.isInteger(f.ed2kListenPort) || f.ed2kListenPort < 0 || f.ed2kListenPort > 65535) {
+    return 'preferences.ed2k-invalid-listen-port'
+  }
+  if (!Number.isInteger(f.ed2kUdpListenPort) || f.ed2kUdpListenPort < 0 || f.ed2kUdpListenPort > 65535) {
     return 'preferences.ed2k-invalid-listen-port'
   }
   if (!Number.isInteger(f.ed2kUploadSlots) || f.ed2kUploadSlots < 1 || f.ed2kUploadSlots > 100) {

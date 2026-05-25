@@ -218,6 +218,7 @@ export interface PortConflictRecoveryConfig {
   bt: boolean
   dht: boolean
   ed2k: boolean
+  ed2kUdp: boolean
 }
 
 /** A file category rule mapping extensions to a download directory. */
@@ -339,6 +340,7 @@ export interface AppConfig {
   listenPort: number
   dhtListenPort: number
   ed2kListenPort: number
+  ed2kUdpListenPort: number
   ed2kServer: string
   ed2kServerList: string
   ed2kNodeList: string
@@ -346,7 +348,6 @@ export interface AppConfig {
   ed2kShareFiles: string[]
   ed2kSearchTimeout: number
   btTracker: string
-  forceSave: boolean
   btForceEncryption: boolean
   pauseMetadata: boolean
   continue: boolean

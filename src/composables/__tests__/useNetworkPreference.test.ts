@@ -242,6 +242,7 @@ describe('buildNetworkForm', () => {
       bt: true,
       dht: true,
       ed2k: true,
+      ed2kUdp: true,
     })
   })
 

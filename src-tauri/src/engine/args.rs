@@ -1,8 +1,111 @@
 /// Builds the CLI argument list for spawning the bundled Motrix Next engine sidecar.
 ///
-/// Whitelists only valid aria2c options from the config object and handles
+/// Whitelists only valid Aria2 Next options from the config object and handles
 /// the `keep-seeding` app-level flag. Options managed exclusively by
 /// `aria2.conf` are excluded from the whitelist to prevent store overrides.
+pub(crate) const SUPPORTED_ENGINE_KEYS: &[&str] = &[
+    "all-proxy-passwd",
+    "all-proxy-user",
+    "all-proxy",
+    "allow-overwrite",
+    "allow-piece-length-change",
+    "always-resume",
+    "auto-file-renaming",
+    "bt-enable-lpd",
+    "bt-exclude-tracker",
+    "bt-force-encryption",
+    "bt-max-peers",
+    "bt-require-crypto",
+    "bt-stop-timeout",
+    "bt-tracker",
+    "check-integrity",
+    "checksum",
+    "conditional-get",
+    "connect-timeout",
+    "content-disposition-default-utf8",
+    "continue",
+    "dht-listen-port",
+    "dir",
+    "dry-run",
+    "ed2k-listen-port",
+    "ed2k-node-list",
+    "ed2k-server",
+    "ed2k-server-list",
+    "ed2k-share-file",
+    "ed2k-udp-listen-port",
+    "ed2k-upload-slots",
+    "enable-dht",
+    "enable-http-keep-alive",
+    "enable-http-pipelining",
+    "enable-mmap",
+    "enable-peer-exchange",
+    "file-allocation",
+    "force-sequential",
+    "ftp-passwd",
+    "ftp-pasv",
+    "ftp-proxy-passwd",
+    "ftp-proxy-user",
+    "ftp-proxy",
+    "ftp-type",
+    "ftp-user",
+    "gid",
+    "hash-check-only",
+    "header",
+    "http-accept-gzip",
+    "http-no-cache",
+    "http-passwd",
+    "http-proxy-passwd",
+    "http-proxy-user",
+    "http-proxy",
+    "http-user",
+    "https-proxy-passwd",
+    "https-proxy-user",
+    "https-proxy",
+    "index-out",
+    "listen-port",
+    "log-level",
+    "lowest-speed-limit",
+    "max-concurrent-downloads",
+    "max-connection-per-server",
+    "max-download-limit",
+    "max-file-not-found",
+    "max-mmap-limit",
+    "max-overall-download-limit",
+    "max-overall-upload-limit",
+    "max-resume-failure-tries",
+    "max-tries",
+    "max-upload-limit",
+    "min-split-size",
+    "no-file-allocation-limit",
+    "no-netrc",
+    "no-proxy",
+    "no-want-digest-header",
+    "out",
+    "parameterized-uri",
+    "pause-metadata",
+    "pause",
+    "piece-length",
+    "proxy-method",
+    "realtime-chunk-checksum",
+    "referer",
+    "remote-time",
+    "remove-control-file",
+    "retry-wait",
+    "reuse-uri",
+    "rpc-listen-port",
+    "rpc-save-upload-metadata",
+    "rpc-secret",
+    "seed-ratio",
+    "seed-time",
+    "select-file",
+    "split",
+    "stream-piece-selector",
+    "timeout",
+    "uri-selector",
+    "use-head",
+    "user-agent",
+];
+
 pub(crate) fn build_start_args(
     config: &serde_json::Value,
     conf_path: Option<&str>,
@@ -22,117 +125,7 @@ pub(crate) fn build_start_args(
         args.push(format!("--input-file={}", session_path));
     }
 
-    // Whitelist: only valid aria2c CLI options (from configKeys.ts systemKeys)
-    const VALID_ARIA2_KEYS: &[&str] = &[
-        "all-proxy-passwd",
-        "all-proxy-user",
-        "all-proxy",
-        "allow-overwrite",
-        "allow-piece-length-change",
-        "always-resume",
-        "auto-file-renaming",
-        "bt-enable-hook-after-hash-check",
-        "bt-enable-lpd",
-        "bt-exclude-tracker",
-        "bt-external-ip",
-        "bt-force-encryption",
-        "bt-max-peers",
-        "bt-min-crypto-level",
-        "bt-request-peer-speed-limit",
-        "bt-require-crypto",
-        "bt-stop-timeout",
-        "bt-tracker-interval",
-        "bt-tracker",
-        "check-integrity",
-        "checksum",
-        "conditional-get",
-        "connect-timeout",
-        "content-disposition-default-utf8",
-        "continue",
-        "dht-file-path",
-        "dht-file-path6",
-        "dht-listen-port",
-        "dir",
-        "dry-run",
-        "ed2k-listen-port",
-        "ed2k-node-list",
-        "ed2k-server",
-        "ed2k-server-list",
-        "ed2k-share-file",
-        "ed2k-upload-slots",
-        "enable-dht",
-        "enable-http-keep-alive",
-        "enable-http-pipelining",
-        "enable-mmap",
-        "enable-peer-exchange",
-        "file-allocation",
-        "force-sequential",
-        "ftp-passwd",
-        "ftp-pasv",
-        "ftp-proxy-passwd",
-        "ftp-proxy-user",
-        "ftp-proxy",
-        "ftp-type",
-        "ftp-user",
-        "gid",
-        "hash-check-only",
-        "header",
-        "http-accept-gzip",
-        "http-no-cache",
-        "http-passwd",
-        "http-proxy-passwd",
-        "http-proxy-user",
-        "http-proxy",
-        "http-user",
-        "https-proxy-passwd",
-        "https-proxy-user",
-        "https-proxy",
-        "index-out",
-        "listen-port",
-        "log-level",
-        "lowest-speed-limit",
-        "max-concurrent-downloads",
-        "max-connection-per-server",
-        "max-download-limit",
-        "max-file-not-found",
-        "max-mmap-limit",
-        "max-overall-download-limit",
-        "max-overall-upload-limit",
-        "max-resume-failure-tries",
-        "max-tries",
-        "max-upload-limit",
-        "min-split-size",
-        "no-file-allocation-limit",
-        "no-netrc",
-        "no-proxy",
-        "no-want-digest-header",
-        "out",
-        "parameterized-uri",
-        "pause-metadata",
-        "pause",
-        "piece-length",
-        "proxy-method",
-        "realtime-chunk-checksum",
-        "referer",
-        "remote-time",
-        "remove-control-file",
-        "retry-wait",
-        "reuse-uri",
-        "rpc-listen-port",
-        "rpc-save-upload-metadata",
-        "rpc-secret",
-        "seed-ratio",
-        "seed-time",
-        "select-file",
-        "split",
-        "stream-piece-selector",
-        "timeout",
-        "uri-selector",
-        "use-head",
-        "user-agent",
-    ];
-
-    // Check keep-seeding flag (app-level logic, not aria2c option)
+    // Check keep-seeding flag (app-level logic, not an engine option).
     // Frontend sends String("true"/"false"), so handle both Bool and String
     let keep_seeding = config
         .get("keep-seeding")
@@ -145,8 +138,8 @@ pub(crate) fn build_start_args(
 
     if let Some(obj) = config.as_object() {
         for (key, value) in obj {
-            // Only pass whitelisted aria2c keys
-            if !VALID_ARIA2_KEYS.contains(&key.as_str()) {
+            // Only pass whitelisted Aria2 Next keys.
+            if !SUPPORTED_ENGINE_KEYS.contains(&key.as_str()) {
                 continue;
             }
 
@@ -220,16 +213,16 @@ mod tests {
     }
 
     #[test]
-    fn build_args_excludes_removed_engine_keys() {
+    fn build_args_rejects_unsupported_engine_keys() {
         let config = json!({
-            "bt-save-metadata": "false",
-            "bt-load-saved-metadata": "false",
-            "bt-seed-unverified": "false"
+            "not-supported": "false",
+            "stale-local-key": "false",
+            "future-unknown-key": "203.0.113.1"
         });
         let args = build_start_args(&config, None, "/tmp/s.session", false);
-        assert!(!args.iter().any(|a| a.contains("bt-save-metadata")));
-        assert!(!args.iter().any(|a| a.contains("bt-load-saved-metadata")));
-        assert!(!args.iter().any(|a| a.contains("bt-seed-unverified")));
+        assert!(!args.iter().any(|a| a.contains("not-supported")));
+        assert!(!args.iter().any(|a| a.contains("stale-local-key")));
+        assert!(!args.iter().any(|a| a.contains("future-unknown-key")));
     }
 
     #[test]

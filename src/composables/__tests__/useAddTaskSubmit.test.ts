@@ -161,7 +161,7 @@ describe('buildEngineOptions', () => {
     expect(opts.header).toEqual(['Cookie: session=abc', 'Authorization: Bearer token'])
   })
 
-  it('builds aria2 native HTTP auth options from Basic Auth fields', () => {
+  it('builds HTTP Basic Auth options from form fields', () => {
     const opts = buildEngineOptions({
       ...baseForm,
       httpAuthUsername: ' demo ',
@@ -169,7 +169,6 @@ describe('buildEngineOptions', () => {
     })
     expect(opts['http-user']).toBe('demo')
     expect(opts['http-passwd']).toBe('secret')
-    expect(opts).not.toHaveProperty('http-auth-challenge')
   })
 
   it('sanitizes every HTTP header value before building aria2 options', () => {

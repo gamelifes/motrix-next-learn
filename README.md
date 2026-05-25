@@ -65,7 +65,7 @@ What changed is everything underneath. Every transition and micro-interaction ha
 
 ## Features
 
-- **Multi-protocol downloads** — HTTP, FTP, ED2K, BitTorrent, Magnet, `.torrent`, and Metalink tasks
+- **Multi-protocol downloads** — HTTP, FTP, ED2K, BitTorrent, Magnet, and `.torrent` tasks
 - **BitTorrent** — Selective file download, DHT, peer exchange, encryption controls, metadata caching, GeoIP peer flags, and tracker probing
 - **Browser extension integration** — Embedded Extension API with independent authentication, download confirmation, smart auto-submit, filename hints, referer/cookie forwarding, and real-time controls ([Chrome Web Store](https://chromewebstore.google.com/detail/ofeajdebdjajhkmcmamagokecnbephhl) · [Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/loojjolhejmakcdlbidigoniobfanjlb))
 - **Safe filename handling** — Content-Disposition, RFC 2047, non-UTF-8, percent-encoded, and extensionless URL resolution with path traversal sanitization

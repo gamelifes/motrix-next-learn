@@ -48,6 +48,7 @@ function buildPortConflictRecovery(config: AppConfig): PortConflictRecoveryConfi
     bt: saved?.bt ?? defaults.bt,
     dht: saved?.dht ?? defaults.dht,
     ed2k: saved?.ed2k ?? defaults.ed2k,
+    ed2kUdp: saved?.ed2kUdp ?? defaults.ed2kUdp,
   }
 }
 

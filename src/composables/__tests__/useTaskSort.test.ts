@@ -209,6 +209,24 @@ describe('sortTasks', () => {
       sortTasks(tasks, 'progress', 'desc', new Map())
       expect(gids(tasks)).toEqual(['b', 'a'])
     })
+
+    it('uses active ED2K in-flight progress for sorting', () => {
+      const tasks = [
+        mockTask('http', { totalLength: '1000', completedLength: '500' }),
+        mockTask('ed2k', {
+          status: 'active',
+          totalLength: '1000',
+          completedLength: '0',
+          inFlightCompletedLength: '800',
+          ed2k: {
+            completedLength: '0',
+            inFlightCompletedLength: '800',
+          },
+        }),
+      ]
+      sortTasks(tasks, 'progress', 'desc', new Map())
+      expect(gids(tasks)).toEqual(['ed2k', 'http'])
+    })
   })
 
   // ── speed sorting (Active tab only) ───────────────────────────────

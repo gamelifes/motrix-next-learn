@@ -42,13 +42,13 @@ interface PendingFrontendAction {
 }
 
 interface PortSwitchEvent {
-  kind: 'rpc' | 'extensionApi' | 'bt' | 'dht' | 'ed2k'
+  kind: 'rpc' | 'extensionApi' | 'bt' | 'dht' | 'ed2k' | 'ed2kUdp'
   oldPort: number
   newPort: number
 }
 
 interface PortSwitchFailureEvent {
-  kind: 'rpc' | 'extensionApi' | 'bt' | 'dht' | 'ed2k'
+  kind: 'rpc' | 'extensionApi' | 'bt' | 'dht' | 'ed2k' | 'ed2kUdp'
   port: number
   reason: 'disabled' | 'noAvailablePort' | 'bindFailed'
   source: 'startup' | 'btRuntime' | 'extensionApi'
@@ -88,6 +88,7 @@ interface AppEventsDeps {
       listenPort?: number
       dhtListenPort?: number
       ed2kListenPort?: number
+      ed2kUdpListenPort?: number
       lightweightMode?: boolean
     }
     updatePreference?: (cfg: Record<string, unknown>) => void
@@ -266,6 +267,7 @@ export function useAppEvents(deps: AppEventsDeps): AppEventsReturn {
           bt: t('preferences.bt-port'),
           dht: t('preferences.dht-port'),
           ed2k: t('preferences.ed2k-listen-port'),
+          ed2kUdp: t('preferences.ed2k-udp-listen-port'),
         }
         const ports = switches
           .map((item) => `${labels[item.kind] ?? item.kind} ${item.oldPort} -> ${item.newPort}`)
@@ -277,6 +279,7 @@ export function useAppEvents(deps: AppEventsDeps): AppEventsReturn {
           if (item.kind === 'bt') patch.listenPort = item.newPort
           if (item.kind === 'dht') patch.dhtListenPort = item.newPort
           if (item.kind === 'ed2k') patch.ed2kListenPort = item.newPort
+          if (item.kind === 'ed2kUdp') patch.ed2kUdpListenPort = item.newPort
         }
         preferenceStore.updatePreference?.(patch)
         message.success(t('preferences.port-auto-switched', { ports }))
@@ -293,6 +296,7 @@ export function useAppEvents(deps: AppEventsDeps): AppEventsReturn {
           bt: t('preferences.bt-port'),
           dht: t('preferences.dht-port'),
           ed2k: t('preferences.ed2k-listen-port'),
+          ed2kUdp: t('preferences.ed2k-udp-listen-port'),
         }
         const params = {
           label: labels[failure.kind] ?? failure.kind,

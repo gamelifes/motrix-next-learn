@@ -188,8 +188,16 @@ describe('formatOptionsForEngine', () => {
     expect(result).toHaveProperty('max-speed')
   })
   it('formats ED2K option keys with the aria2 ED2K prefix', () => {
-    const result = formatOptionsForEngine({ ed2kListenPort: 4663, ed2kServerList: '/tmp/server.met' })
-    expect(result).toEqual({ 'ed2k-listen-port': '4663', 'ed2k-server-list': '/tmp/server.met' })
+    const result = formatOptionsForEngine({
+      ed2kListenPort: 4663,
+      ed2kUdpListenPort: 4673,
+      ed2kServerList: '/tmp/server.met',
+    })
+    expect(result).toEqual({
+      'ed2k-listen-port': '4663',
+      'ed2k-udp-listen-port': '4673',
+      'ed2k-server-list': '/tmp/server.met',
+    })
   })
   it('joins arrays with newline', () => {
     const result = formatOptionsForEngine({ trackerSource: ['a', 'b'] })
@@ -263,6 +271,8 @@ describe('filterHotReloadableKeys', () => {
       'rpc-secret': 'abc',
       'listen-port': '21301',
       'dht-listen-port': '26701',
+      'ed2k-listen-port': '4662',
+      'ed2k-udp-listen-port': '4672',
       'enable-dht': 'true',
     }
     expect(filterHotReloadableKeys(config)).toEqual({})
@@ -284,11 +294,11 @@ describe('filterHotReloadableKeys', () => {
     expect(filterHotReloadableKeys({ 'log-level': 'debug' })).toEqual({})
   })
 
-  it('strips engine options removed by Aria2 Next', () => {
+  it('strips unsupported engine keys by allowlist', () => {
     const config = {
-      'bt-save-metadata': 'true',
-      'bt-seed-unverified': 'false',
-      'http-auth-challenge': 'true',
+      'not-supported': 'true',
+      'stale-local-key': 'false',
+      'future-unknown-key': '203.0.113.1',
       'max-overall-download-limit': '1M',
     }
     expect(filterHotReloadableKeys(config)).toEqual({

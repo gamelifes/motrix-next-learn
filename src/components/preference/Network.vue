@@ -60,14 +60,15 @@ const fileAllocationOptions = computed(() =>
   })),
 )
 
-type PortRecoveryTarget = 'rpc' | 'extensionApi' | 'bt' | 'dht' | 'ed2k'
-const portRecoveryTargets: PortRecoveryTarget[] = ['rpc', 'extensionApi', 'bt', 'dht', 'ed2k']
+type PortRecoveryTarget = 'rpc' | 'extensionApi' | 'bt' | 'dht' | 'ed2k' | 'ed2kUdp'
+const portRecoveryTargets: PortRecoveryTarget[] = ['rpc', 'extensionApi', 'bt', 'dht', 'ed2k', 'ed2kUdp']
 const portRecoveryTargetOptions = computed(() => [
   { label: t('preferences.rpc-listen-port'), value: 'rpc' },
   { label: t('preferences.extension-api-port'), value: 'extensionApi' },
   { label: t('preferences.port-conflict-recovery-bt'), value: 'bt' },
   { label: t('preferences.port-conflict-recovery-dht'), value: 'dht' },
   { label: t('preferences.port-conflict-recovery-ed2k'), value: 'ed2k' },
+  { label: t('preferences.port-conflict-recovery-ed2k-udp'), value: 'ed2kUdp' },
 ])
 const selectedPortRecoveryTargets = computed<string[]>({
   get: () => portRecoveryTargets.filter((target) => form.value.portConflictRecovery[target]),
@@ -144,7 +145,13 @@ const { form, isDirty, handleSave, handleReset, resetSnapshot } = usePreferenceF
       f.enableUpnp !== prevConfig.enableUpnp ||
       (f.enableUpnp && (f.listenPort !== prevConfig.listenPort || f.dhtListenPort !== prevConfig.dhtListenPort))
     ) {
-      syncUpnpState(!!f.enableUpnp, f.listenPort, f.dhtListenPort, preferenceStore.config.ed2kListenPort)
+      syncUpnpState(
+        !!f.enableUpnp,
+        f.listenPort,
+        f.dhtListenPort,
+        preferenceStore.config.ed2kListenPort,
+        preferenceStore.config.ed2kUdpListenPort,
+      )
     }
 
     // Engine restart — user already confirmed in beforeSave, execute immediately.
@@ -169,10 +176,15 @@ function onDhtPortDice() {
 }
 
 // ── UPnP save-time sync ─────────────────────────────────────────────
-async function syncUpnpState(enabled: boolean, btPort: number, dhtPort: number, ed2kPort: number) {
+async function syncUpnpState(enabled: boolean, btPort: number, dhtPort: number, ed2kPort: number, ed2kUdpPort: number) {
   try {
     if (enabled) {
-      await invoke('start_upnp_mapping', { btPort, dhtPort, ed2kPort: ed2kPort > 0 ? ed2kPort : null })
+      await invoke('start_upnp_mapping', {
+        btPort,
+        dhtPort,
+        ed2kPort: ed2kPort > 0 ? ed2kPort : null,
+        ed2kUdpPort: ed2kUdpPort > 0 ? ed2kUdpPort : null,
+      })
     } else {
       await invoke('stop_upnp_mapping')
     }

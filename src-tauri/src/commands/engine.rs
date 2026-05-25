@@ -60,8 +60,8 @@ pub async fn restart_engine_command(app: AppHandle) -> Result<(), AppError> {
 ///   3. Syncs global options to aria2 via changeGlobalOption
 ///   4. Applies speed limit overrides
 ///
-/// This ordering is critical — `on_engine_ready` sends RPC to aria2c,
-/// so it MUST run AFTER the probe confirms aria2c is accepting connections.
+/// This ordering is critical — `on_engine_ready` sends RPC to Aria2 Next,
+/// so it MUST run AFTER the probe confirms the engine is accepting connections.
 #[tauri::command]
 pub async fn wait_for_engine(app: AppHandle) -> Result<bool, AppError> {
     use tauri::Manager;

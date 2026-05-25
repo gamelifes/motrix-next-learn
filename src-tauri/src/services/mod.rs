@@ -25,6 +25,7 @@ pub mod speed;
 pub mod stat;
 
 use crate::aria2::client::Aria2State;
+use crate::engine::SUPPORTED_ENGINE_KEYS;
 use crate::error::AppError;
 use config::RuntimeConfigState;
 use tauri::Manager;
@@ -42,6 +43,7 @@ const NON_HOT_RELOADABLE: &[&str] = &[
     "ed2k-server",
     "ed2k-server-list",
     "ed2k-share-file",
+    "ed2k-udp-listen-port",
     "ed2k-upload-slots",
     "listen-port",
     "rpc-listen-port",
@@ -56,37 +58,6 @@ const NON_HOT_RELOADABLE: &[&str] = &[
     "enable-dht",
     // Needs full app relaunch (tauri-plugin-log init)
     "log-level",
-];
-
-/// Keys removed from Aria2 Next and rejected by both startup args and
-/// `changeGlobalOption`. Old system.json files may still contain them.
-const REMOVED_ENGINE_KEYS: &[&str] = &[
-    "async-dns",
-    "bt-load-saved-metadata",
-    "bt-hash-check-seed",
-    "bt-metadata-only",
-    "bt-prioritize-piece",
-    "bt-remove-unselected-file",
-    "bt-save-metadata",
-    "bt-seed-unverified",
-    "bt-tracker-connect-timeout",
-    "bt-tracker-timeout",
-    "dht-entry-point6",
-    "enable-dht6",
-    "follow-metalink",
-    "follow-torrent",
-    "ftp-reuse-connection",
-    "http-auth-challenge",
-    "metalink-base-uri",
-    "metalink-enable-unique-protocol",
-    "metalink-language",
-    "metalink-location",
-    "metalink-os",
-    "metalink-preferred-protocol",
-    "metalink-version",
-    "ssh-host-key-md",
-    "peer-agent",
-    "peer-id-prefix",
 ];
 
 /// Reads the `system.json` store and returns its key-value pairs as a
@@ -104,7 +75,8 @@ fn read_system_options(
     // system.json stores all keys at the root level
     let mut opts = serde_json::Map::new();
     for key in store.keys() {
-        if NON_HOT_RELOADABLE.contains(&key.as_str()) || REMOVED_ENGINE_KEYS.contains(&key.as_str())
+        if !SUPPORTED_ENGINE_KEYS.contains(&key.as_str())
+            || NON_HOT_RELOADABLE.contains(&key.as_str())
         {
             continue;
         }
@@ -510,6 +482,8 @@ mod tests {
         assert!(NON_HOT_RELOADABLE.contains(&"rpc-secret"));
         assert!(NON_HOT_RELOADABLE.contains(&"listen-port"));
         assert!(NON_HOT_RELOADABLE.contains(&"dht-listen-port"));
+        assert!(NON_HOT_RELOADABLE.contains(&"ed2k-listen-port"));
+        assert!(NON_HOT_RELOADABLE.contains(&"ed2k-udp-listen-port"));
     }
 
     #[test]
