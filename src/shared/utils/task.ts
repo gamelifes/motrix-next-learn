@@ -112,6 +112,22 @@ export const isMagnetTask = (task: Aria2Task): boolean => {
   return !!bittorrent && !bittorrent.info
 }
 
+/** Returns true for the temporary BitTorrent metadata fetch task created from a magnet URI. */
+export const isBtMetadataTask = (task: Aria2Task): boolean => {
+  if (!task.bittorrent) return false
+  if (task.followedBy && task.followedBy.length > 0) return true
+
+  const firstPath = task.files?.[0]?.path ?? ''
+  const firstName = firstPath.split(/[/\\]/).pop() ?? firstPath
+  const btName = task.bittorrent.info?.name ?? ''
+  return (
+    !task.bittorrent.info ||
+    firstPath.startsWith('[METADATA]') ||
+    firstName.startsWith('[METADATA]') ||
+    btName.startsWith('[METADATA]')
+  )
+}
+
 /** Returns true if the task is actively seeding (BT upload-only, must be running). */
 export const checkTaskIsSeeder = (task: Aria2Task): boolean => {
   const { bittorrent, seeder, status } = task

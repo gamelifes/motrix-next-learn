@@ -257,6 +257,7 @@ export default {
   'status-error': 'Eroare',
   'status-removed': 'Eliminat',
   'status-seeding': 'Partajare',
+  'bt-metadata-fetching': 'Se preiau metadatele torrentului',
   'no-paused-tasks': 'Nu există sarcini în pauză',
   'no-active-tasks': 'Nu există sarcini active',
   failed: 'sarcină(-ini) nu a/au putut fi adăugată(-e)',

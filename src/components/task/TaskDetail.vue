@@ -19,6 +19,7 @@ import {
   timeRemaining,
   timeFormat,
   getTaskVisibleCompletedLength,
+  isBtMetadataTask,
 } from '@shared/utils'
 import { decodePathSegment } from '@shared/utils/batchHelpers'
 import { calcColumnWidth } from '@shared/utils/calcColumnWidth'
@@ -155,7 +156,10 @@ watch(
   },
 )
 const isSeeder = computed(() => (props.task ? checkTaskIsSeeder(props.task) : false))
-const taskStatusKey = computed(() => (isSeeder.value ? TASK_STATUS.SEEDING : props.task?.status))
+const isMetadataFetching = computed(() => (props.task ? isBtMetadataTask(props.task) : false))
+const taskStatusKey = computed(() =>
+  isSeeder.value ? TASK_STATUS.SEEDING : isMetadataFetching.value ? 'bt-metadata-fetching' : props.task?.status,
+)
 const taskStatus = computed(() => {
   const key = taskStatusKey.value
   const translated = t(`task.status-${key}`)

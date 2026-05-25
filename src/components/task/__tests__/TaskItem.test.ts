@@ -37,6 +37,7 @@ vi.mock('@vicons/ionicons5', () => ({
   CloudUploadOutline: { template: '<i />' },
   CheckmarkCircleOutline: { template: '<i />' },
   TrashOutline: { template: '<i />' },
+  InformationCircleOutline: { template: '<i />' },
 }))
 
 vi.mock('../TaskItemActions.vue', () => ({
@@ -139,5 +140,29 @@ describe('TaskItem', () => {
     expect(invokeMock).toHaveBeenCalledWith('check_path_exists', {
       path: '/downloads/third.bin',
     })
+  })
+
+  it('shows a metadata resolving tag for magnet metadata tasks', () => {
+    const task = createTask('/downloads/[METADATA]KNOPPIX')
+    task.status = 'active'
+    task.totalLength = '0'
+    task.completedLength = '0'
+    task.files = [
+      {
+        index: '1',
+        path: '[METADATA]KNOPPIX_V9.1CD-2021-01-25-EN',
+        length: '0',
+        completedLength: '0',
+        selected: 'true',
+        uris: [],
+      },
+    ]
+    task.bittorrent = {}
+
+    const wrapper = mount(TaskItem, {
+      props: { task },
+    })
+
+    expect(wrapper.text()).toContain('task.bt-metadata-fetching')
   })
 })

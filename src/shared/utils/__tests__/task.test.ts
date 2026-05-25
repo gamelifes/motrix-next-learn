@@ -6,6 +6,7 @@ import {
   getTaskVisibleCompletedLength,
   getTaskName,
   isMagnetTask,
+  isBtMetadataTask,
   checkTaskIsBT,
   checkTaskIsEd2kSearch,
   checkTaskIsSeeder,
@@ -382,6 +383,35 @@ describe('isMagnetTask', () => {
   it('returns false for HTTP task', () => {
     const task = createMockTask()
     expect(isMagnetTask(task)).toBe(false)
+  })
+})
+
+describe('isBtMetadataTask', () => {
+  it('returns true for active magnet metadata task with metadata file name', () => {
+    const task = createMockTask({
+      bittorrent: {},
+      files: [createMockFile({ path: '[METADATA]KNOPPIX_V9.1CD-2021-01-25-EN' })],
+    })
+
+    expect(isBtMetadataTask(task)).toBe(true)
+  })
+
+  it('returns true when aria2 reports a metadata parent with followedBy', () => {
+    const task = createMockTask({
+      followedBy: ['real-download-gid'],
+      bittorrent: { info: { name: 'KNOPPIX_V9.1CD-2021-01-25-EN' } },
+    })
+
+    expect(isBtMetadataTask(task)).toBe(true)
+  })
+
+  it('returns false for resolved BitTorrent content task', () => {
+    const task = createMockTask({
+      bittorrent: { info: { name: 'KNOPPIX_V9.1CD-2021-01-25-EN' } },
+      files: [createMockFile({ path: '/downloads/KNOPPIX.iso' })],
+    })
+
+    expect(isBtMetadataTask(task)).toBe(false)
   })
 })
 

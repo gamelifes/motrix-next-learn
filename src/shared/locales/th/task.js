@@ -256,6 +256,7 @@ export default {
   'status-error': 'ข้อผิดพลาด',
   'status-removed': 'ถูกลบ',
   'status-seeding': 'กำลังแชร์',
+  'bt-metadata-fetching': 'กำลังดึงข้อมูลเมทาดาทาทอร์เรนต์',
   'no-paused-tasks': 'ไม่มีงานที่หยุดชั่วคราว',
   'no-active-tasks': 'ไม่มีงานที่กำลังดำเนินการ',
   failed: 'งานไม่สามารถเพิ่มได้',

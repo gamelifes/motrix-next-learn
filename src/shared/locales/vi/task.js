@@ -257,6 +257,7 @@ export default {
   'status-error': 'Lỗi',
   'status-removed': 'Đã xóa',
   'status-seeding': 'Đang chia sẻ',
+  'bt-metadata-fetching': 'Đang lấy siêu dữ liệu torrent',
   'no-paused-tasks': 'Không có tác vụ tạm dừng',
   'no-active-tasks': 'Không có tác vụ đang hoạt động',
   failed: 'tác vụ không thể thêm được',

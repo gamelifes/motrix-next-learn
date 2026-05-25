@@ -258,6 +258,7 @@ export default {
   'status-error': 'Błąd',
   'status-removed': 'Usunięto',
   'status-seeding': 'Udostępnianie',
+  'bt-metadata-fetching': 'Pobieranie metadanych torrentu',
   'no-paused-tasks': 'Brak wstrzymanych zadań',
   'no-active-tasks': 'Brak aktywnych zadań',
   failed: 'zadanie(-nia) nie mogło(-gły) zostać dodane',

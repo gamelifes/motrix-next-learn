@@ -257,6 +257,7 @@ export default {
   'status-error': 'Помилка',
   'status-removed': 'Видалено',
   'status-seeding': 'Роздача',
+  'bt-metadata-fetching': 'Отримання метаданих торента',
   'no-paused-tasks': 'Немає призупинених завдань',
   'no-active-tasks': 'Немає активних завдань',
   failed: 'завдання не вдалося додати',

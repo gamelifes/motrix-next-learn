@@ -257,6 +257,7 @@ export default {
   'status-error': 'Грешка',
   'status-removed': 'Премахнато',
   'status-seeding': 'Споделяне',
+  'bt-metadata-fetching': 'Изтегляне на торент информация',
   'no-paused-tasks': 'Няма паузирани задачи',
   'no-active-tasks': 'Няма активни задачи',
   failed: 'задача(и) не можа(ха) да бъде(ат) добавена(и)',

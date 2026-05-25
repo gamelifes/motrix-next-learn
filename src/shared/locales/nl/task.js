@@ -256,6 +256,7 @@ export default {
   'status-error': 'Fout',
   'status-removed': 'Verwijderd',
   'status-seeding': 'Seeden',
+  'bt-metadata-fetching': 'Torrentmetadata ophalen',
   'no-paused-tasks': 'Geen gepauzeerde taken',
   'no-active-tasks': 'Geen actieve taken',
   failed: 'taak/taken kon(den) niet worden toegevoegd',

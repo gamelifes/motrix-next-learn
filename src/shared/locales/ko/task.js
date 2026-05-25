@@ -256,6 +256,7 @@ export default {
   'status-error': '오류',
   'status-removed': '삭제됨',
   'status-seeding': '시딩 중',
+  'bt-metadata-fetching': '토렌트 메타데이터 가져오는 중',
   'no-paused-tasks': '일시정지된 작업이 없습니다',
   'no-active-tasks': '진행 중인 작업이 없습니다',
   failed: '개 작업을 추가할 수 없습니다',

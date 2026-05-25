@@ -258,6 +258,7 @@ export default {
   'status-error': 'Hiba',
   'status-removed': 'Eltávolítva',
   'status-seeding': 'Megosztás',
+  'bt-metadata-fetching': 'Torrent metaadatok lekérése',
   'no-paused-tasks': 'Nincsenek szüneteltetett feladatok',
   'no-active-tasks': 'Nincsenek aktív feladatok',
   failed: 'feladat(ok) nem sikerült hozzáadni',

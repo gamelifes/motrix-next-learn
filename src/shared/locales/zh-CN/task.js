@@ -256,6 +256,7 @@ export default {
   'status-error': '错误',
   'status-removed': '已删除',
   'status-seeding': '做种中',
+  'bt-metadata-fetching': '正在获取种子信息',
   'no-paused-tasks': '没有暂停中的任务',
   'no-active-tasks': '没有进行中的任务',
   failed: '个任务无法添加',

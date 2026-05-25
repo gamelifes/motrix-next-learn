@@ -257,6 +257,7 @@ export default {
   'status-error': 'Errore',
   'status-removed': 'Rimosso',
   'status-seeding': 'In condivisione',
+  'bt-metadata-fetching': 'Recupero metadati torrent',
   'no-paused-tasks': 'Nessun download in pausa',
   'no-active-tasks': 'Nessun download attivo',
   failed: 'attività non aggiunta/e',

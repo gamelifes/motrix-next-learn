@@ -12,6 +12,7 @@ import {
   timeFormat,
   checkTaskIsBT,
   getTaskVisibleCompletedLength,
+  isBtMetadataTask,
 } from '@shared/utils'
 import { invoke } from '@tauri-apps/api/core'
 import { logger } from '@shared/logger'
@@ -27,6 +28,7 @@ import {
   CloudUploadOutline,
   CheckmarkCircleOutline,
   TrashOutline,
+  InformationCircleOutline,
 } from '@vicons/ionicons5'
 import TaskItemActions from './TaskItemActions.vue'
 import type { Aria2Task } from '@shared/types'
@@ -52,6 +54,7 @@ const taskFullName = computed(() =>
 
 const isSeeder = computed(() => checkTaskIsSeeder(props.task))
 const isBT = computed(() => checkTaskIsBT(props.task))
+const isMetadataFetching = computed(() => isBtMetadataTask(props.task))
 const taskStatus = computed(() => (isSeeder.value ? TASK_STATUS.SEEDING : props.task.status))
 const isActive = computed(() => props.task.status === TASK_STATUS.ACTIVE)
 
@@ -256,12 +259,19 @@ onBeforeUnmount(() => {
           <Transition name="name-crossfade" mode="out-in">
             <span :key="taskFullName">{{ taskFullName }}</span>
           </Transition>
-          <div class="tags-wrapper" :class="{ 'has-tags': isSeeder || finishedTag || fileMissing }">
+          <div
+            class="tags-wrapper"
+            :class="{ 'has-tags': isSeeder || isMetadataFetching || finishedTag || fileMissing }"
+          >
             <div class="tags-inner">
-              <div v-if="isSeeder || finishedTag || fileMissing" class="task-tags">
+              <div v-if="isSeeder || isMetadataFetching || finishedTag || fileMissing" class="task-tags">
                 <span v-if="isSeeder" class="seeding-tag">
                   <NIcon :size="13"><CloudUploadOutline /></NIcon>
                   {{ t('task.seeding') || 'Seeding' }}
+                </span>
+                <span v-else-if="isMetadataFetching" class="metadata-tag">
+                  <NIcon :size="13"><InformationCircleOutline /></NIcon>
+                  {{ t('task.bt-metadata-fetching') || 'Fetching torrent metadata' }}
                 </span>
                 <span v-else-if="finishedTag" class="status-tag" :style="{ color: finishedTag.color }">
                   <NIcon :size="13"><component :is="finishedTag.icon" /></NIcon>
@@ -541,6 +551,16 @@ onBeforeUnmount(() => {
   gap: 3px;
   font-size: 13px;
   color: var(--m3-success);
+  opacity: 0.9;
+  vertical-align: middle;
+  animation: m3-tag-enter 0.35s cubic-bezier(0.05, 0.7, 0.1, 1);
+}
+.metadata-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 13px;
+  color: var(--m3-status-active);
   opacity: 0.9;
   vertical-align: middle;
   animation: m3-tag-enter 0.35s cubic-bezier(0.05, 0.7, 0.1, 1);

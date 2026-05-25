@@ -58,10 +58,12 @@ fn compact_size(bytes: u64) -> String {
     }
 }
 
+#[cfg(any(target_os = "macos", target_os = "windows", test))]
 fn parse_length(value: Option<&str>) -> u64 {
     value.and_then(|v| v.parse::<u64>().ok()).unwrap_or(0)
 }
 
+#[cfg(any(target_os = "macos", target_os = "windows", test))]
 fn visible_completed_length(task: &crate::aria2::types::Aria2Task) -> u64 {
     let verified = parse_length(Some(&task.completed_length));
     let Some(ed2k) = &task.ed2k else {
