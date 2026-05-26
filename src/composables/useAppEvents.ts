@@ -134,6 +134,7 @@ export function useAppEvents(deps: AppEventsDeps): AppEventsReturn {
   const route = useRoute()
   const cleanupFns: Array<() => void> = []
   let silentCleanupTimer: ReturnType<typeof setTimeout> | null = null
+  let engineRecoveredWaitInFlight = false
 
   function registerCleanup(cleanup: (() => void) | null | undefined): () => void {
     let active = true
@@ -227,6 +228,11 @@ export function useAppEvents(deps: AppEventsDeps): AppEventsReturn {
     const unlistenEngineRecovered = registerCleanup(
       await listen<{ source: string }>('engine-recovered', async (event) => {
         logger.info('MainLayout', `engine recovered (source: ${event.payload.source})`)
+        if (engineRecoveredWaitInFlight) {
+          logger.debug('MainLayout', 'engine-recovered: readiness check already in flight, skipping')
+          return
+        }
+        engineRecoveredWaitInFlight = true
 
         // Rust-side health check with retries — also updates Aria2Client credentials.
         // on_engine_ready() was already called by restart_engine_command before
@@ -247,6 +253,8 @@ export function useAppEvents(deps: AppEventsDeps): AppEventsReturn {
           logger.error('MainLayout', `engine-recovered: wait_for_engine failed: ${e}`)
           setEngineReady(false)
           appStore.engineReady = false
+        } finally {
+          engineRecoveredWaitInFlight = false
         }
       }),
     )

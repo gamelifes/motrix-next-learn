@@ -51,7 +51,7 @@ describe('port auto-switch coverage', () => {
     const enginePortBlock = sliceBetween(
       source,
       'pub(crate) fn reconcile_engine_ports(app: &AppHandle) -> Result<Vec<PortSwitch>, AppError>',
-      'pub(crate) fn reconcile_bt_ports(app: &AppHandle) -> Result<Vec<PortSwitch>, AppError>',
+      'pub(crate) fn reconcile_runtime_ports(',
     )
 
     expect(enginePortBlock).toContain('for kind in ENGINE_PORT_KINDS')
@@ -86,5 +86,14 @@ describe('port auto-switch coverage', () => {
     expect(appEventsSource).toContain("t('preferences.port-auto-switch-disabled'")
     expect(appEventsSource).toContain("t('preferences.port-auto-switch-no-available-port'")
     expect(appEventsSource).toContain("t('preferences.port-auto-switch-bind-failed'")
+  })
+
+  it('guards engine recovered readiness checks against concurrent duplicate events', () => {
+    const appEventsSource = readProjectFile('src/composables/useAppEvents.ts')
+
+    expect(appEventsSource).toContain('let engineRecoveredWaitInFlight = false')
+    expect(appEventsSource).toContain('engine-recovered: readiness check already in flight, skipping')
+    expect(appEventsSource).toContain('engineRecoveredWaitInFlight = true')
+    expect(appEventsSource).toContain('engineRecoveredWaitInFlight = false')
   })
 })

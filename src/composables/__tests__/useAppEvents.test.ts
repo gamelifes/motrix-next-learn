@@ -398,6 +398,33 @@ describe('useAppEvents', () => {
     expect(message.warning).toHaveBeenCalledWith('preferences.port-auto-switch-disabled')
   })
 
+  it('deduplicates concurrent engine recovered readiness probes', async () => {
+    let resolveWait: ((ready: boolean) => void) | undefined
+    invokeMock.mockImplementation((command: string) => {
+      if (command === 'wait_for_engine') {
+        return new Promise((resolve) => {
+          resolveWait = resolve
+        })
+      }
+      return Promise.resolve([])
+    })
+    const { deps } = createDeps()
+    const { setupListeners } = mountComposable(deps)
+
+    await setupListeners()
+    const first = eventCallbacks['engine-recovered']?.({ payload: { source: 'bt-port-auto-switch' } })
+    const second = eventCallbacks['engine-recovered']?.({ payload: { source: 'bt-port-auto-switch' } })
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, 0)
+    })
+
+    expect(invokeMock).toHaveBeenCalledWith('wait_for_engine')
+    expect(invokeMock.mock.calls.filter(([command]) => command === 'wait_for_engine')).toHaveLength(1)
+
+    resolveWait?.(true)
+    await Promise.all([first, second])
+  })
+
   it('opens the add-task dialog from a pending tray action after listeners are ready', async () => {
     invokeMock.mockImplementation(async (command: string) => {
       if (command === 'take_pending_frontend_actions') {

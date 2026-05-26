@@ -14,16 +14,16 @@ static BT_PORT_RECOVERY_IN_FLIGHT: std::sync::atomic::AtomicBool =
 const ENGINE_SIDECAR_NAME: &str = "motrix-next-engine";
 const DEFAULT_RPC_PORT_STR: &str = "24100";
 
-fn recover_bt_port_conflict(app: &tauri::AppHandle) {
+fn recover_runtime_port_conflict(app: &tauri::AppHandle, kind: port_guard::PortKind) {
     if BT_PORT_RECOVERY_IN_FLIGHT.swap(true, Ordering::SeqCst) {
         return;
     }
 
     let app_handle = app.clone();
     tauri::async_runtime::spawn(async move {
-        let recovery = match port_guard::reconcile_bt_ports(&app_handle) {
+        let recovery = match port_guard::reconcile_runtime_ports(&app_handle, &[kind]) {
             Ok(switches) if !switches.is_empty() => {
-                log::warn!("port_guard: recovering BT bind failure switches={switches:?}");
+                log::warn!("port_guard: recovering runtime bind failure switches={switches:?}");
                 let app_for_restart = app_handle.clone();
                 match tokio::task::spawn_blocking(move || {
                     let config =
@@ -41,21 +41,21 @@ fn recover_bt_port_conflict(app: &tauri::AppHandle) {
                         Ok(())
                     }
                     Ok(Err(e)) => {
-                        log::error!("port_guard: BT bind recovery restart failed: {e}");
+                        log::error!("port_guard: runtime bind recovery restart failed: {e}");
                         Err(())
                     }
                     Err(e) => {
-                        log::error!("port_guard: BT bind recovery task failed: {e}");
+                        log::error!("port_guard: runtime bind recovery task failed: {e}");
                         Err(())
                     }
                 }
             }
             Ok(_) => {
-                log::warn!("port_guard: BT bind failure detected but no port was switched");
+                log::warn!("port_guard: runtime bind failure detected but no port was switched");
                 Err(())
             }
             Err(e) => {
-                log::error!("port_guard: BT bind recovery failed: {e}");
+                log::error!("port_guard: runtime bind recovery failed: {e}");
                 Err(())
             }
         };
@@ -187,8 +187,8 @@ pub fn start_engine(app: &tauri::AppHandle, config: &serde_json::Value) -> Resul
                 CommandEvent::Stdout(line) => {
                     let text = String::from_utf8_lossy(&line);
                     log_engine_stdout(&text);
-                    if port_guard::aria2_bt_bind_error_line(&text) {
-                        recover_bt_port_conflict(&app_handle);
+                    if let Some(kind) = port_guard::aria2_runtime_bind_error_kind(&text) {
+                        recover_runtime_port_conflict(&app_handle, kind);
                     }
                 }
                 CommandEvent::Stderr(line) => {
@@ -414,8 +414,8 @@ pub fn restart_engine(app: &tauri::AppHandle, _config: &serde_json::Value) -> Re
                 CommandEvent::Stdout(line) => {
                     let text = String::from_utf8_lossy(&line);
                     log_engine_stdout(&text);
-                    if port_guard::aria2_bt_bind_error_line(&text) {
-                        recover_bt_port_conflict(&app_handle);
+                    if let Some(kind) = port_guard::aria2_runtime_bind_error_kind(&text) {
+                        recover_runtime_port_conflict(&app_handle, kind);
                     }
                 }
                 CommandEvent::Stderr(line) => {

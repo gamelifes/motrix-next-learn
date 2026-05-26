@@ -165,10 +165,31 @@ fn spec_for(kind: PortKind) -> PortSpec {
     }
 }
 
-pub(crate) fn aria2_bt_bind_error_line(line: &str) -> bool {
-    line.contains("failed to bind TCP port")
-        || line.contains("failed to bind UDP port")
-        || line.contains("Errors occurred while binding port")
+pub(crate) fn aria2_runtime_bind_error_kind(line: &str) -> Option<PortKind> {
+    let lower = line.to_ascii_lowercase();
+    if lower.contains("rpc") {
+        return None;
+    }
+    let is_bind_error = lower.contains("failed to bind tcp port")
+        || lower.contains("failed to bind udp port")
+        || lower.contains("errors occurred while binding port");
+    if !is_bind_error {
+        return None;
+    }
+    if lower.contains("dht") {
+        return Some(PortKind::Dht);
+    }
+    if lower.contains("ed2k") {
+        return if lower.contains("udp") {
+            Some(PortKind::Ed2kUdp)
+        } else {
+            Some(PortKind::Ed2k)
+        };
+    }
+    if lower.contains("bittorrent") || lower.contains("btsetup") {
+        return Some(PortKind::Bt);
+    }
+    None
 }
 
 fn recovery_policy_from_preferences(prefs: &serde_json::Value) -> PortRecoveryPolicy {
@@ -237,6 +258,19 @@ fn choose_available_port(policy: PortRecoveryPolicy, reserved: &BTreeSet<u16>) -
         .find(|port| !reserved.contains(port) && tcp_available(*port) && udp_available(*port))
 }
 
+fn choose_replacement_port(
+    policy: PortRecoveryPolicy,
+    reserved: &BTreeSet<u16>,
+    old_port: u16,
+) -> Option<u16> {
+    (policy.range.start..=policy.range.end).find(|port| {
+        *port != old_port
+            && !reserved.contains(port)
+            && tcp_available(*port)
+            && udp_available(*port)
+    })
+}
+
 pub(crate) fn reconcile_engine_ports(app: &AppHandle) -> Result<Vec<PortSwitch>, AppError> {
     let prefs_store = app
         .store("config.json")
@@ -274,7 +308,7 @@ pub(crate) fn reconcile_engine_ports(app: &AppHandle) -> Result<Vec<PortSwitch>,
             continue;
         }
         reserved.remove(&port);
-        let Some(new_port) = choose_available_port(policy, &reserved) else {
+        let Some(new_port) = choose_replacement_port(policy, &reserved, port) else {
             emit_failure(
                 app,
                 PortSwitchFailure {
@@ -304,7 +338,10 @@ pub(crate) fn reconcile_engine_ports(app: &AppHandle) -> Result<Vec<PortSwitch>,
     Ok(switches)
 }
 
-pub(crate) fn reconcile_bt_ports(app: &AppHandle) -> Result<Vec<PortSwitch>, AppError> {
+pub(crate) fn reconcile_runtime_ports(
+    app: &AppHandle,
+    kinds: &[PortKind],
+) -> Result<Vec<PortSwitch>, AppError> {
     let prefs_store = app
         .store("config.json")
         .map_err(|e| AppError::Store(format!("Failed to open config.json: {e}")))?;
@@ -319,8 +356,16 @@ pub(crate) fn reconcile_bt_ports(app: &AppHandle) -> Result<Vec<PortSwitch>, App
     let mut next = current;
     let mut switches = Vec::new();
 
-    for kind in [PortKind::Bt, PortKind::Dht] {
+    for kind in kinds {
+        let kind = *kind;
         let old_port = next.get(kind);
+        let spec = spec_for(kind);
+        if spec.allows_zero && old_port == 0 {
+            continue;
+        }
+        if port_available(old_port, spec.transport) {
+            continue;
+        }
         if !recovery_enabled_for(policy, kind) {
             emit_failure(
                 app,
@@ -334,7 +379,7 @@ pub(crate) fn reconcile_bt_ports(app: &AppHandle) -> Result<Vec<PortSwitch>, App
             continue;
         }
         reserved.remove(&old_port);
-        let Some(new_port) = choose_available_port(policy, &reserved) else {
+        let Some(new_port) = choose_replacement_port(policy, &reserved, old_port) else {
             emit_failure(
                 app,
                 PortSwitchFailure {
@@ -675,15 +720,56 @@ mod tests {
     }
 
     #[test]
-    fn aria2_bt_bind_error_line_detects_runtime_bt_port_failures() {
-        assert!(aria2_bt_bind_error_line(
-            "05/14 10:24:11 [ERROR] IPv4 BitTorrent: failed to bind TCP port 24120"
-        ));
-        assert!(aria2_bt_bind_error_line(
-            "Exception: [BtSetup.cc:212] errorCode=1 Errors occurred while binding port."
-        ));
-        assert!(!aria2_bt_bind_error_line(
-            "05/14 10:24:11 [NOTICE] IPv4 RPC: listening on TCP port 24100"
-        ));
+    fn aria2_runtime_bind_error_kind_classifies_runtime_port_failures() {
+        assert_eq!(
+            aria2_runtime_bind_error_kind(
+                "05/14 10:24:11 [ERROR] IPv4 BitTorrent: failed to bind TCP port 24120"
+            ),
+            Some(PortKind::Bt)
+        );
+        assert_eq!(
+            aria2_runtime_bind_error_kind(
+                "05/14 10:24:11 [ERROR] IPv4 DHT: failed to bind UDP port 24130"
+            ),
+            Some(PortKind::Dht)
+        );
+        assert_eq!(
+            aria2_runtime_bind_error_kind(
+                "Exception: [BtSetup.cc:212] errorCode=1 Errors occurred while binding port."
+            ),
+            Some(PortKind::Bt)
+        );
+        assert_eq!(
+            aria2_runtime_bind_error_kind(
+                "05/14 10:24:11 [NOTICE] IPv4 RPC: listening on TCP port 24100"
+            ),
+            None
+        );
+        assert_eq!(
+            aria2_runtime_bind_error_kind(
+                "05/26 22:14:21 [ERROR] IPv6 RPC: failed to bind TCP port 24100: Address already in use"
+            ),
+            None
+        );
+        assert_eq!(
+            aria2_runtime_bind_error_kind(
+                "Exception: [DownloadEngineFactory.cc:198] errorCode=1 Failed to setup RPC server."
+            ),
+            None
+        );
+    }
+
+    #[test]
+    fn replacement_port_never_returns_the_current_port() {
+        let policy = PortRecoveryPolicy {
+            range: PortRange {
+                start: 24000,
+                end: 24002,
+            },
+            ..default_recovery_policy(true)
+        };
+        let reserved = BTreeSet::from([24001, 24002]);
+
+        assert_eq!(choose_replacement_port(policy, &reserved, 24000), None);
     }
 }

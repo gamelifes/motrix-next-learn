@@ -10,6 +10,31 @@ fn is_supported_engine_process(comm: &str) -> bool {
     comm.contains("motrix-next-engine")
 }
 
+#[cfg(unix)]
+fn process_identity(pid: &str) -> Option<String> {
+    let args_output = std::process::Command::new("ps")
+        .args(["-p", pid, "-o", "args="])
+        .stderr(std::process::Stdio::null())
+        .output()
+        .ok()?;
+    let args = String::from_utf8_lossy(&args_output.stdout)
+        .trim()
+        .to_string();
+    if !args.is_empty() {
+        return Some(args);
+    }
+
+    let comm_output = std::process::Command::new("ps")
+        .args(["-p", pid, "-o", "comm="])
+        .stderr(std::process::Stdio::null())
+        .output()
+        .ok()?;
+    let comm = String::from_utf8_lossy(&comm_output.stdout)
+        .trim()
+        .to_string();
+    (!comm.is_empty()).then_some(comm)
+}
+
 /// Kill only supported engine processes occupying the given port, so a new engine can bind to it.
 /// Non-engine processes on the same port are left untouched to prevent accidental kills.
 pub(crate) fn cleanup_port(port: &str) {
@@ -39,15 +64,8 @@ pub(crate) fn cleanup_port(port: &str) {
                     if pid.is_empty() {
                         continue;
                     }
-                    // Verify the process is a supported engine before killing
-                    let check = std::process::Command::new("ps")
-                        .args(["-p", pid, "-o", "comm="])
-                        .stderr(std::process::Stdio::null())
-                        .output();
-                    if let Ok(check_out) = check {
-                        let comm = String::from_utf8_lossy(&check_out.stdout);
-                        let comm = comm.trim();
-                        if is_supported_engine_process(comm) {
+                    if let Some(identity) = process_identity(pid) {
+                        if is_supported_engine_process(&identity) {
                             log::debug!(
                                 "killing leftover engine process on port {}: PID {}",
                                 port,
@@ -62,7 +80,7 @@ pub(crate) fn cleanup_port(port: &str) {
                             log::debug!(
                                 "port {} occupied by non-engine process '{}' (PID {}), skipping",
                                 port,
-                                comm,
+                                identity,
                                 pid
                             );
                         }
@@ -150,6 +168,14 @@ mod tests {
         assert!(is_supported_engine_process(
             "/Applications/MotrixNext.app/Contents/Resources/motrix-next-engine"
         ));
+        assert!(is_supported_engine_process(
+            "/usr/bin/motrix-next-engine --conf-path=/usr/lib/MotrixNext/binaries/aria2.conf"
+        ));
+    }
+
+    #[test]
+    fn is_supported_engine_process_does_not_trust_truncated_comm_names() {
+        assert!(!is_supported_engine_process("motrix-next-eng"));
     }
 
     #[test]
