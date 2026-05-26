@@ -20,6 +20,7 @@ import {
   randomBtPort,
   randomDhtPort,
 } from '@/composables/useNetworkPreference'
+import { proxySwitchValueToMode } from '@shared/utils/proxyPolicy'
 
 import userAgentMap from '@shared/ua'
 import { hasUnsafeHeaderChars, sanitizeHeaderValue } from '@shared/utils/headerSanitize'
@@ -209,6 +210,10 @@ function cleanUserAgent() {
   form.value.userAgent = sanitizeHeaderValue(form.value.userAgent as string)
 }
 
+function handleProxySwitch(value: boolean) {
+  form.value.proxy.mode = proxySwitchValueToMode(value, form.value.proxy.mode)
+}
+
 function handleManualRestart() {
   const port = (preferenceStore.config.rpcListenPort as number) || ENGINE_RPC_PORT
   const secret = (preferenceStore.config.rpcSecret as string) || ''
@@ -240,13 +245,19 @@ onMounted(() => {
     <NForm label-placement="left" label-align="left" label-width="260px" size="small" class="form-preference">
       <!-- Proxy -->
       <NDivider title-placement="left">{{ t('preferences.proxy') }}</NDivider>
-      <NFormItem :label="t('preferences.proxy-mode')">
-        <NRadioGroup v-model:value="form.proxy.mode" name="download-proxy-mode">
-          <NRadio value="direct">{{ t('preferences.proxy-mode-direct') }}</NRadio>
-          <NRadio value="auto">{{ t('preferences.proxy-mode-auto') }}</NRadio>
-          <NRadio value="manual">{{ t('preferences.proxy-mode-manual') }}</NRadio>
-        </NRadioGroup>
+      <NFormItem :label="t('task.use-proxy')">
+        <NSwitch :value="form.proxy.mode !== 'direct'" @update:value="handleProxySwitch" />
       </NFormItem>
+      <div class="proxy-mode-collapse" :class="{ 'proxy-mode-collapse--open': form.proxy.mode !== 'direct' }">
+        <div class="proxy-mode-collapse__inner collapse-indent">
+          <NFormItem :label="t('preferences.proxy-mode')">
+            <NRadioGroup v-model:value="form.proxy.mode" name="download-proxy-mode">
+              <NRadio value="auto">{{ t('preferences.proxy-mode-auto') }}</NRadio>
+              <NRadio value="manual">{{ t('preferences.proxy-mode-manual') }}</NRadio>
+            </NRadioGroup>
+          </NFormItem>
+        </div>
+      </div>
       <div class="proxy-collapse" :class="{ 'proxy-collapse--open': form.proxy.mode === 'manual' }">
         <div class="proxy-collapse__inner collapse-indent">
           <NFormItem :label="t('preferences.proxy-server')">
@@ -433,15 +444,17 @@ onMounted(() => {
   margin-bottom: 18px;
 }
 
-/* ── Proxy collapse — CSS Grid 0fr→1fr ───────────────────────────── */
+.proxy-mode-collapse,
 .proxy-collapse {
   display: grid;
   grid-template-rows: 0fr;
   transition: grid-template-rows 0.35s cubic-bezier(0.2, 0, 0, 1);
 }
+.proxy-mode-collapse--open,
 .proxy-collapse--open {
   grid-template-rows: 1fr;
 }
+.proxy-mode-collapse__inner,
 .proxy-collapse__inner {
   overflow: hidden;
 }

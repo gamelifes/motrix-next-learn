@@ -12,6 +12,15 @@ export function normalizeProxyMode(mode: unknown): EngineProxyMode {
   return ENGINE_PROXY_MODES.includes(mode as EngineProxyMode) ? (mode as EngineProxyMode) : 'direct'
 }
 
+export function isProxyModeEnabled(mode: EngineProxyMode): boolean {
+  return mode !== 'direct'
+}
+
+export function proxySwitchValueToMode(enabled: boolean, currentMode: EngineProxyMode): EngineProxyMode {
+  if (!enabled) return 'direct'
+  return currentMode === 'direct' ? 'auto' : currentMode
+}
+
 function hasDownloadScope(proxy: Pick<ProxyConfig, 'scope'>): boolean {
   return Array.isArray(proxy.scope) && proxy.scope.includes(PROXY_SCOPES.DOWNLOAD)
 }

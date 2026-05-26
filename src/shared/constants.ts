@@ -295,8 +295,8 @@ export const DEFAULT_APP_CONFIG = {
   ed2kShareFiles: [] as string[],
   ed2kSearchTimeout: 20,
   proxy: {
-    mode: 'direct' as const,
-    enable: false,
+    mode: 'auto' as const,
+    enable: true,
     server: '',
     bypass: '',
     scope: ['download', 'update-app', 'update-trackers'],

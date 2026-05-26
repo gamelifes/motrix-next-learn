@@ -160,7 +160,7 @@ describe('buildAdvancedForm', () => {
 
   it('returns defaults for empty config', () => {
     const { form } = buildAdvancedForm(emptyConfig)
-    expect(form.proxy.enable).toBe(false)
+    expect(form.proxy.mode).toBe('auto')
     expect(form.proxy.server).toBe('')
     // Default scope must include ALL scopes so proxy works on first enable
     // (legacy Motrix behavior — scope defaults to PROXY_SCOPE_OPTIONS)

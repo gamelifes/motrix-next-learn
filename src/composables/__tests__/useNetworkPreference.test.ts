@@ -101,9 +101,9 @@ describe('buildNetworkForm', () => {
 
   // ── Proxy ───────────────────────────────────────────────────────
 
-  it('defaults proxy.enable to false', () => {
+  it('defaults proxy mode to environment inheritance', () => {
     const form = buildNetworkForm(emptyConfig)
-    expect(form.proxy.enable).toBe(false)
+    expect(form.proxy.mode).toBe('auto')
   })
 
   it('defaults proxy.server to empty string', () => {
