@@ -2,7 +2,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { usePreferenceStore } from '../preference'
-import { CURRENT_DB_SCHEMA_VERSION } from '@shared/constants'
+import { CURRENT_DB_SCHEMA_VERSION, DEFAULT_APP_CONFIG } from '@shared/constants'
+import { CONFIG_VERSION } from '@shared/utils/configMigration'
 import type { AppConfig } from '@shared/types'
 
 // Mock @tauri-apps/plugin-store — returns an in-memory store
@@ -61,6 +62,42 @@ describe('PreferenceStore', () => {
     await store.loadPreference()
     expect(store.config.theme).toBe('auto')
     expect(store.config.locale).toBe('auto')
+  })
+
+  it('loadPreference hydrates missing nested config fields', async () => {
+    mockStoreData.set('preferences', {
+      configVersion: CONFIG_VERSION,
+      protocols: { magnet: false },
+      clipboard: { enable: false },
+      proxy: { mode: 'manual', enable: true, server: 'http://127.0.0.1:7890' },
+    })
+
+    await store.loadPreference()
+
+    expect(store.config.protocols).toEqual({ ...DEFAULT_APP_CONFIG.protocols, magnet: false })
+    expect(store.config.clipboard).toEqual({ ...DEFAULT_APP_CONFIG.clipboard, enable: false })
+    expect(store.config.proxy).toEqual({
+      ...DEFAULT_APP_CONFIG.proxy,
+      mode: 'manual',
+      enable: true,
+      server: 'http://127.0.0.1:7890',
+    })
+  })
+
+  it('loadPreference persists repaired invalid config once', async () => {
+    mockStoreData.set('preferences', {
+      configVersion: CONFIG_VERSION,
+      theme: 'bad-theme',
+      updateChannel: 'nightly',
+    })
+
+    await store.loadPreference()
+
+    const saved = mockStoreData.get('preferences') as AppConfig
+    expect(store.config.theme).toBe(DEFAULT_APP_CONFIG.theme)
+    expect(store.config.updateChannel).toBe(DEFAULT_APP_CONFIG.updateChannel)
+    expect(saved.theme).toBe(DEFAULT_APP_CONFIG.theme)
+    expect(saved.updateChannel).toBe(DEFAULT_APP_CONFIG.updateChannel)
   })
 
   // ─── computed: theme / locale / direction ───────────────

@@ -6,9 +6,13 @@
  * electron-store, VS Code, Obsidian, etc.):
  *
  *   1. Store a `configVersion` integer alongside user preferences.
- *   2. On each app launch, compare stored version against CONFIG_VERSION.
+ *   2. hydrateAppConfig() compares stored version against CONFIG_VERSION.
  *   3. Execute any pending migration functions in order.
- *   4. Stamp the new version and persist.
+ *   4. Stamp the new version.
+ *
+ * This file handles semantic schema changes only. Default materialization,
+ * selective nested merges, invalid-value repair, and secret preservation
+ * belong in configHydration.ts.
  *
  * Adding a new migration:
  *   1. Append a function to the `migrations` array.

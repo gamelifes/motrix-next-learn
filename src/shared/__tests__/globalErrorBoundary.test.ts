@@ -81,13 +81,17 @@ describe('main.ts — global error boundary', () => {
   // ─── ordering ────────────────────────────────────────────────────
 
   describe('handler ordering', () => {
-    it('both handlers are registered after app.mount (UI renders first)', () => {
+    it('both handlers are registered before preference hydration and app.mount', () => {
       const mountIdx = mainSource.indexOf("app.mount('#app')")
       const errorIdx = mainSource.indexOf("addEventListener('error'")
       const rejIdx = mainSource.indexOf("addEventListener('unhandledrejection'")
+      const preferenceLoadIdx = mainSource.indexOf('preferenceStore.loadPreference')
       expect(mountIdx).toBeGreaterThanOrEqual(0)
-      expect(errorIdx).toBeGreaterThan(mountIdx)
-      expect(rejIdx).toBeGreaterThan(mountIdx)
+      expect(preferenceLoadIdx).toBeGreaterThanOrEqual(0)
+      expect(errorIdx).toBeLessThan(preferenceLoadIdx)
+      expect(rejIdx).toBeLessThan(preferenceLoadIdx)
+      expect(errorIdx).toBeLessThan(mountIdx)
+      expect(rejIdx).toBeLessThan(mountIdx)
     })
   })
 })

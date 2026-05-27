@@ -604,16 +604,10 @@ onMounted(async () => {
     const { invoke } = await import('@tauri-apps/api/core')
     const isAutostart: boolean = await invoke('is_autostart_launch')
     const silentExternalInput = await invoke<boolean>('peek_pending_deep_links_silent')
-    // Read autoHideWindow directly from the Tauri persistent store
-    // instead of the Pinia reactive state.  The Pinia store initialises
-    // with DEFAULT_APP_CONFIG (autoHideWindow: false) and is hydrated
-    // asynchronously by loadPreference() in main.ts.  Because
-    // loadPreference() uses a non-blocking .then(), Vue components can
-    // mount before hydration completes, causing this code to read the
-    // stale default value and incorrectly call show() — undoing the
-    // Rust-layer force-hide.  Reading via Tauri Store IPC matches
-    // exactly what the Rust setup() guard does, guaranteeing both
-    // layers see the same persisted value.
+    // Read autoHideWindow directly from the same Tauri persistent store
+    // used by the Rust setup() guard. This keeps the frontend safety net
+    // aligned with the native cold-start decision, including WebView
+    // recreation in lightweight mode.
     const { load } = await import('@tauri-apps/plugin-store')
     const tauriStore = await load('config.json')
     const prefs = await tauriStore.get<Record<string, unknown>>('preferences')

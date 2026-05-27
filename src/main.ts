@@ -34,24 +34,25 @@ app.use(pinia)
 app.use(router)
 app.use(i18n)
 
-// ── Production guard: suppress browser default context menu ─────────
-// In dev mode, keep the context menu for DevTools / Inspect Element.
-// Industry standard for Tauri/Electron desktop apps (Discord, Slack, VS Code).
-if (import.meta.env.PROD) {
-  document.addEventListener('contextmenu', (e) => e.preventDefault())
-}
-
-app.mount('#app')
-
 // ── Global error boundary — catch all uncaught exceptions to log file ──
-// Registered after mount (UI renders first) but before init block (covers
-// all async code paths: deep-link, clipboard, engine, tracker sync).
+// Register before preference hydration so startup failures do not disappear
+// before Vue mounts and the app-level handler becomes active.
 window.addEventListener('error', (e) => {
   logger.error('GlobalError', e.error ?? e.message)
 })
 window.addEventListener('unhandledrejection', (e) => {
   logger.error('UnhandledRejection', e.reason)
 })
+app.config.errorHandler = (err) => {
+  logger.error('VueError', err)
+}
+
+// ── Production guard: suppress browser default context menu ─────────
+// In dev mode, keep the context menu for DevTools / Inspect Element.
+// Industry standard for Tauri/Electron desktop apps (Discord, Slack, VS Code).
+if (import.meta.env.PROD) {
+  document.addEventListener('contextmenu', (e) => e.preventDefault())
+}
 
 // ── Main window initialization ──────────────────────────────────────
 
@@ -303,8 +304,10 @@ window.addEventListener('unhandledrejection', (e) => {
     }
   }
 
-  preferenceStore.loadPreference().then(async () => {
+  async function bootstrapMainWindow(): Promise<void> {
     // ── Phase 1: critical path → window visible ASAP ──────────────────────
+    await preferenceStore.loadPreference()
+
     const storedLocale = preferenceStore.locale
     let resolvedLocale: string
 
@@ -341,6 +344,12 @@ window.addEventListener('unhandledrejection', (e) => {
     // Flush deferred migration toasts now that i18n locale is active.
     // loadPreference() buffers these signals to avoid showing English toasts.
     preferenceStore.flushMigrationSignals()
+
+    // Mount only after preference + locale hydration so root-level theme,
+    // color-scheme, locale, and layout watchers see stable persisted values
+    // on their first run. The native window is still hidden until
+    // MainLayout.onMounted explicitly shows it.
+    app.mount('#app')
 
     const config = preferenceStore.config
 
@@ -520,5 +529,10 @@ window.addEventListener('unhandledrejection', (e) => {
         logger.debug('Main.clipboardMonitor', e)
       }
     })
+  }
+
+  void bootstrapMainWindow().catch((e) => {
+    logger.error('main.bootstrap', e)
+    appStore.setEngineRestarting(false)
   })
 } // end: main window initialization

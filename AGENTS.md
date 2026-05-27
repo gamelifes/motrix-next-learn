@@ -35,6 +35,7 @@ src/
 │   ├── guards.ts               # Type guard utilities
 │   ├── locales/                # 26 locale directories (see Section D)
 │   └── utils/
+│       ├── configHydration.ts  # Config defaults, migration, nested merge, and repair boundary
 │       ├── configMigration.ts  # Config schema migration engine (see Section C′)
 │       ├── config.ts           # Config key-value transform utilities
 │       ├── tracker.ts          # BT tracker fetching with proxy support
@@ -142,22 +143,29 @@ Follow this exact checklist:
 
 1. **`src/shared/types.ts`** — Add the field to the `AppConfig` interface with proper typing
 2. **`src/shared/configKeys.ts`** — Add the key name (kebab-case) to `userKeys` or `systemKeys` array. Without this, the value will NOT persist across restarts
-3. **UI binding** — For Basic settings: add to `buildForm()` initializer + `watchSyncEffect` save in `Basic.vue`. For Advanced settings: add to `buildAdvancedForm()` + `buildAdvancedSystemConfig()` in `useAdvancedPreference.ts`
-4. **All 26 locale files** — Add i18n label keys. **Must use batch Python script** (see Section D)
-5. **If modifying an existing field's format or default** — Add a migration in `configMigration.ts` (see Section C′)
+3. **`src/shared/constants.ts`** — Add the default value to `DEFAULT_APP_CONFIG`
+4. **`src/shared/utils/configHydration.ts`** — Check whether the key needs validation, repair, or selective nested merge. Top-level keys usually need no code here; nested object keys and enum-like values usually do.
+5. **UI binding** — Add the field to the relevant preference composable and component save flow
+6. **All 26 locale files** — Add i18n label keys. **Must use batch Python script** (see Section D)
+7. **Migration decision** — Add a `configMigration.ts` migration only when changing stored shape, semantics, or existing user values. Do not add a migration just to materialize a new default; hydration handles that.
 
 ---
 
-## C′. Config Schema Migration
+## C′. Config Hydration & Schema Migration
 
-`src/shared/utils/configMigration.ts` implements versioned schema migration (same pattern as `electron-store`). On each app launch, `loadPreference()` runs pending migrations before merging saved config into defaults.
+`src/shared/utils/configHydration.ts` is the single frontend entry point for turning persisted `config.json` preferences into a complete runtime `AppConfig`. It clones `DEFAULT_APP_CONFIG`, runs `configMigration.ts`, selectively hydrates known nested objects, repairs invalid enum/port values, preserves secret-generation semantics, and tells the store whether repaired data should be persisted.
+
+`src/shared/utils/configMigration.ts` implements versioned schema migration. It is called from `hydrateAppConfig()`, not directly from the preference store.
 
 ### How It Works
 
 - `configVersion` (integer) is stored in `config.json` alongside user preferences
+- `hydrateAppConfig(saved)` runs on `loadPreference()`, `reloadPreferenceFromDisk()`, `savePreference()`, `updateAndSave()`, and in-memory `updatePreference()`
 - `CONFIG_VERSION` constant defines the current schema version
 - `migrations[]` array holds ordered migration functions (index 0 = v0→v1, etc.)
-- Migrations run only when `stored version < CONFIG_VERSION`, then persist
+- Migrations run only when `stored version < CONFIG_VERSION`
+- Hydration handles missing defaults and safe repairs without bumping `CONFIG_VERSION`
+- The store persists only when migration or repair changed the loaded config
 
 ### Adding a New Migration
 
@@ -168,6 +176,9 @@ Follow this exact checklist:
 
 ### Rules
 
+- `hydrateAppConfig()` owns default materialization, selective nested merge, enum validation, port validation, and secret preservation
+- Arrays are user-owned by default. Do not deep-merge arrays such as `trackerSource`, `customTrackerUrls`, `historyDirectories`, `favoriteDirectories`, or `fileCategories`
+- `rpcSecret` and `extensionApiSecret` must preserve the existing meaning: `undefined`/`null` means generate later; empty string means intentionally cleared
 - Migrations **mutate** the config object in place
 - Migrations **must be idempotent** — safe to re-run on already-migrated data
 - Migrations **must not delete** user data without logging

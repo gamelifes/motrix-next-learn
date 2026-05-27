@@ -148,9 +148,8 @@ describe('MainLayout.vue — show window from frontend on mount', () => {
   })
 
   it('reads autoHideWindow directly from Tauri Store IPC, not Pinia', () => {
-    // The Pinia store may not have finished hydrating when onMounted fires
-    // (loadPreference uses non-blocking .then()).  autoHideWindow must be
-    // read via Tauri Store IPC to match what the Rust guard sees.
+    // The frontend safety net must read the same persisted value as the
+    // Rust setup guard, including lightweight WebView recreation.
     const mountedBody = extractOnMountedBody(source)
     expect(mountedBody).toBeTruthy()
     expect(mountedBody).toContain('autoHideWindow')

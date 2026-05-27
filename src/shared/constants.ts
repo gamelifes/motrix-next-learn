@@ -207,6 +207,39 @@ export const BUILTIN_CATEGORY_LABELS: ReadonlySet<string> = new Set(BUILTIN_CATE
  *  and REGISTERED_VERSIONS in src-tauri/src/db_guard.rs. */
 export const CURRENT_DB_SCHEMA_VERSION = 3
 
+/**
+ * @see https://github.com/ngosang/trackerslist
+ */
+export const NGOSANG_TRACKERS_BEST_URL =
+  'https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt'
+export const NGOSANG_TRACKERS_BEST_IP_URL =
+  'https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best_ip.txt'
+export const NGOSANG_TRACKERS_ALL_URL = 'https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_all.txt'
+export const NGOSANG_TRACKERS_ALL_IP_URL =
+  'https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_all_ip.txt'
+
+export const NGOSANG_TRACKERS_BEST_URL_CDN = 'https://cdn.jsdelivr.net/gh/ngosang/trackerslist/trackers_best.txt'
+export const NGOSANG_TRACKERS_BEST_IP_URL_CDN = 'https://cdn.jsdelivr.net/gh/ngosang/trackerslist/trackers_best_ip.txt'
+export const NGOSANG_TRACKERS_ALL_URL_CDN = 'https://cdn.jsdelivr.net/gh/ngosang/trackerslist/trackers_all.txt'
+export const NGOSANG_TRACKERS_ALL_IP_URL_CDN = 'https://cdn.jsdelivr.net/gh/ngosang/trackerslist/trackers_all_ip.txt'
+
+/**
+ * @see https://github.com/XIU2/TrackersListCollection
+ */
+export const XIU2_TRACKERS_BEST_URL = 'https://raw.githubusercontent.com/XIU2/TrackersListCollection/master/best.txt'
+export const XIU2_TRACKERS_ALL_URL = 'https://raw.githubusercontent.com/XIU2/TrackersListCollection/master/all.txt'
+export const XIU2_TRACKERS_HTTP_URL = 'https://raw.githubusercontent.com/XIU2/TrackersListCollection/master/http.txt'
+
+export const XIU2_TRACKERS_BEST_URL_CDN = 'https://cdn.jsdelivr.net/gh/XIU2/TrackersListCollection/best.txt'
+export const XIU2_TRACKERS_ALL_URL_CDN = 'https://cdn.jsdelivr.net/gh/XIU2/TrackersListCollection/all.txt'
+export const XIU2_TRACKERS_HTTP_URL_CDN = 'https://cdn.jsdelivr.net/gh/XIU2/TrackersListCollection/http.txt'
+
+// For bt-exclude-tracker
+export const XIU2_TRACKERS_BLACK_URL = 'https://cdn.jsdelivr.net/gh/XIU2/TrackersListCollection/blacklist.txt'
+
+/** Sensible default tracker sources for first install (CDN endpoints). */
+export const DEFAULT_TRACKER_SOURCE = [NGOSANG_TRACKERS_BEST_URL_CDN, NGOSANG_TRACKERS_BEST_IP_URL_CDN]
+
 export const DEFAULT_APP_CONFIG = {
   configVersion: 5,
   dbSchemaVersion: CURRENT_DB_SCHEMA_VERSION,
@@ -325,7 +358,7 @@ export const DEFAULT_APP_CONFIG = {
 
   // ── Tracker ───────────────────────────────────────────────────
   autoSyncTracker: true,
-  trackerSource: [] as string[], // populated from DEFAULT_TRACKER_SOURCE below at runtime
+  trackerSource: [...DEFAULT_TRACKER_SOURCE],
   customTrackerUrls: [] as string[],
   btTracker: '',
   lastSyncTrackerTime: 0,
@@ -349,7 +382,7 @@ export const DEFAULT_APP_CONFIG = {
   retryWait: 10, // seconds; aria2 waits this long after 503 before retrying
   connectTimeout: 10, // seconds to establish connection
   timeout: 10, // seconds for data transfer after connection
-  fileAllocation: 'prealloc', // 'none' | 'trunc' | 'prealloc' | 'falloc'
+  fileAllocation: 'prealloc' as const, // 'none' | 'trunc' | 'prealloc' | 'falloc'
 
   // ── Task Sorting ─────────────────────────────────────────────
   taskSort: DEFAULT_TASK_SORT,
@@ -358,45 +391,6 @@ export const DEFAULT_APP_CONFIG = {
 export const FILE_ALLOCATION_OPTIONS = ['none', 'trunc', 'prealloc', 'falloc'] as const
 
 export const MAX_BT_TRACKER_LENGTH = 6144
-
-/**
- * @see https://github.com/ngosang/trackerslist
- */
-export const NGOSANG_TRACKERS_BEST_URL =
-  'https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt'
-export const NGOSANG_TRACKERS_BEST_IP_URL =
-  'https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best_ip.txt'
-export const NGOSANG_TRACKERS_ALL_URL = 'https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_all.txt'
-export const NGOSANG_TRACKERS_ALL_IP_URL =
-  'https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_all_ip.txt'
-
-export const NGOSANG_TRACKERS_BEST_URL_CDN = 'https://cdn.jsdelivr.net/gh/ngosang/trackerslist/trackers_best.txt'
-export const NGOSANG_TRACKERS_BEST_IP_URL_CDN = 'https://cdn.jsdelivr.net/gh/ngosang/trackerslist/trackers_best_ip.txt'
-export const NGOSANG_TRACKERS_ALL_URL_CDN = 'https://cdn.jsdelivr.net/gh/ngosang/trackerslist/trackers_all.txt'
-export const NGOSANG_TRACKERS_ALL_IP_URL_CDN = 'https://cdn.jsdelivr.net/gh/ngosang/trackerslist/trackers_all_ip.txt'
-
-/**
- * @see https://github.com/XIU2/TrackersListCollection
- */
-export const XIU2_TRACKERS_BEST_URL = 'https://raw.githubusercontent.com/XIU2/TrackersListCollection/master/best.txt'
-export const XIU2_TRACKERS_ALL_URL = 'https://raw.githubusercontent.com/XIU2/TrackersListCollection/master/all.txt'
-export const XIU2_TRACKERS_HTTP_URL = 'https://raw.githubusercontent.com/XIU2/TrackersListCollection/master/http.txt'
-
-export const XIU2_TRACKERS_BEST_URL_CDN = 'https://cdn.jsdelivr.net/gh/XIU2/TrackersListCollection/best.txt'
-export const XIU2_TRACKERS_ALL_URL_CDN = 'https://cdn.jsdelivr.net/gh/XIU2/TrackersListCollection/all.txt'
-export const XIU2_TRACKERS_HTTP_URL_CDN = 'https://cdn.jsdelivr.net/gh/XIU2/TrackersListCollection/http.txt'
-
-// For bt-exclude-tracker
-export const XIU2_TRACKERS_BLACK_URL = 'https://cdn.jsdelivr.net/gh/XIU2/TrackersListCollection/blacklist.txt'
-
-/** Sensible default tracker sources for first install (CDN endpoints). */
-export const DEFAULT_TRACKER_SOURCE = [NGOSANG_TRACKERS_BEST_URL_CDN, NGOSANG_TRACKERS_BEST_IP_URL_CDN]
-
-// Backfill DEFAULT_APP_CONFIG.trackerSource now that the URLs are defined.
-// This preserves the single-source-of-truth invariant: DEFAULT_APP_CONFIG
-// is the authoritative set of defaults, and trackerSource is populated
-// once JS finishes evaluating all module-level constants.
-;(DEFAULT_APP_CONFIG as Record<string, unknown>).trackerSource = [...DEFAULT_TRACKER_SOURCE]
 
 export const TRACKER_SOURCE_OPTIONS = [
   {
