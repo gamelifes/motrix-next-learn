@@ -19,7 +19,7 @@ import {
 import { convertTrackerDataToLine, convertTrackerDataToComma, reduceTrackerString } from '@shared/utils/tracker'
 import { logger } from '@shared/logger'
 import { getErrorMessage } from '@shared/utils/errorMessage'
-import { resolveUserVisibleDownloadDir } from '@shared/utils/userVisibleDirectory'
+import { resolveUserVisibleDownloadDir, shouldPersistResolvedDownloadDir } from '@shared/utils/userVisibleDirectory'
 import type { AppConfig, TauriUpdate } from '@shared/types'
 import App from './App.vue'
 import 'virtual:uno.css'
@@ -152,12 +152,26 @@ if (import.meta.env.PROD) {
 
       // Resolve a user-visible writable directory before aria2 starts.
       let defaultDir = ''
-      if (!config.dir) {
+      let configuredDirIsHome = false
+      if (config.dir) {
+        try {
+          const { homeDir } = await import('@tauri-apps/api/path')
+          const home = (await homeDir()).replace(/\\/g, '/').replace(/\/+$/, '')
+          const configured = config.dir.replace(/\\/g, '/').replace(/\/+$/, '')
+          configuredDirIsHome = !!home && configured === home
+        } catch (e) {
+          logger.debug('Engine.defaultDirHomeCheck', e)
+        }
+      }
+
+      if (!config.dir || configuredDirIsHome) {
         const resolvedDir = await resolveUserVisibleDownloadDir()
         defaultDir = resolvedDir.path
         if (defaultDir) {
           config.dir = defaultDir
-          preferenceStore.updateAndSave({ dir: defaultDir })
+          if (shouldPersistResolvedDownloadDir(resolvedDir)) {
+            preferenceStore.updateAndSave({ dir: defaultDir })
+          }
           logger.info(
             'Engine',
             `resolved default download dir source=${resolvedDir.source} fallback=${resolvedDir.usedFallback}`,

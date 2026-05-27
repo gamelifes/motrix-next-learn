@@ -1,5 +1,5 @@
 import { appDataDir, downloadDir, homeDir, join } from '@tauri-apps/api/path'
-import { exists } from '@tauri-apps/plugin-fs'
+import { invoke } from '@tauri-apps/api/core'
 
 export type UserVisibleDirectorySource = 'configured' | 'system-downloads' | 'home-downloads' | 'home' | 'app-data'
 
@@ -13,7 +13,7 @@ export interface UserVisibleDirectoryDeps {
   downloadDir: () => Promise<string>
   homeDir: () => Promise<string>
   appDataDir: () => Promise<string>
-  exists: (path: string) => Promise<boolean>
+  pathExists: (path: string) => Promise<boolean>
   join: (...paths: string[]) => Promise<string>
 }
 
@@ -26,7 +26,7 @@ const defaultDeps: UserVisibleDirectoryDeps = {
   downloadDir,
   homeDir,
   appDataDir,
-  exists,
+  pathExists: (path: string) => invoke<boolean>('check_path_exists', { path }),
   join,
 }
 
@@ -41,10 +41,14 @@ function normalizeForCompare(path: string): string {
 
 async function pathExists(deps: UserVisibleDirectoryDeps, path: string): Promise<boolean> {
   try {
-    return await deps.exists(path)
+    return await deps.pathExists(path)
   } catch {
     return false
   }
+}
+
+export function shouldPersistResolvedDownloadDir(resolved: ResolvedUserVisibleDirectory): boolean {
+  return resolved.source === 'system-downloads' || resolved.source === 'home-downloads'
 }
 
 export async function resolveUserVisibleDownloadDir(
@@ -52,7 +56,7 @@ export async function resolveUserVisibleDownloadDir(
 ): Promise<ResolvedUserVisibleDirectory> {
   const deps = options.deps ?? defaultDeps
   const configuredDir = cleanPath(options.configuredDir)
-  if (configuredDir && (await pathExists(deps, configuredDir))) {
+  if (configuredDir) {
     return { path: configuredDir, source: 'configured', usedFallback: false }
   }
 
@@ -73,20 +77,23 @@ export async function resolveUserVisibleDownloadDir(
     systemDownloads = ''
   }
 
-  const homeDownloadsExists = homeDownloads ? await pathExists(deps, homeDownloads) : false
-  const systemDownloadsExists = systemDownloads ? await pathExists(deps, systemDownloads) : false
   const systemIsHome = !!systemDownloads && !!home && normalizeForCompare(systemDownloads) === normalizeForCompare(home)
 
-  if (systemDownloads && systemDownloadsExists && !systemIsHome) {
+  if (systemDownloads && !systemIsHome) {
     return { path: systemDownloads, source: 'system-downloads', usedFallback: false }
   }
 
+  const homeDownloadsExists = homeDownloads ? await pathExists(deps, homeDownloads) : false
   if (homeDownloads && homeDownloadsExists) {
     return { path: homeDownloads, source: 'home-downloads', usedFallback: true }
   }
 
-  if (systemDownloads && systemDownloadsExists) {
-    return { path: systemDownloads, source: 'system-downloads', usedFallback: false }
+  if (systemDownloads) {
+    return {
+      path: systemIsHome && home ? home : systemDownloads,
+      source: systemIsHome ? 'home' : 'system-downloads',
+      usedFallback: systemIsHome,
+    }
   }
 
   if (home) {
