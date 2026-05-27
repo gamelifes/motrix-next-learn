@@ -91,6 +91,7 @@ export default {
   'proxy-mode-direct': 'پروکسی خاموش',
   'proxy-mode-auto': 'محیط',
   'proxy-mode-manual': 'پروکسی دستی',
+  'proxy-new-task-only-hint': 'تنظیمات پراکسی فقط برای وظایف جدید اعمال می‌شود، وظایف موجود باید از جزئیات وظیفه تغییر کنند.',
   'proxy-bypass': 'دور زدن پروکسی',
   'proxy-scope': 'محدوده پروکسی',
   'proxy-bypass-input-tips': 'دور زدن پروکسی برای این میزبان‌ها، یکی در هر خط',

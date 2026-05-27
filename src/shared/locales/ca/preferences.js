@@ -92,6 +92,7 @@ export default {
   'proxy-mode-direct': 'Proxy desactivat',
   'proxy-mode-auto': 'Hereta el proxy de l\'entorn',
   'proxy-mode-manual': 'Proxy manual',
+  'proxy-new-task-only-hint': 'La configuració del proxy només s\'aplica a les tasques noves, les tasques existents s\'han de modificar des dels detalls de la tasca.',
   'proxy-bypass': 'Omissió del proxy',
   'proxy-scope': 'Àmbit del proxy',
   'proxy-bypass-input-tips': 'Ometre proxy per a aquests amfitrions, un per línia',

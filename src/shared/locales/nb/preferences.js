@@ -91,6 +91,7 @@ export default {
   'proxy-mode-direct': 'Proxy av',
   'proxy-mode-auto': 'Miljø',
   'proxy-mode-manual': 'Manuell proxy',
+  'proxy-new-task-only-hint': 'Proxyinnstillinger gjelder bare nye oppgaver, eksisterende oppgaver må endres i oppgavedetaljene.',
   'proxy-bypass': 'Proxy-unntak',
   'proxy-scope': 'Proxy-omfang',
   'proxy-bypass-input-tips': 'Omgå proxy for disse vertene, én per linje',

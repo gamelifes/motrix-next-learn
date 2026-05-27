@@ -90,6 +90,7 @@ export default {
   'proxy-mode-direct': 'ปิดพร็อกซี',
   'proxy-mode-auto': 'สภาพแวดล้อม',
   'proxy-mode-manual': 'พร็อกซีด้วยตนเอง',
+  'proxy-new-task-only-hint': 'การตั้งค่าพร็อกซีมีผลเฉพาะกับงานใหม่ งานที่มีอยู่ต้องแก้ไขในรายละเอียดงาน',
   'proxy-bypass': 'ข้ามพร็อกซี',
   'proxy-scope': 'ขอบเขตพร็อกซี',
   'proxy-bypass-input-tips': 'ข้ามพร็อกซีสำหรับโฮสต์เหล่านี้ หนึ่งรายการต่อบรรทัด',

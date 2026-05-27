@@ -92,6 +92,7 @@ export default {
   'proxy-mode-direct': 'Proxy désactivé',
   'proxy-mode-auto': 'Hériter du proxy d\'environnement',
   'proxy-mode-manual': 'Proxy manuel',
+  'proxy-new-task-only-hint': 'Les paramètres du proxy ne s\'appliquent qu\'aux nouvelles tâches, les tâches existantes doivent être modifiées dans les détails de la tâche.',
   'proxy-bypass': 'Contournement du proxy',
   'proxy-scope': 'Portée du proxy',
   'proxy-bypass-input-tips': 'Ignorer le proxy pour ces hôtes, un par ligne',

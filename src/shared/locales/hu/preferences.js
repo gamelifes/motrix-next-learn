@@ -91,6 +91,7 @@ export default {
   'proxy-mode-direct': 'Proxy kikapcsolva',
   'proxy-mode-auto': 'Környezet',
   'proxy-mode-manual': 'Kézi proxy',
+  'proxy-new-task-only-hint': 'A proxybeállítások csak az új feladatokra érvényesek, a meglévő feladatokat a feladat részleteiben kell módosítani.',
   'proxy-bypass': 'Proxy kivétel',
   'proxy-scope': 'Proxy hatóköre',
   'proxy-bypass-input-tips': 'Proxy kihagyása ezeknél a gazdagépeknél, soronként egy',

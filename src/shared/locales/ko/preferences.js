@@ -90,6 +90,7 @@ export default {
   'proxy-mode-direct': '프록시 끄기',
   'proxy-mode-auto': '환경',
   'proxy-mode-manual': '수동 프록시',
+  'proxy-new-task-only-hint': '프록시 설정은 새 작업에만 적용되며, 기존 작업은 작업 상세에서 별도로 변경해야 합니다.',
   'proxy-bypass': '프록시 우회',
   'proxy-scope': '프록시 범위',
   'proxy-bypass-input-tips': '프록시를 사용하지 않을 호스트 (줄당 하나)',

@@ -90,6 +90,7 @@ export default {
   'proxy-mode-direct': '关闭代理',
   'proxy-mode-auto': '继承环境',
   'proxy-mode-manual': '手动代理',
+  'proxy-new-task-only-hint': '代理设置只在新建任务时生效，已有任务需在任务详情中单独修改。',
   'proxy-bypass': '代理排除',
   'proxy-scope': '代理范围',
   'proxy-bypass-input-tips': '不使用代理的地址，每行一个',

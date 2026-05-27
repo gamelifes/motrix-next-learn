@@ -90,6 +90,7 @@ export default {
   'proxy-mode-direct': '關閉代理',
   'proxy-mode-auto': '繼承環境',
   'proxy-mode-manual': '手動代理',
+  'proxy-new-task-only-hint': '代理設定只會在新建任務時生效，既有任務需在任務詳情中單獨修改。',
   'proxy-bypass': '代理排除',
   'proxy-scope': '代理範圍',
   'proxy-bypass-input-tips': '不使用代理的位址，每行一個',

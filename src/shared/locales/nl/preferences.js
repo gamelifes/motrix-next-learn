@@ -91,6 +91,7 @@ export default {
   'proxy-mode-direct': 'Proxy uit',
   'proxy-mode-auto': 'Omgeving',
   'proxy-mode-manual': 'Handmatige proxy',
+  'proxy-new-task-only-hint': 'Proxy-instellingen gelden alleen voor nieuwe taken, bestaande taken moeten in de taakdetails worden aangepast.',
   'proxy-bypass': 'Proxy-uitzondering',
   'proxy-scope': 'Proxy-bereik',
   'proxy-bypass-input-tips': 'Proxy overslaan voor deze hosts, één per regel',

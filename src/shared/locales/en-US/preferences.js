@@ -92,6 +92,7 @@ export default {
   'proxy-mode-direct': 'Proxy off',
   'proxy-mode-auto': 'Environment',
   'proxy-mode-manual': 'Manual proxy',
+  'proxy-new-task-only-hint': 'Proxy settings apply only to new tasks, existing tasks must be changed in task details.',
   'proxy-bypass': 'Proxy bypass',
   'proxy-scope': 'Proxy scope',
   'proxy-bypass-input-tips': 'Bypass proxy for these hosts, one per line',

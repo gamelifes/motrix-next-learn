@@ -91,6 +91,7 @@ export default {
   'proxy-mode-direct': 'Proxy aus',
   'proxy-mode-auto': 'Umgebung',
   'proxy-mode-manual': 'Manueller Proxy',
+  'proxy-new-task-only-hint': 'Proxy-Einstellungen gelten nur für neue Aufgaben, bestehende Aufgaben müssen in den Aufgabendetails geändert werden.',
   'proxy-bypass': 'Proxy-Ausnahmen',
   'proxy-scope': 'Proxy-Bereich',
   'proxy-bypass-input-tips': 'Proxy für diese Hosts umgehen, einer pro Zeile',

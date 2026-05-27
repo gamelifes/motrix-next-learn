@@ -92,6 +92,7 @@ export default {
   'proxy-mode-direct': 'Proxy ανενεργό',
   'proxy-mode-auto': 'Περιβάλλον',
   'proxy-mode-manual': 'Χειροκίνητο proxy',
+  'proxy-new-task-only-hint': 'Οι ρυθμίσεις διακομιστή μεσολάβησης ισχύουν μόνο για νέες εργασίες, οι υπάρχουσες εργασίες αλλάζουν από τις λεπτομέρειες εργασίας.',
   'proxy-bypass': 'Παράκαμψη proxy',
   'proxy-scope': 'Εύρος proxy',
   'proxy-bypass-input-tips': 'Παράκαμψη proxy για αυτούς τους κεντρικούς, ένας ανά γραμμή',

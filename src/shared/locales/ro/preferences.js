@@ -91,6 +91,7 @@ export default {
   'proxy-mode-direct': 'Proxy oprit',
   'proxy-mode-auto': 'Mediu',
   'proxy-mode-manual': 'Proxy manual',
+  'proxy-new-task-only-hint': 'Setările proxy se aplică doar sarcinilor noi, sarcinile existente trebuie schimbate din detaliile sarcinii.',
   'proxy-bypass': 'Excepție proxy',
   'proxy-scope': 'Domeniu proxy',
   'proxy-bypass-input-tips': 'Ocolește proxy pentru aceste gazde, una pe linie',

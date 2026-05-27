@@ -91,6 +91,7 @@ export default {
   'proxy-mode-direct': 'Tắt proxy',
   'proxy-mode-auto': 'Môi trường',
   'proxy-mode-manual': 'Proxy thủ công',
+  'proxy-new-task-only-hint': 'Cài đặt proxy chỉ áp dụng cho tác vụ mới, tác vụ hiện có phải đổi trong chi tiết tác vụ.',
   'proxy-bypass': 'Bỏ qua proxy',
   'proxy-scope': 'Phạm vi proxy',
   'proxy-bypass-input-tips': 'Bỏ qua proxy cho các máy chủ này, mỗi dòng một máy chủ',

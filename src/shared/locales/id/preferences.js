@@ -91,6 +91,7 @@ export default {
   'proxy-mode-direct': 'Proxy mati',
   'proxy-mode-auto': 'Lingkungan',
   'proxy-mode-manual': 'Proxy manual',
+  'proxy-new-task-only-hint': 'Pengaturan proxy hanya berlaku untuk tugas baru, tugas yang sudah ada harus diubah di detail tugas.',
   'proxy-bypass': 'Lewati proxy',
   'proxy-scope': 'Cakupan proxy',
   'proxy-bypass-input-tips': 'Lewati proxy untuk host ini, satu per baris',

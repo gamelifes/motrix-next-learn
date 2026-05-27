@@ -257,6 +257,9 @@ onMounted(() => {
               <NRadio value="manual">{{ t('preferences.proxy-mode-manual') }}</NRadio>
             </NRadioGroup>
           </NFormItem>
+          <NFormItem :show-label="false">
+            <div class="info-text">{{ t('preferences.proxy-new-task-only-hint') }}</div>
+          </NFormItem>
         </div>
       </div>
       <div class="proxy-collapse" :class="{ 'proxy-collapse--open': form.proxy.mode === 'manual' }">

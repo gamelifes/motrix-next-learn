@@ -91,6 +91,7 @@ export default {
   'proxy-mode-direct': 'プロキシ無効',
   'proxy-mode-auto': '環境',
   'proxy-mode-manual': '手動プロキシ',
+  'proxy-new-task-only-hint': 'プロキシ設定は新しいタスクにのみ適用され、既存のタスクはタスク詳細で個別に変更する必要があります。',
   'proxy-bypass': 'プロキシ除外',
   'proxy-scope': 'プロキシ適用範囲',
   'proxy-bypass-input-tips': 'プロキシを使用しないホスト（1行に1つ）',

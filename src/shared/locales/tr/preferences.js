@@ -91,6 +91,7 @@ export default {
   'proxy-mode-direct': 'Proxy kapalı',
   'proxy-mode-auto': 'Ortam proxy\'sini devral',
   'proxy-mode-manual': 'Manuel proxy',
+  'proxy-new-task-only-hint': 'Proxy ayarları yalnızca yeni görevlere uygulanır, mevcut görevler görev ayrıntılarından değiştirilmelidir.',
   'proxy-bypass': 'Proxy istisnası',
   'proxy-scope': 'Proxy kapsamı',
   'proxy-bypass-input-tips': 'Bu ana makineler için proxy atla, satır başına bir tane',

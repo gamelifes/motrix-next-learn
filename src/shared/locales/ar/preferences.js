@@ -90,6 +90,7 @@ export default {
   'proxy-mode-direct': 'إيقاف الوكيل',
   'proxy-mode-auto': 'البيئة',
   'proxy-mode-manual': 'وكيل يدوي',
+  'proxy-new-task-only-hint': 'تنطبق إعدادات الوكيل على المهام الجديدة فقط، ويجب تعديل المهام الحالية من تفاصيل المهمة.',
   'proxy-bypass': 'تجاوز الوكيل',
   'proxy-scope': 'نطاق الوكيل',
   'proxy-bypass-input-tips': 'تجاوز الوكيل لهذه المضيفات، واحد لكل سطر',

@@ -91,6 +91,7 @@ export default {
   'proxy-mode-direct': 'Прокси выключен',
   'proxy-mode-auto': 'Окружение',
   'proxy-mode-manual': 'Ручной прокси',
+  'proxy-new-task-only-hint': 'Настройки прокси применяются только к новым задачам, существующие задачи нужно менять в деталях задачи.',
   'proxy-bypass': 'Исключения прокси',
   'proxy-scope': 'Область прокси',
   'proxy-bypass-input-tips': 'Обходить прокси для этих хостов, один на строку',
