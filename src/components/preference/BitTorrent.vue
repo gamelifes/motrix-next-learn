@@ -29,6 +29,7 @@ import {
   NButton,
   NDivider,
   NIcon,
+  NCollapseTransition,
   NRadioGroup,
   NRadioButton,
   useDialog,
@@ -277,17 +278,19 @@ onMounted(() => {
           <NRadioButton value="manual-stop">{{ t('preferences.seeding-mode-manual-stop') }}</NRadioButton>
         </NRadioGroup>
       </NFormItem>
-      <template v-if="form.seedingMode === 'stop-by-condition'">
+      <NCollapseTransition :show="form.seedingMode === 'stop-by-condition'" class="collapse-indent">
         <NFormItem :label="t('preferences.seed-ratio')">
           <NInputNumber v-model:value="form.seedRatio" :min="1" :max="100" :step="0.1" style="width: 120px" />
         </NFormItem>
         <NFormItem :label="t('preferences.seed-time') + ' (' + t('preferences.seed-time-unit') + ')'">
           <NInputNumber v-model:value="form.seedTime" :min="60" :max="525600" style="width: 120px" />
         </NFormItem>
-      </template>
-      <NFormItem v-else :show-label="false">
-        <div class="info-text">{{ t('preferences.seeding-mode-manual-stop-tips') }}</div>
-      </NFormItem>
+      </NCollapseTransition>
+      <NCollapseTransition :show="form.seedingMode === 'manual-stop'" class="collapse-indent">
+        <NFormItem :show-label="false">
+          <div class="info-text">{{ t('preferences.seeding-mode-manual-stop-tips') }}</div>
+        </NFormItem>
+      </NCollapseTransition>
 
       <!-- Tracker Management -->
       <NDivider title-placement="left">{{ t('preferences.bt-tracker') }}</NDivider>
@@ -384,6 +387,10 @@ onMounted(() => {
 }
 .form-preference :deep(.n-form-item) {
   padding-left: 50px;
+}
+.form-preference :deep(.collapse-indent) {
+  position: relative;
+  margin-left: 16px;
 }
 .info-text {
   color: var(--m3-on-surface-variant);
