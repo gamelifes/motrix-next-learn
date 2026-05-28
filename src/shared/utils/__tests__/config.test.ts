@@ -149,6 +149,9 @@ describe('checkIsNeedRestart', () => {
     expect(checkIsNeedRestart({ ed2kUploadSlots: 4 })).toBe(true)
     expect(checkIsNeedRestart({ ed2kShareFiles: ['/tmp/shared.bin'] })).toBe(true)
   })
+  it('returns true for DNS resolver changes', () => {
+    expect(checkIsNeedRestart({ dnsResolver: 'async' })).toBe(true)
+  })
   it('returns false for non-restart keys', () => {
     expect(checkIsNeedRestart({ theme: 'dark' })).toBe(false)
   })
@@ -302,6 +305,10 @@ describe('filterHotReloadableKeys', () => {
 
   it('strips log-level (needs app relaunch, not engine restart)', () => {
     expect(filterHotReloadableKeys({ 'log-level': 'debug' })).toEqual({})
+  })
+
+  it('strips dns-resolver because aria2 only reads it at startup', () => {
+    expect(filterHotReloadableKeys({ 'dns-resolver': 'async' })).toEqual({})
   })
 
   it('strips unsupported engine keys by allowlist', () => {

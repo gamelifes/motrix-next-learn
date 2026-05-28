@@ -370,6 +370,9 @@ export default {
   'transfer-params': 'Параметри на трансфера',
   'connect-timeout': 'Времеви лимит за свързване',
   timeout: 'Времеви лимит за трансфер',
+  'async-dns': 'Асинхронен DNS',
+  'async-dns-hint':
+    'Използвайте асинхронен DNS на Aria2 Next за обикновени URL изтегляния. Промяната на тази настройка рестартира двигателя за изтегляне.',
   'file-allocation': 'Предварително разпределяне на файл',
   'startup-behavior': 'Стартиране',
   'tray-and-dock': 'Трей и Dock',

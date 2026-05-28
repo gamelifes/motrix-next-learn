@@ -368,6 +368,9 @@ export default {
   'transfer-params': 'Thông số truyền tải',
   'connect-timeout': 'Hết hạn kết nối',
   timeout: 'Hết hạn truyền tải',
+  'async-dns': 'DNS bất đồng bộ',
+  'async-dns-hint':
+    'Dùng DNS bất đồng bộ của Aria2 Next cho các lượt tải URL thông thường. Thay đổi này sẽ khởi động lại trình tải xuống.',
   'file-allocation': 'Phân bổ trước tệp',
   'startup-behavior': 'Khởi động',
   'tray-and-dock': 'Khay hệ thống và Dock',

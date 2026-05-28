@@ -366,6 +366,9 @@ export default {
   'transfer-params': 'معلمات النقل',
   'connect-timeout': 'مهلة الاتصال',
   timeout: 'مهلة النقل',
+  'async-dns': 'DNS غير متزامن',
+  'async-dns-hint':
+    'استخدم DNS غير المتزامن في Aria2 Next لتنزيلات URL العادية. يؤدي تغيير هذا الخيار إلى إعادة تشغيل محرك التنزيل.',
   'file-allocation': 'تخصيص الملف المسبق',
   'startup-behavior': 'التشغيل',
   'tray-and-dock': 'شريط المهام والـ Dock',

@@ -372,6 +372,9 @@ export default {
   'transfer-params': 'Parâmetros de transferência',
   'connect-timeout': 'Timeout de conexão',
   timeout: 'Timeout de transferência',
+  'async-dns': 'DNS assíncrono',
+  'async-dns-hint':
+    'Use o DNS assíncrono do Aria2 Next para downloads comuns por URL. Alterar isto reinicia o mecanismo de downloads.',
   'file-allocation': 'Pré-alocação de arquivo',
   'startup-behavior': 'Inicialização',
   'tray-and-dock': 'Bandeja e Dock',

@@ -369,6 +369,9 @@ export default {
   'transfer-params': 'Transfer Parameters',
   'connect-timeout': 'Connection Timeout',
   timeout: 'Transfer Timeout',
+  'async-dns': 'Async DNS',
+  'async-dns-hint':
+    'Use Aria2 Next asynchronous DNS for ordinary URL downloads. Changing this restarts the download engine.',
   'file-allocation': 'File Pre-allocation',
   'startup-behavior': 'Startup',
   'tray-and-dock': 'Tray & Dock',

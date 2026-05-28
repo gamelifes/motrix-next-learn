@@ -33,7 +33,7 @@ src/
 │   ├── logger.ts               # Structured logging (console + webview bridge)
 │   ├── timing.ts               # Timing constants (polling intervals, debounce delays)
 │   ├── guards.ts               # Type guard utilities
-│   ├── locales/                # 26 locale directories (see Section D)
+│   ├── locales/                # 27 locale directories (see Section D)
 │   └── utils/
 │       ├── configHydration.ts  # Config defaults, migration, nested merge, and repair boundary
 │       ├── configMigration.ts  # Config schema migration engine (see Section C′)
@@ -66,7 +66,10 @@ src-tauri/
 │   │   ├── fs.rs               # File system ops, diagnostics, platform code
 │   │   ├── geoip.rs            # GeoIP database loading and peer IP lookup
 │   │   ├── history.rs          # History DB read/write commands
+│   │   ├── http_api.rs         # Local extension HTTP API auth and status commands
 │   │   ├── net.rs              # Network utility commands
+│   │   ├── notification.rs     # Native notification permission and test commands
+│   │   ├── power.rs            # System power action commands
 │   │   ├── protocol.rs         # Default protocol handler detection and registration
 │   │   ├── proxy.rs            # System proxy detection (PAC, WPAD, env)
 │   │   ├── runtime_config.rs   # RuntimeConfig refresh command
@@ -83,9 +86,17 @@ src-tauri/
 │   ├── services/
 │   │   ├── mod.rs              # Runtime services orchestration (on_engine_ready)
 │   │   ├── config.rs           # RuntimeConfig cache (refreshed per engine cycle)
+│   │   ├── deep_link.rs        # Deep-link and startup URL dispatch service
+│   │   ├── external_input.rs   # External extension/API input queue service
+│   │   ├── frontend_action.rs  # Frontend action event bridge
+│   │   ├── http_api.rs         # Local HTTP API server for browser extensions
+│   │   ├── monitor.rs          # Task lifecycle monitor, history DB persistence, event emission
+│   │   ├── notification.rs     # Native notification dispatch service
+│   │   ├── notification_i18n.rs # Localised notification strings
+│   │   ├── port_guard.rs       # Runtime port conflict detection and recovery
+│   │   ├── power.rs            # Sleep prevention and power guard service
 │   │   ├── stat.rs             # Global stat polling, Dock badge, Dock progress bar (custom NSProgressIndicator)
-│   │   ├── speed.rs            # Speed limit scheduler (time-of-day limits)
-│   │   └── monitor.rs          # Task lifecycle monitor, history DB persistence, event emission
+│   │   └── speed.rs            # Speed limit scheduler (time-of-day limits)
 │   ├── db_guard.rs             # Database health check, corruption detection, and auto-rebuild
 │   ├── gpu_guard.rs            # GPU compatibility detection and WebView renderer fallback
 │   ├── history.rs              # HistoryDbState: Rust-side SQLite history record persistence
@@ -95,7 +106,8 @@ src-tauri/
 │   └── upnp.rs                 # UPnP/IGD port mapping with renewal loop
 ├── migrations/
 │   ├── 001_download_history.sql  # Initial history table schema
-│   └── 002_add_added_at.sql      # Added added_at column + task_birth table
+│   ├── 002_add_added_at.sql      # Added added_at column + task_birth table
+│   └── 003_http_auth_credentials.sql # HTTP extension API auth credentials
 ├── nsis/
 │   ├── hooks.nsh              # Windows installer hooks (compat shim + icon refresh)
 │   ├── header.bmp             # Installer header image (150×57, 24-bit BMP)
@@ -146,7 +158,7 @@ Follow this exact checklist:
 3. **`src/shared/constants.ts`** — Add the default value to `DEFAULT_APP_CONFIG`
 4. **`src/shared/utils/configHydration.ts`** — Check whether the key needs validation, repair, or selective nested merge. Top-level keys usually need no code here; nested object keys and enum-like values usually do.
 5. **UI binding** — Add the field to the relevant preference composable and component save flow
-6. **All 26 locale files** — Add i18n label keys. **Must use batch Python script** (see Section D)
+6. **All 27 locale files** — Add i18n label keys. **Must use batch Python script** (see Section D)
 7. **Migration decision** — Add a `configMigration.ts` migration only when changing stored shape, semantics, or existing user values. Do not add a migration just to materialize a new default; hydration handles that.
 
 ---
@@ -229,10 +241,10 @@ Follow this exact checklist:
 
 Both migration systems show upgrade toasts on the UI, but with distinct messages:
 
-| System | i18n Key | Example (en-US) | Toast Type |
-| ------ | -------- | --------------- | ---------- |
+| System      | i18n Key                | Example (en-US)                       | Toast Type        |
+| ----------- | ----------------------- | ------------------------------------- | ----------------- |
 | Config (C′) | `app.migration-success` | "User settings schema upgraded to v2" | `success` (green) |
-| DB (C″) | `app.db-upgraded` | "Database schema upgraded to v2" | `info` (blue) |
+| DB (C″)     | `app.db-upgraded`       | "Database schema upgraded to v2"      | `info` (blue)     |
 
 ### Windows Installer Hooks (not a migration system)
 
@@ -240,11 +252,11 @@ Both migration systems show upgrade toasts on the UI, but with distinct messages
 
 The hooks file defines three injection points:
 
-| Hook | Timing | Purpose |
-| ---- | ------ | ------- |
-| `MUI_CUSTOMFUNCTION_GUIINIT` | Before any installer pages | Bridges old `MANUPRODUCTKEY` registry path (`Software\motrix\…`) to new (`Software\AnInsomniacy\…`) so `PageLeaveReinstall` can locate the old uninstaller |
-| `!macro NSIS_HOOK_PREINSTALL` | Inside `Section Install`, before file copy | Redirects `$INSTDIR`/`$OUTDIR` to old install location, deletes stale HKCU uninstall entry, cleans orphaned registry keys and Program Files residuals |
-| `!macro NSIS_HOOK_POSTINSTALL` | After file copy | Refreshes Windows icon cache via `ie4uinit.exe` |
+| Hook                           | Timing                                     | Purpose                                                                                                                                                    |
+| ------------------------------ | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MUI_CUSTOMFUNCTION_GUIINIT`   | Before any installer pages                 | Bridges old `MANUPRODUCTKEY` registry path (`Software\motrix\…`) to new (`Software\AnInsomniacy\…`) so `PageLeaveReinstall` can locate the old uninstaller |
+| `!macro NSIS_HOOK_PREINSTALL`  | Inside `Section Install`, before file copy | Redirects `$INSTDIR`/`$OUTDIR` to old install location, deletes stale HKCU uninstall entry, cleans orphaned registry keys and Program Files residuals      |
+| `!macro NSIS_HOOK_POSTINSTALL` | After file copy                            | Refreshes Windows icon cache via `ie4uinit.exe`                                                                                                            |
 
 > [!CAUTION]
 > **Do NOT change `bundle.publisher`, `bundle.identifier`, or `productName` after the first public release.** These values derive the NSIS `MANUFACTURER` variable and `MANUPRODUCTKEY` registry path (`Software\{MANUFACTURER}\{PRODUCTNAME}`). Changing them breaks the Windows upgrade path for all existing users and requires a new NSIS compatibility shim in `hooks.nsh`. The v3.6.2 transition required four separate fixups (issue #159) — avoid repeating this.
@@ -259,10 +271,10 @@ The hooks file defines three injection points:
 2. Strings containing `'` must be escaped as `\'` in JS source files.
 3. English (`en-US`) keys serve as the fallback — always verify this locale first.
 
-### 26 Locale Directories
+### 27 Locale Directories
 
 ```
-ar bg ca de el en-US es fa fr hu id it ja ko nb nl pl pt-BR ro ru th tr uk vi zh-CN zh-TW
+ar bg ca de el en-US es fa fr hi hu id it ja ko nb nl pl pt-BR ro ru th tr uk vi zh-CN zh-TW
 ```
 
 ### Script Template
@@ -277,7 +289,7 @@ LOCALES_DIR = "src/shared/locales"
 TRANSLATIONS = {
     "ar":    ("Arabic text",),
     "bg":    ("Bulgarian text",),
-    # ... all 26 locales with native translations ...
+    # ... all 27 locales with native translations ...
     "en-US": ("English text",),
     "zh-CN": ("Chinese Simplified text",),
     "zh-TW": ("Chinese Traditional text",),
@@ -449,10 +461,10 @@ One-paragraph summary of the release scope and significance.
 
 Two parallel jobs:
 
-| Job        | Steps                                                                                             |
-| ---------- | ------------------------------------------------------------------------------------------------- |
-| `frontend` | `pnpm install` → `eslint` → `prettier --check` → `vue-tsc --noEmit` → `vitest run` → `vite build` |
-| `backend`  | `cargo fmt --check` → `cargo clippy` → `cargo check --all-targets` → `cargo test`                 |
+| Job        | Steps                                                                                                                        |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `frontend` | `pnpm install` → `pnpm lint` → `pnpm format:check` → `vue-tsc --noEmit` → `vitest run` → `vite build`                        |
+| `backend`  | `cargo fmt --check` → `cargo clippy --all-targets -- -D warnings` → `cargo check --all-targets` → `cargo test --all-targets` |
 
 ### `release.yml` (Release Published)
 
@@ -494,13 +506,14 @@ Run these before committing changes:
 ```bash
 # Frontend
 pnpm format                # Auto-format all source files with Prettier
+pnpm lint                  # ESLint check
 pnpm format:check          # Verify formatting (CI runs this)
 pnpm test                  # Vitest unit tests
 npx vue-tsc --noEmit       # TypeScript type checking
 
 # Backend
-cargo check                # Fast compilation check
-cargo test                 # Rust unit tests
+cargo check --all-targets  # Fast compilation check
+cargo test --all-targets   # Rust unit tests
 
 # Version (when bumping)
 ./scripts/bump-version.sh <version>
@@ -516,4 +529,4 @@ All fast checks must pass with zero errors before any PR or release.
 
 ## I. Testing Constraints
 
-> **DO NOT use browser tools (Playwright, browser subagent, etc.) to test this app.** Tauri renders in a native webview — `localhost:1420` in a browser lacks IPC, tray, and sidecar access. Use CLI checks (`vue-tsc`, `pnpm test`, `cargo test`) or ask the user to verify UI via `pnpm tauri dev`.
+> **DO NOT use browser tools (Playwright, browser subagent, etc.) to test this app.** Tauri renders in a native webview — `localhost:1420` in a browser lacks IPC, tray, and sidecar access. Use CLI checks (`vue-tsc`, `pnpm test`, `cargo test --all-targets`) or ask the user to verify UI via `pnpm tauri dev`.

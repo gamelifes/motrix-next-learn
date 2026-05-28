@@ -54,6 +54,7 @@ const NON_HOT_RELOADABLE: &[&str] = &[
     "bt-force-encryption",
     "bt-max-peers",
     "bt-require-crypto",
+    "dns-resolver",
     "enable-dht",
     "enable-peer-exchange",
     // aria2 docs exclusions
@@ -500,6 +501,7 @@ mod tests {
 
     #[test]
     fn non_hot_reloadable_contains_startup_only_keys() {
+        assert!(NON_HOT_RELOADABLE.contains(&"dns-resolver"));
         assert!(NON_HOT_RELOADABLE.contains(&"enable-dht"));
         assert!(NON_HOT_RELOADABLE.contains(&"enable-peer-exchange"));
         assert!(NON_HOT_RELOADABLE.contains(&"bt-enable-lpd"));

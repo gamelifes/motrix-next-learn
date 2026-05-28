@@ -233,8 +233,19 @@ describe('buildNetworkForm', () => {
     expect(form).toHaveProperty('connectTimeout')
     expect(form).toHaveProperty('timeout')
     expect(form).toHaveProperty('fileAllocation')
+    expect(form).toHaveProperty('dnsResolver')
     expect(form).not.toHaveProperty('asyncDns')
     expect(form).toHaveProperty('userAgent')
+  })
+
+  it('defaults DNS resolver to system', () => {
+    const form = buildNetworkForm(emptyConfig)
+    expect(form.dnsResolver).toBe('system')
+  })
+
+  it('reads async DNS resolver from config', () => {
+    const form = buildNetworkForm({ dnsResolver: 'async' } as AppConfig)
+    expect(form.dnsResolver).toBe('async')
   })
 
   it('defaults port conflict recovery to enabled for every managed port type', () => {
@@ -271,6 +282,7 @@ describe('buildNetworkSystemConfig', () => {
     connectTimeout: 10,
     timeout: 10,
     fileAllocation: 'none',
+    dnsResolver: 'system',
     userAgent: '',
   }
 
@@ -287,7 +299,13 @@ describe('buildNetworkSystemConfig', () => {
     expect(config['connect-timeout']).toBe('10')
     expect(config['timeout']).toBe('10')
     expect(config['file-allocation']).toBe('none')
+    expect(config['dns-resolver']).toBe('system')
     expect(config).not.toHaveProperty('async-dns')
+  })
+
+  it('maps async DNS resolver to aria2 startup config', () => {
+    const config = buildNetworkSystemConfig({ ...baseForm, dnsResolver: 'async' })
+    expect(config['dns-resolver']).toBe('async')
   })
 
   it('emits custom connect-timeout and timeout values', () => {
@@ -402,6 +420,7 @@ describe('transformNetworkForStore', () => {
     connectTimeout: 10,
     timeout: 10,
     fileAllocation: 'none',
+    dnsResolver: 'system',
     userAgent: '',
   }
 
@@ -446,6 +465,11 @@ describe('transformNetworkForStore', () => {
     const result = transformNetworkForStore({ ...baseForm, fileAllocation: 'prealloc' })
     expect(result.fileAllocation).toBe('prealloc')
   })
+
+  it('preserves dnsResolver through transform', () => {
+    const result = transformNetworkForStore({ ...baseForm, dnsResolver: 'async' })
+    expect(result.dnsResolver).toBe('async')
+  })
 })
 
 // ── validateNetworkForm ─────────────────────────────────────────────
@@ -461,6 +485,7 @@ describe('validateNetworkForm', () => {
     connectTimeout: 10,
     timeout: 10,
     fileAllocation: 'none',
+    dnsResolver: 'system',
     userAgent: '',
   }
 

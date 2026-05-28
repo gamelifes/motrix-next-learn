@@ -374,6 +374,9 @@ export default {
   'transfer-params': 'Übertragungsparameter',
   'connect-timeout': 'Verbindungs-Zeitlimit',
   timeout: 'Übertragungs-Zeitlimit',
+  'async-dns': 'Asynchrones DNS',
+  'async-dns-hint':
+    'Verwendet das asynchrone DNS von Aria2 Next für normale URL-Downloads. Eine Änderung startet die Download-Engine neu.',
   'file-allocation': 'Datei-Vorabzuweisung',
   'startup-behavior': 'Autostart',
   'tray-and-dock': 'Taskleiste & Dock',

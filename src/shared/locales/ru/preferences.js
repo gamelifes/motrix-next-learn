@@ -370,6 +370,9 @@ export default {
   'transfer-params': 'Параметры передачи',
   'connect-timeout': 'Тайм-аут подключения',
   timeout: 'Тайм-аут передачи',
+  'async-dns': 'Асинхронный DNS',
+  'async-dns-hint':
+    'Использовать асинхронный DNS Aria2 Next для обычных загрузок по URL. Изменение перезапустит движок загрузок.',
   'file-allocation': 'Предварительное выделение файла',
   'startup-behavior': 'Запуск',
   'tray-and-dock': 'Трей и Dock',

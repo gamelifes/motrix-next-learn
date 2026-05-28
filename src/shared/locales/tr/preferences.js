@@ -371,6 +371,9 @@ export default {
   'transfer-params': 'Aktarım Parametreleri',
   'connect-timeout': 'Bağlantı zaman aşımı',
   timeout: 'Aktarım zaman aşımı',
+  'async-dns': 'Eşzamansız DNS',
+  'async-dns-hint':
+    'Normal URL indirmeleri için Aria2 Next eşzamansız DNS kullanır. Bu ayarı değiştirmek indirme motorunu yeniden başlatır.',
   'file-allocation': 'Dosya ön tahsisi',
   'startup-behavior': 'Başlangıç',
   'tray-and-dock': 'Tepsi ve Dock',

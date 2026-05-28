@@ -377,6 +377,9 @@ export default {
   'transfer-params': 'Παράμετροι μεταφοράς',
   'connect-timeout': 'Χρονικό όριο σύνδεσης',
   timeout: 'Χρονικό όριο μεταφοράς',
+  'async-dns': 'Ασύγχρονο DNS',
+  'async-dns-hint':
+    'Χρησιμοποιεί το ασύγχρονο DNS του Aria2 Next για συνηθισμένες λήψεις URL. Η αλλαγή επανεκκινεί τη μηχανή λήψεων.',
   'file-allocation': 'Προ-εκχώρηση αρχείου',
   'startup-behavior': 'Εκκίνηση',
   'tray-and-dock': 'Περιοχή ειδοποιήσεων & Dock',

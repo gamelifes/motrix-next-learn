@@ -370,6 +370,9 @@ export default {
   'transfer-params': 'Átviteli paraméterek',
   'connect-timeout': 'Kapcsolódási időtúllépés',
   timeout: 'Átviteli időtúllépés',
+  'async-dns': 'Aszinkron DNS',
+  'async-dns-hint':
+    'Az Aria2 Next aszinkron DNS-ét használja a szokásos URL-letöltésekhez. A módosítás újraindítja a letöltőmotort.',
   'file-allocation': 'Fájl előfoglalás',
   'startup-behavior': 'Indítás',
   'tray-and-dock': 'Tálca és Dock',

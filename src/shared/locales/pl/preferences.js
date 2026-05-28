@@ -371,6 +371,9 @@ export default {
   'transfer-params': 'Parametry transferu',
   'connect-timeout': 'Limit czasu połączenia',
   timeout: 'Limit czasu transferu',
+  'async-dns': 'Asynchroniczny DNS',
+  'async-dns-hint':
+    'Używa asynchronicznego DNS Aria2 Next dla zwykłych pobrań URL. Zmiana tej opcji uruchamia ponownie silnik pobierania.',
   'file-allocation': 'Wstępna alokacja pliku',
   'startup-behavior': 'Uruchamianie',
   'tray-and-dock': 'Zasobnik i Dock',

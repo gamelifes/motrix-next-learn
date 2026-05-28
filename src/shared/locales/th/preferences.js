@@ -365,6 +365,9 @@ export default {
   'transfer-params': 'พารามิเตอร์การถ่ายโอน',
   'connect-timeout': 'หมดเวลาเชื่อมต่อ',
   timeout: 'หมดเวลาถ่ายโอน',
+  'async-dns': 'DNS แบบอะซิงโครนัส',
+  'async-dns-hint':
+    'ใช้ DNS แบบอะซิงโครนัสของ Aria2 Next สำหรับการดาวน์โหลด URL ทั่วไป การเปลี่ยนค่านี้จะรีสตาร์ทเอนจินดาวน์โหลด',
   'file-allocation': 'จัดสรรไฟล์ล่วงหน้า',
   'startup-behavior': 'การเริ่มต้น',
   'tray-and-dock': 'ถาดและ Dock',

@@ -372,6 +372,9 @@ export default {
   'transfer-params': 'Overdrachtsparameters',
   'connect-timeout': 'Verbindingstime-out',
   timeout: 'Overdrachtstime-out',
+  'async-dns': 'Asynchrone DNS',
+  'async-dns-hint':
+    'Gebruik de asynchrone DNS van Aria2 Next voor gewone URL-downloads. Deze wijziging herstart de downloadengine.',
   'file-allocation': 'Bestandsvoorallocatie',
   'startup-behavior': 'Opstarten',
   'tray-and-dock': 'Systeemvak en Dock',

@@ -369,6 +369,9 @@ export default {
   'transfer-params': 'پارامترهای انتقال',
   'connect-timeout': 'مهلت اتصال',
   timeout: 'مهلت انتقال',
+  'async-dns': 'DNS ناهمگام',
+  'async-dns-hint':
+    'از DNS ناهمگام Aria2 Next برای دانلودهای URL معمولی استفاده می‌کند. تغییر این گزینه موتور دانلود را دوباره راه‌اندازی می‌کند.',
   'file-allocation': 'پیش‌تخصیص فایل',
   'startup-behavior': 'راه‌اندازی',
   'tray-and-dock': 'سینی و Dock',

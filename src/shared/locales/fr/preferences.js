@@ -378,6 +378,9 @@ export default {
   'transfer-params': 'Paramètres de transfert',
   'connect-timeout': 'Délai de connexion',
   timeout: 'Délai de transfert',
+  'async-dns': 'DNS asynchrone',
+  'async-dns-hint':
+    'Utilise le DNS asynchrone d\'Aria2 Next pour les téléchargements URL ordinaires. Ce changement redémarre le moteur de téléchargement.',
   'file-allocation': 'Pré-allocation de fichier',
   'startup-behavior': 'Démarrage',
   'tray-and-dock': 'Barre des tâches et Dock',

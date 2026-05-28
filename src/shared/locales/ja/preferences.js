@@ -371,6 +371,9 @@ export default {
   'transfer-params': '転送パラメータ',
   'connect-timeout': '接続タイムアウト',
   timeout: '転送タイムアウト',
+  'async-dns': '非同期 DNS',
+  'async-dns-hint':
+    '通常の URL ダウンロードで Aria2 Next の非同期 DNS を使用します。この変更によりダウンロードエンジンが再起動します。',
   'file-allocation': 'ファイル事前割り当て',
   'startup-behavior': '起動',
   'tray-and-dock': 'トレイと Dock',

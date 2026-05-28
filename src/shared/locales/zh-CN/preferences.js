@@ -358,6 +358,9 @@ export default {
   'transfer-params': '传输参数',
   'connect-timeout': '连接超时',
   timeout: '传输超时',
+  'async-dns': '异步 DNS',
+  'async-dns-hint':
+    '为普通 URL 下载使用 Aria2 Next 异步 DNS。更改此项会重启下载引擎。',
   'file-allocation': '文件预分配',
   'startup-behavior': '启动',
   'tray-and-dock': '托盘与 Dock',

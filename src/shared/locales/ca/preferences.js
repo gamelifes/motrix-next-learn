@@ -374,6 +374,9 @@ export default {
   'transfer-params': 'Paràmetres de transferència',
   'connect-timeout': "Temps d'espera de connexió",
   timeout: "Temps d'espera de transferència",
+  'async-dns': 'DNS asíncron',
+  'async-dns-hint':
+    'Utilitza el DNS asíncron d\'Aria2 Next per a baixades d\'URL normals. Canviar-ho reinicia el motor de baixades.',
   'file-allocation': 'Preasignació de fitxer',
   'startup-behavior': 'Inici',
   'tray-and-dock': 'Safata i Dock',

@@ -372,6 +372,9 @@ export default {
   'transfer-params': 'Parametrii de transfer',
   'connect-timeout': 'Timeout conexiune',
   timeout: 'Timeout transfer',
+  'async-dns': 'DNS asincron',
+  'async-dns-hint':
+    'Folosește DNS-ul asincron Aria2 Next pentru descărcări URL obișnuite. Modificarea repornește motorul de descărcare.',
   'file-allocation': 'Pre-alocare fișier',
   'startup-behavior': 'Pornire',
   'tray-and-dock': 'Tavă și Dock',

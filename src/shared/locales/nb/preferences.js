@@ -368,6 +368,9 @@ export default {
   'transfer-params': 'Overføringsparametere',
   'connect-timeout': 'Tilkoblingsavbrudd',
   timeout: 'Overføringsavbrudd',
+  'async-dns': 'Asynkron DNS',
+  'async-dns-hint':
+    'Bruk Aria2 Next sin asynkrone DNS for vanlige URL-nedlastinger. Endring av dette starter nedlastingsmotoren på nytt.',
   'file-allocation': 'Forhåndstildeling av fil',
   'startup-behavior': 'Oppstart',
   'tray-and-dock': 'Systemstatusfeltet og Dock',

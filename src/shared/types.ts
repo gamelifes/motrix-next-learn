@@ -187,6 +187,7 @@ export interface SystemProxyInfo {
 
 export type UpdateChannel = 'stable' | 'beta' | 'latest'
 export type ResolvedUpdateChannel = Exclude<UpdateChannel, 'latest'>
+export type DnsResolver = 'system' | 'async'
 
 /** Protocol handler registration settings (system-level). */
 export interface ProtocolsConfig {
@@ -385,6 +386,8 @@ export interface AppConfig {
   connectTimeout: number
   /** Seconds to wait for data transfer after connection is established. Maps to aria2 --timeout. */
   timeout: number
+  /** DNS resolver policy for ordinary URL transfers. Maps to aria2 --dns-resolver. */
+  dnsResolver: DnsResolver
   /** Disk space pre-allocation method. Maps to aria2 --file-allocation.
    *  Values: 'none' | 'trunc' | 'prealloc' | 'falloc' */
   fileAllocation: string

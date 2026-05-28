@@ -71,6 +71,7 @@ describe('hydrateAppConfig', () => {
       updateChannel: 'nightly' as AppConfig['updateChannel'],
       logLevel: 'verbose',
       fileAllocation: 'magic',
+      dnsResolver: 'threaded' as AppConfig['dnsResolver'],
     })
 
     expect(result.config.theme).toBe(DEFAULT_APP_CONFIG.theme)
@@ -78,8 +79,9 @@ describe('hydrateAppConfig', () => {
     expect(result.config.updateChannel).toBe(DEFAULT_APP_CONFIG.updateChannel)
     expect(result.config.logLevel).toBe(DEFAULT_APP_CONFIG.logLevel)
     expect(result.config.fileAllocation).toBe(DEFAULT_APP_CONFIG.fileAllocation)
+    expect(result.config.dnsResolver).toBe(DEFAULT_APP_CONFIG.dnsResolver)
     expect(result.repairs).toEqual(
-      expect.arrayContaining(['theme', 'colorScheme', 'updateChannel', 'logLevel', 'fileAllocation']),
+      expect.arrayContaining(['theme', 'colorScheme', 'updateChannel', 'logLevel', 'fileAllocation', 'dnsResolver']),
     )
   })
 
@@ -142,6 +144,7 @@ describe('hydrateAppConfig', () => {
     expect(UPDATE_CHANNELS).toContain(DEFAULT_APP_CONFIG.updateChannel)
     expect(LOG_LEVELS).toContain(DEFAULT_APP_CONFIG.logLevel)
     expect(FILE_ALLOCATION_OPTIONS).toContain(DEFAULT_APP_CONFIG.fileAllocation)
+    expect(['system', 'async']).toContain(DEFAULT_APP_CONFIG.dnsResolver)
     expect(DEFAULT_APP_CONFIG.proxy.scope).toEqual(PROXY_SCOPE_OPTIONS)
   })
 })

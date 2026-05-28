@@ -156,6 +156,7 @@ function normalizeScalarValues(config: Record<string, unknown>, repairs: string[
   repairEnum(config, 'updateChannel', UPDATE_CHANNELS, DEFAULT_APP_CONFIG.updateChannel, repairs)
   repairEnum(config, 'logLevel', LOG_LEVELS, DEFAULT_APP_CONFIG.logLevel, repairs)
   repairEnum(config, 'fileAllocation', FILE_ALLOCATION_OPTIONS, DEFAULT_APP_CONFIG.fileAllocation, repairs)
+  repairEnum(config, 'dnsResolver', ['system', 'async'] as const, DEFAULT_APP_CONFIG.dnsResolver, repairs)
 
   config.rpcListenPort = normalizePort(config.rpcListenPort, DEFAULT_APP_CONFIG.rpcListenPort, 'rpcListenPort', repairs)
   config.extensionApiPort = normalizePort(
