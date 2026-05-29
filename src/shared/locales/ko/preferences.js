@@ -224,6 +224,8 @@ export default {
   'export-diagnostic-logs-failed': '로그 내보내기 실패',
   'log-level': '로그 수준',
   'log-level-restart-confirm': '로그 수준 변경은 앱을 재시작한 후 적용됩니다.',
+  'aria2-logs': 'Aria2 Next 로그',
+  'aria2-logs-hint': '진단을 위해 자세한 엔진 로그를 기록합니다.',
   'restart-now': '지금 재시작',
   'db-integrity-check': '무결성 검사',
   'db-integrity-check-running': '데이터베이스 무결성 검사 중...',

@@ -226,6 +226,8 @@ export default {
   'export-diagnostic-logs-failed': 'Logs export नहीं हुए',
   'log-level': 'Log level',
   'log-level-restart-confirm': 'Log level बदलने का असर app restart के बाद होगा।',
+  'aria2-logs': 'Aria2 Next लॉग',
+  'aria2-logs-hint': 'निदान के लिए विस्तृत engine logs रिकॉर्ड करता है।',
   'restart-now': 'अभी Restart करें',
   'db-integrity-check': 'Integrity check',
   'db-integrity-check-running': 'Database integrity जांची जा रही है...',

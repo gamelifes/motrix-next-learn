@@ -34,7 +34,18 @@ fn read_app_log_level(app: &tauri::AppHandle) -> String {
     }
 }
 
-fn engine_log_config(app: &tauri::AppHandle) -> Result<(String, String), String> {
+fn read_aria2_logs_enabled(app: &tauri::AppHandle) -> bool {
+    app.store("config.json")
+        .ok()
+        .and_then(|store| {
+            store
+                .get("preferences")
+                .and_then(|p| p.get("aria2LogsEnabled")?.as_bool())
+        })
+        .unwrap_or(false)
+}
+
+fn engine_log_config(app: &tauri::AppHandle) -> Result<(String, String, bool), String> {
     let log_path = app
         .path()
         .app_log_dir()
@@ -42,7 +53,8 @@ fn engine_log_config(app: &tauri::AppHandle) -> Result<(String, String), String>
         .join("aria2-next.log");
     let log_path = path_to_safe_string(&log_path);
     let log_level = read_app_log_level(app);
-    Ok((log_path, log_level))
+    let aria2_logs_enabled = read_aria2_logs_enabled(app);
+    Ok((log_path, log_level, aria2_logs_enabled))
 }
 
 fn recover_runtime_port_conflict(app: &tauri::AppHandle, kind: port_guard::PortKind) {
@@ -178,7 +190,7 @@ pub fn start_engine(app: &tauri::AppHandle, config: &serde_json::Value) -> Resul
         let _ = std::fs::create_dir_all(parent);
     }
 
-    let (log_file_path, log_level) = engine_log_config(app)?;
+    let (log_file_path, log_level, aria2_logs_enabled) = engine_log_config(app)?;
     let args = build_start_args(
         &config,
         if conf_path.exists() {
@@ -195,6 +207,7 @@ pub fn start_engine(app: &tauri::AppHandle, config: &serde_json::Value) -> Resul
         session_path.exists(),
         &log_file_path,
         &log_level,
+        aria2_logs_enabled,
     );
 
     let sidecar = app
@@ -402,7 +415,7 @@ pub fn restart_engine(app: &tauri::AppHandle, _config: &serde_json::Value) -> Re
         let _ = std::fs::create_dir_all(parent);
     }
 
-    let (log_file_path, log_level) = engine_log_config(app)?;
+    let (log_file_path, log_level, aria2_logs_enabled) = engine_log_config(app)?;
     let args = build_start_args(
         &config,
         if conf_path.exists() {
@@ -419,6 +432,7 @@ pub fn restart_engine(app: &tauri::AppHandle, _config: &serde_json::Value) -> Re
         session_path.exists(),
         &log_file_path,
         &log_level,
+        aria2_logs_enabled,
     );
 
     let sidecar = app

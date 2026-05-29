@@ -226,6 +226,8 @@ export default {
   'export-diagnostic-logs-failed': 'Неуспешно експортиране на логове',
   'log-level': 'Ниво на логване',
   'log-level-restart-confirm': 'Промяната на нивото на логване ще влезе в сила след рестартиране на приложението.',
+  'aria2-logs': 'Aria2 Next логове',
+  'aria2-logs-hint': 'Записва подробни логове на двигателя за диагностика.',
   'restart-now': 'Рестартирай сега',
   'db-integrity-check': 'Проверка на целостта',
   'db-integrity-check-running': 'Проверка на целостта на базата данни...',

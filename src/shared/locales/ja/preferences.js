@@ -226,6 +226,8 @@ export default {
   'export-diagnostic-logs-failed': 'ログのエクスポートに失敗しました',
   'log-level': 'ログレベル',
   'log-level-restart-confirm': 'ログレベルの変更はアプリの再起動後に反映されます。',
+  'aria2-logs': 'Aria2 Next ログ',
+  'aria2-logs-hint': '診断用に詳細なエンジンログを記録します。',
   'restart-now': '今すぐ再起動',
   'db-integrity-check': '整合性チェック',
   'db-integrity-check-running': 'データベースの整合性をチェック中...',

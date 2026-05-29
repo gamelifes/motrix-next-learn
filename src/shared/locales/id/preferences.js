@@ -227,6 +227,8 @@ export default {
   'export-diagnostic-logs-failed': 'Gagal mengekspor log',
   'log-level': 'Level log',
   'log-level-restart-confirm': 'Perubahan level log akan diterapkan setelah aplikasi dimulai ulang.',
+  'aria2-logs': 'Log Aria2 Next',
+  'aria2-logs-hint': 'Merekam log mesin terperinci untuk diagnosis.',
   'restart-now': 'Mulai ulang sekarang',
   'db-integrity-check': 'Pemeriksaan Integritas',
   'db-integrity-check-running': 'Memeriksa integritas database...',

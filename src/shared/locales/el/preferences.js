@@ -230,6 +230,8 @@ export default {
   'export-diagnostic-logs-failed': 'Αποτυχία εξαγωγής αρχείων',
   'log-level': 'Επίπεδο καταγραφής',
   'log-level-restart-confirm': 'Η αλλαγή επιπέδου καταγραφής θα εφαρμοστεί μετά την επανεκκίνηση της εφαρμογής.',
+  'aria2-logs': 'Αρχεία καταγραφής Aria2 Next',
+  'aria2-logs-hint': 'Καταγράφει λεπτομερή αρχεία του μηχανισμού για διάγνωση.',
   'restart-now': 'Επανεκκίνηση τώρα',
   'db-integrity-check': 'Έλεγχος ακεραιότητας',
   'db-integrity-check-running': 'Έλεγχος ακεραιότητας βάσης δεδομένων...',

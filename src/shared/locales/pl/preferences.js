@@ -229,6 +229,8 @@ export default {
   'export-diagnostic-logs-failed': 'Nie udało się wyeksportować dzienników',
   'log-level': 'Poziom logowania',
   'log-level-restart-confirm': 'Zmiana poziomu logowania zostanie zastosowana po ponownym uruchomieniu aplikacji.',
+  'aria2-logs': 'Dzienniki Aria2 Next',
+  'aria2-logs-hint': 'Zapisuje szczegółowe dzienniki silnika do diagnostyki.',
   'restart-now': 'Uruchom ponownie teraz',
   'db-integrity-check': 'Sprawdzanie integralności',
   'db-integrity-check-running': 'Sprawdzanie integralności bazy danych...',

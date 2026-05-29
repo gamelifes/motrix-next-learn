@@ -4,6 +4,31 @@ use std::path::Path;
 use tauri::AppHandle;
 use tauri::Manager;
 
+fn is_motrix_log_file(name: &str) -> bool {
+    name == "motrix-next.log" || name.starts_with("motrix-next.log.")
+}
+
+fn is_aria2_log_file(name: &str) -> bool {
+    name == "aria2-next.log" || name.starts_with("aria2-next.log.")
+}
+
+fn diagnostic_log_zip_path(name: &str, aria2_logs_enabled: bool) -> Option<String> {
+    if is_motrix_log_file(name) {
+        Some(format!("motrix-next/{name}"))
+    } else if aria2_logs_enabled && is_aria2_log_file(name) {
+        Some(format!("aria2-next/{name}"))
+    } else {
+        None
+    }
+}
+
+fn config_aria2_logs_enabled(raw: &Value) -> bool {
+    raw.get("preferences")
+        .and_then(|prefs| prefs.get("aria2LogsEnabled"))
+        .and_then(Value::as_bool)
+        .unwrap_or(false)
+}
+
 fn redact_url_credentials(value: &str) -> String {
     match url::Url::parse(value) {
         Ok(url) => {
@@ -94,7 +119,7 @@ pub fn is_autostart_launch(lifecycle: tauri::State<'_, crate::AppLifecycleState>
     result
 }
 
-/// Truncates log files in the app log directory.
+/// Truncates managed log files in the app log directory.
 #[tauri::command]
 pub fn clear_log_file(app: AppHandle) -> Result<(), AppError> {
     let log_dir = app
@@ -109,11 +134,11 @@ pub fn clear_log_file(app: AppHandle) -> Result<(), AppError> {
         .flatten()
     {
         let path = entry.path();
-        let is_log = path
-            .extension()
-            .and_then(|ext| ext.to_str())
-            .is_some_and(|ext| ext.eq_ignore_ascii_case("log"));
-        if path.is_file() && is_log {
+        let name = path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .unwrap_or("");
+        if path.is_file() && (is_motrix_log_file(name) || is_aria2_log_file(name)) {
             std::fs::write(&path, "")
                 .map_err(|e| AppError::Io(format!("Failed to clear log: {e}")))?;
             log::info!("log file cleared: {}", path.display());
@@ -126,7 +151,8 @@ pub fn clear_log_file(app: AppHandle) -> Result<(), AppError> {
 /// into a ZIP archive at the user-specified path (chosen via a save dialog
 /// on the frontend). Includes:
 /// - `system-info.json` with enriched machine/runtime context for diagnostics
-/// - All log files from the app log directory
+/// - Motrix Next logs under `motrix-next/`
+/// - Aria2 Next logs under `aria2-next/` when enabled
 /// - `config.json` user configuration snapshot for issue reproduction
 ///
 /// Returns the full path to the created ZIP file.
@@ -149,6 +175,33 @@ pub async fn export_diagnostic_logs(app: AppHandle, save_path: String) -> Result
     let options = zip::write::SimpleFileOptions::default()
         .compression_method(zip::CompressionMethod::Deflated);
 
+    let data_dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|e| AppError::Io(e.to_string()))?;
+    let config_path = data_dir.join("config.json");
+    let raw_config = if config_path.exists() {
+        match std::fs::read(&config_path) {
+            Ok(content) => match serde_json::from_slice::<Value>(&content) {
+                Ok(value) => Some(value),
+                Err(e) => {
+                    log::warn!("diagnostic export: config parse failed, omitting raw config: {e}");
+                    None
+                }
+            },
+            Err(e) => {
+                log::warn!("diagnostic export: config read failed: {e}");
+                None
+            }
+        }
+    } else {
+        None
+    };
+    let aria2_logs_enabled = raw_config
+        .as_ref()
+        .map(config_aria2_logs_enabled)
+        .unwrap_or(false);
+
     // ── System info: enriched machine context for diagnostics ────────
     let pkg = app.package_info();
     let engine_pid = app
@@ -166,6 +219,7 @@ pub async fn export_diagnostic_logs(app: AppHandle, save_path: String) -> Result
         "app_version": pkg.version.to_string(),
         "app_name": pkg.name,
         "log_level": format!("{}", crate::read_log_level()),
+        "aria2_next_logs_enabled": aria2_logs_enabled,
         "engine_pid": engine_pid,
         "webkit_dmabuf_disabled": std::env::var("WEBKIT_DISABLE_DMABUF_RENDERER")
             .unwrap_or_default(),
@@ -188,10 +242,13 @@ pub async fn export_diagnostic_logs(app: AppHandle, save_path: String) -> Result
         let path = entry.path();
         if path.is_file() {
             let name = path.file_name().unwrap_or_default().to_string_lossy();
+            let Some(zip_name) = diagnostic_log_zip_path(&name, aria2_logs_enabled) else {
+                continue;
+            };
             let content = std::fs::read(&path)
                 .map_err(|e| AppError::Io(format!("Failed to read {}: {}", name, e)))?;
             zip_writer
-                .start_file(name.to_string(), options)
+                .start_file(zip_name, options)
                 .map_err(|e| AppError::Io(format!("Failed to add {} to zip: {}", name, e)))?;
             std::io::Write::write_all(&mut zip_writer, &content)
                 .map_err(|e| AppError::Io(format!("Failed to write {}: {}", name, e)))?;
@@ -199,27 +256,9 @@ pub async fn export_diagnostic_logs(app: AppHandle, save_path: String) -> Result
     }
 
     // ── Config snapshot: user preferences for issue reproduction ─────
-    let data_dir = app
-        .path()
-        .app_data_dir()
-        .map_err(|e| AppError::Io(e.to_string()))?;
-    let config_path = data_dir.join("config.json");
-    if config_path.exists() {
-        let config_content = std::fs::read(&config_path)
-            .map_err(|e| AppError::Io(format!("Failed to read config: {}", e)))?;
-        let sanitized = match serde_json::from_slice::<Value>(&config_content) {
-            Ok(value) => serde_json::to_vec_pretty(&sanitize_config_snapshot(&value))
-                .map_err(|e| AppError::Io(format!("Failed to sanitize config: {}", e)))?,
-            Err(e) => {
-                log::warn!("diagnostic export: config parse failed, omitting raw config: {e}");
-                serde_json::to_vec_pretty(&serde_json::json!({
-                    "error": "Failed to sanitize config snapshot"
-                }))
-                .map_err(|serr| {
-                    AppError::Io(format!("Failed to serialize config fallback: {}", serr))
-                })?
-            }
-        };
+    if let Some(value) = raw_config {
+        let sanitized = serde_json::to_vec_pretty(&sanitize_config_snapshot(&value))
+            .map_err(|e| AppError::Io(format!("Failed to sanitize config: {}", e)))?;
         zip_writer
             .start_file("config.json", options)
             .map_err(|e| AppError::Io(format!("Failed to add config.json: {}", e)))?;
@@ -284,6 +323,48 @@ mod export_tests {
                 .and_then(Value::as_str),
             Some("http://[REDACTED]@example.com:8080")
         );
+    }
+
+    #[test]
+    fn diagnostic_log_zip_path_separates_motrix_and_enabled_aria2_logs() {
+        assert_eq!(
+            diagnostic_log_zip_path("motrix-next.log", true),
+            Some("motrix-next/motrix-next.log".to_string())
+        );
+        assert_eq!(
+            diagnostic_log_zip_path("motrix-next.log.1", true),
+            Some("motrix-next/motrix-next.log.1".to_string())
+        );
+        assert_eq!(
+            diagnostic_log_zip_path("aria2-next.log", true),
+            Some("aria2-next/aria2-next.log".to_string())
+        );
+        assert_eq!(
+            diagnostic_log_zip_path("aria2-next.log.1", true),
+            Some("aria2-next/aria2-next.log.1".to_string())
+        );
+        assert_eq!(diagnostic_log_zip_path("other.log", true), None);
+    }
+
+    #[test]
+    fn diagnostic_log_zip_path_omits_aria2_logs_when_disabled() {
+        assert_eq!(
+            diagnostic_log_zip_path("motrix-next.log", false),
+            Some("motrix-next/motrix-next.log".to_string())
+        );
+        assert_eq!(diagnostic_log_zip_path("aria2-next.log", false), None);
+        assert_eq!(diagnostic_log_zip_path("aria2-next.log.1", false), None);
+    }
+
+    #[test]
+    fn config_aria2_logs_enabled_defaults_to_false() {
+        assert!(!config_aria2_logs_enabled(&serde_json::json!({})));
+        assert!(!config_aria2_logs_enabled(&serde_json::json!({
+            "preferences": { "aria2LogsEnabled": false }
+        })));
+        assert!(config_aria2_logs_enabled(&serde_json::json!({
+            "preferences": { "aria2LogsEnabled": true }
+        })));
     }
 }
 

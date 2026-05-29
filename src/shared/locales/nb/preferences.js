@@ -226,6 +226,8 @@ export default {
   'export-diagnostic-logs-failed': 'Kunne ikke eksportere logger',
   'log-level': 'Loggnivå',
   'log-level-restart-confirm': 'Endring av loggnivå vil tre i kraft etter omstart av appen.',
+  'aria2-logs': 'Aria2 Next-logger',
+  'aria2-logs-hint': 'Lagrer detaljerte motorlogger for diagnostikk.',
   'restart-now': 'Start på nytt nå',
   'db-integrity-check': 'Integritetssjekk',
   'db-integrity-check-running': 'Sjekker databaseintegritet...',

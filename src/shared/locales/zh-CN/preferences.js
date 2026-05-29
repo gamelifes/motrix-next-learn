@@ -219,6 +219,8 @@ export default {
   'export-diagnostic-logs-failed': '导出日志失败',
   'log-level': '日志级别',
   'log-level-restart-confirm': '日志级别更改将在重启应用后生效。',
+  'aria2-logs': 'Aria2 Next 日志',
+  'aria2-logs-hint': '记录详细引擎日志，便于诊断。',
   'restart-now': '立即重启',
   'db-integrity-check': '完整性检查',
   'db-integrity-check-running': '正在检查数据库完整性...',

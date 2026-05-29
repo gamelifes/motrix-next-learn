@@ -225,6 +225,8 @@ export default {
   'export-diagnostic-logs-failed': 'Failed to export logs',
   'log-level': 'Log Level',
   'log-level-restart-confirm': 'Log level change will take effect after restarting the app.',
+  'aria2-logs': 'Aria2 Next Logs',
+  'aria2-logs-hint': 'Records detailed engine logs for diagnostics.',
   'restart-now': 'Restart Now',
   'db-integrity-check': 'Integrity Check',
   'db-integrity-check-running': 'Checking database integrity...',

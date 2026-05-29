@@ -231,6 +231,8 @@ export default {
   'log-level': 'Niveau de journalisation',
   'log-level-restart-confirm':
     "Le changement du niveau de journalisation prendra effet après le redémarrage de l'application.",
+  'aria2-logs': 'Journaux Aria2 Next',
+  'aria2-logs-hint': 'Enregistre les journaux détaillés du moteur pour le diagnostic.',
   'restart-now': 'Redémarrer maintenant',
   'db-integrity-check': "Vérification d'intégrité",
   'db-integrity-check-running': "Vérification de l'intégrité de la base de données...",

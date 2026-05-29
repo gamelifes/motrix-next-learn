@@ -228,6 +228,8 @@ export default {
   'export-diagnostic-logs-failed': 'Exporteren van logboeken mislukt',
   'log-level': 'Logniveau',
   'log-level-restart-confirm': 'De wijziging van het logniveau wordt toegepast na het herstarten van de app.',
+  'aria2-logs': 'Aria2 Next-logboeken',
+  'aria2-logs-hint': 'Registreert gedetailleerde engine-logboeken voor diagnose.',
   'restart-now': 'Nu herstarten',
   'db-integrity-check': 'Integriteitscontrole',
   'db-integrity-check-running': 'Databaseintegriteit controleren...',

@@ -222,6 +222,8 @@ export default {
   'export-diagnostic-logs-failed': 'ไม่สามารถส่งออกบันทึกได้',
   'log-level': 'ระดับบันทึก',
   'log-level-restart-confirm': 'การเปลี่ยนระดับบันทึกจะมีผลหลังจากรีสตาร์ทแอป',
+  'aria2-logs': 'บันทึก Aria2 Next',
+  'aria2-logs-hint': 'บันทึกรายละเอียดของเอนจินเพื่อการวินิจฉัย',
   'restart-now': 'รีสตาร์ทตอนนี้',
   'db-integrity-check': 'ตรวจสอบความสมบูรณ์',
   'db-integrity-check-running': 'กำลังตรวจสอบความสมบูรณ์ของฐานข้อมูล...',

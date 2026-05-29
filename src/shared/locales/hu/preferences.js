@@ -228,6 +228,8 @@ export default {
   'export-diagnostic-logs-failed': 'Naplók exportálása sikertelen',
   'log-level': 'Naplózási szint',
   'log-level-restart-confirm': 'A naplózási szint változása az alkalmazás újraindítása után lép érvénybe.',
+  'aria2-logs': 'Aria2 Next naplók',
+  'aria2-logs-hint': 'Részletes motornaplókat rögzít diagnosztikához.',
   'restart-now': 'Újraindítás most',
   'db-integrity-check': 'Integritás-ellenőrzés',
   'db-integrity-check-running': 'Adatbázis integritásának ellenőrzése...',

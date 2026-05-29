@@ -308,6 +308,7 @@ export interface AppConfig {
   traySpeedometer: boolean
   dockBadgeSpeed: boolean
   logLevel: string
+  aria2LogsEnabled: boolean
   engineBinPath: string
   /** Directory for internal temporary engine files. Empty means the OS temporary directory. */
   tempFilesDir: string

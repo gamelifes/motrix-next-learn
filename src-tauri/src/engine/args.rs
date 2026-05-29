@@ -114,6 +114,7 @@ pub(crate) fn build_start_args(
     session_exists: bool,
     log_file_path: &str,
     log_level: &str,
+    aria2_logs_enabled: bool,
 ) -> Vec<String> {
     let mut args: Vec<String> = Vec::new();
 
@@ -128,9 +129,16 @@ pub(crate) fn build_start_args(
         args.push(format!("--input-file={}", session_path));
     }
 
-    args.push(format!("--log-file={log_file_path}"));
+    let engine_log_file = if aria2_logs_enabled {
+        log_file_path
+    } else {
+        "off"
+    };
+    args.push(format!("--log-file={engine_log_file}"));
     args.push(format!("--log-level={log_level}"));
-    args.push(format!("--console-level={log_level}"));
+    args.push("--console-level=warn".to_string());
+    args.push("--log-max-size=10M".to_string());
+    args.push("--log-max-files=2".to_string());
     // Motrix owns torrent parsing and file selection. Remote .torrent URLs
     // must not auto-follow into engine-created BitTorrent tasks via addUri.
     args.push("--torrent-metadata=save".to_string());
@@ -154,6 +162,13 @@ pub(crate) fn build_start_args(
             }
 
             if key == "torrent-metadata" {
+                continue;
+            }
+
+            if matches!(
+                key.as_str(),
+                "log-file" | "log-level" | "console-level" | "log-max-size" | "log-max-files"
+            ) {
                 continue;
             }
 
@@ -220,6 +235,7 @@ mod tests {
             false,
             "/tmp/aria2-next.log",
             "debug",
+            true,
         );
         assert!(args.iter().any(|a| a == "--dir=/tmp"));
         assert!(args.iter().any(|a| a == "--split=16"));
@@ -234,11 +250,14 @@ mod tests {
             false,
             "/tmp/aria2-next.log",
             "warn",
+            true,
         );
 
         assert!(args.iter().any(|a| a == "--log-file=/tmp/aria2-next.log"));
         assert!(args.iter().any(|a| a == "--log-level=warn"));
         assert!(args.iter().any(|a| a == "--console-level=warn"));
+        assert!(args.iter().any(|a| a == "--log-max-size=10M"));
+        assert!(args.iter().any(|a| a == "--log-max-files=2"));
     }
 
     #[test]
@@ -256,16 +275,36 @@ mod tests {
             false,
             "/tmp/managed.log",
             "debug",
+            true,
         );
 
         assert!(args.iter().any(|a| a == "--log-file=/tmp/managed.log"));
         assert!(args.iter().any(|a| a == "--log-level=debug"));
-        assert!(args.iter().any(|a| a == "--console-level=debug"));
+        assert!(args.iter().any(|a| a == "--console-level=warn"));
         assert!(!args.iter().any(|a| a == "--log-file=/tmp/user.log"));
         assert!(!args.iter().any(|a| a == "--log-level=error"));
         assert!(!args.iter().any(|a| a == "--console-level=off"));
-        assert!(!args.iter().any(|a| a.starts_with("--log-max-size=")));
-        assert!(!args.iter().any(|a| a.starts_with("--log-max-files=")));
+        assert!(!args.iter().any(|a| a == "--log-max-size=1M"));
+        assert!(!args.iter().any(|a| a == "--log-max-files=1"));
+    }
+
+    #[test]
+    fn build_args_disables_aria2_file_log_when_not_enabled() {
+        let args = build_start_args(
+            &json!({}),
+            None,
+            "/tmp/s.session",
+            false,
+            "/tmp/aria2-next.log",
+            "debug",
+            false,
+        );
+
+        assert!(args.iter().any(|a| a == "--log-file=off"));
+        assert!(args.iter().any(|a| a == "--log-level=debug"));
+        assert!(args.iter().any(|a| a == "--console-level=warn"));
+        assert!(args.iter().any(|a| a == "--log-max-size=10M"));
+        assert!(args.iter().any(|a| a == "--log-max-files=2"));
     }
 
     #[test]
@@ -279,6 +318,7 @@ mod tests {
             false,
             "/tmp/aria2-next.log",
             "debug",
+            true,
         );
 
         assert!(args.iter().any(|a| a == "--torrent-metadata=save"));
@@ -295,6 +335,7 @@ mod tests {
             false,
             "/tmp/aria2-next.log",
             "debug",
+            true,
         );
         assert!(!args.iter().any(|a| a.contains("not-a-real-key")));
         assert!(!args.iter().any(|a| a.contains("keep-seeding")));
@@ -314,6 +355,7 @@ mod tests {
             false,
             "/tmp/aria2-next.log",
             "debug",
+            true,
         );
         assert!(!args.iter().any(|a| a.contains("not-supported")));
         assert!(!args.iter().any(|a| a.contains("stale-local-key")));
@@ -330,6 +372,7 @@ mod tests {
             false,
             "/tmp/aria2-next.log",
             "debug",
+            true,
         );
         assert!(!args.iter().any(|a| a.contains("seed-time")));
     }
@@ -344,6 +387,7 @@ mod tests {
             false,
             "/tmp/aria2-next.log",
             "debug",
+            true,
         );
         assert!(args.iter().any(|a| a == "--seed-ratio=0"));
     }
@@ -358,6 +402,7 @@ mod tests {
             false,
             "/tmp/aria2-next.log",
             "debug",
+            true,
         );
         assert!(!args.iter().any(|a| a.contains("--dir=")));
     }
@@ -371,6 +416,7 @@ mod tests {
             true,
             "/tmp/aria2-next.log",
             "debug",
+            true,
         );
         assert!(args.iter().any(|a| a == "--input-file=/tmp/s.session"));
         assert!(args.iter().any(|a| a == "--save-session=/tmp/s.session"));
@@ -385,6 +431,7 @@ mod tests {
             false,
             "/tmp/aria2-next.log",
             "debug",
+            true,
         );
         assert!(!args.iter().any(|a| a.contains("input-file")));
         assert!(args.iter().any(|a| a == "--save-session=/tmp/s.session"));
@@ -399,6 +446,7 @@ mod tests {
             false,
             "/tmp/aria2-next.log",
             "debug",
+            true,
         );
         assert!(args.iter().any(|a| a == "--conf-path=/etc/aria2.conf"));
     }
@@ -412,6 +460,7 @@ mod tests {
             false,
             "/tmp/aria2-next.log",
             "debug",
+            true,
         );
         assert!(args.iter().any(|a| a == "--enable-rpc=true"));
         assert!(args.iter().any(|a| a == "--rpc-listen-all=true"));
@@ -434,6 +483,7 @@ mod tests {
             false,
             "/tmp/aria2-next.log",
             "debug",
+            true,
         );
         assert!(!args.iter().any(|a| a.contains("enable-rpc")));
     }
@@ -449,6 +499,7 @@ mod tests {
             false,
             "/tmp/aria2-next.log",
             "debug",
+            true,
         );
         assert!(!args.iter().any(|a| a.starts_with("--seed-time")));
         assert!(args.iter().any(|a| a == "--seed-ratio=0"));
@@ -464,6 +515,7 @@ mod tests {
             false,
             "/tmp/aria2-next.log",
             "debug",
+            true,
         );
         assert!(args.iter().any(|a| a == "--seed-time=30"));
         assert!(args.iter().any(|a| a == "--seed-ratio=1.5"));
@@ -480,6 +532,7 @@ mod tests {
             false,
             "/tmp/aria2-next.log",
             "debug",
+            true,
         );
         assert!(args.iter().any(|a| a == "--seed-time=60"));
         assert!(args.iter().any(|a| a == "--seed-ratio=2.0"));
@@ -495,6 +548,7 @@ mod tests {
             false,
             "/tmp/aria2-next.log",
             "debug",
+            true,
         );
         assert!(args.iter().any(|a| a == "--continue=true"));
     }
@@ -509,6 +563,7 @@ mod tests {
             false,
             "/tmp/aria2-next.log",
             "debug",
+            true,
         );
         assert!(args.iter().any(|a| a == "--continue=false"));
     }
@@ -523,6 +578,7 @@ mod tests {
             false,
             "/tmp/aria2-next.log",
             "debug",
+            true,
         );
         assert!(args.iter().any(|a| a == "--max-concurrent-downloads=5"));
     }
@@ -536,6 +592,7 @@ mod tests {
             false,
             "/tmp/aria2-next.log",
             "debug",
+            true,
         );
         assert!(!args.iter().any(|a| a.starts_with("--conf-path")));
     }
@@ -550,6 +607,7 @@ mod tests {
             false,
             "/tmp/aria2-next.log",
             "debug",
+            true,
         );
         assert!(!args.iter().any(|a| a.contains("--dir=")));
         // Arrays are not handled by the match — skipped via `_ => continue`
@@ -571,6 +629,7 @@ mod tests {
             false,
             "/tmp/aria2-next.log",
             "debug",
+            true,
         );
         assert!(!args.iter().any(|a| a.contains("force-save")));
     }
@@ -585,6 +644,7 @@ mod tests {
             false,
             "/tmp/aria2-next.log",
             "debug",
+            true,
         );
         assert!(!args.iter().any(|a| a.contains("force-save")));
     }
@@ -599,6 +659,7 @@ mod tests {
             false,
             "/tmp/aria2-next.log",
             "debug",
+            true,
         );
         assert!(
             !args.iter().any(|a| a.contains("all-proxy")),
@@ -617,6 +678,7 @@ mod tests {
             false,
             "/tmp/aria2-next.log",
             "debug",
+            true,
         );
         assert!(
             !args.iter().any(|a| a.contains("all-proxy")),
@@ -634,6 +696,7 @@ mod tests {
             false,
             "/tmp/aria2-next.log",
             "debug",
+            true,
         );
         assert!(
             !args.iter().any(|a| a.contains("all-proxy")),
@@ -651,6 +714,7 @@ mod tests {
             false,
             "/tmp/aria2-next.log",
             "debug",
+            true,
         );
         assert!(
             args.iter()
@@ -669,6 +733,7 @@ mod tests {
             false,
             "/tmp/aria2-next.log",
             "debug",
+            true,
         );
         assert!(
             args.iter().any(|a| a == "--all-proxy=127.0.0.1:8080"),
@@ -686,6 +751,7 @@ mod tests {
             false,
             "/tmp/aria2-next.log",
             "debug",
+            true,
         );
         assert!(args.iter().any(|a| a == "--dns-resolver=async"));
     }

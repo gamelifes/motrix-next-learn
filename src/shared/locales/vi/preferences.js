@@ -225,6 +225,8 @@ export default {
   'export-diagnostic-logs-failed': 'Xuất nhật ký thất bại',
   'log-level': 'Cấp độ nhật ký',
   'log-level-restart-confirm': 'Thay đổi cấp độ nhật ký sẽ có hiệu lực sau khi khởi động lại ứng dụng.',
+  'aria2-logs': 'Nhật ký Aria2 Next',
+  'aria2-logs-hint': 'Ghi nhật ký engine chi tiết để chẩn đoán.',
   'restart-now': 'Khởi động lại ngay',
   'db-integrity-check': 'Kiểm tra tính toàn vẹn',
   'db-integrity-check-running': 'Đang kiểm tra tính toàn vẹn cơ sở dữ liệu...',

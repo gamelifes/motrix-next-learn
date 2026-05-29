@@ -177,6 +177,7 @@ describe('buildAdvancedForm', () => {
     expect(form.listenPort).toBe(29120)
     expect(form.dhtListenPort).toBe(29130)
     expect(form.logLevel).toBe('debug')
+    expect(form.aria2LogsEnabled).toBe(false)
     expect(form.enableUpnp).toBe(true)
   })
 
@@ -255,6 +256,7 @@ describe('buildAdvancedSystemConfig', () => {
     dhtListenPort: 29130,
     userAgent: '',
     logLevel: 'warn',
+    aria2LogsEnabled: false,
     tempFilesDir: '',
     hardwareRendering: false,
     extensionApiPort: 29110,
@@ -352,6 +354,7 @@ describe('transformAdvancedForStore', () => {
       dhtListenPort: 29130,
       userAgent: '',
       logLevel: 'warn',
+      aria2LogsEnabled: false,
       tempFilesDir: '',
       hardwareRendering: false,
       extensionApiPort: 29110,
@@ -394,6 +397,7 @@ describe('transformAdvancedForStore', () => {
       dhtListenPort: 29130,
       userAgent: '',
       logLevel: 'warn',
+      aria2LogsEnabled: false,
       tempFilesDir: '',
       hardwareRendering: false,
       extensionApiPort: 29110,
@@ -439,6 +443,7 @@ describe('transformAdvancedForStore', () => {
       dhtListenPort: 29130,
       userAgent: '',
       logLevel: 'warn',
+      aria2LogsEnabled: false,
       tempFilesDir: '',
       hardwareRendering: false,
       extensionApiPort: 29110,
@@ -585,6 +590,7 @@ describe('validateAdvancedForm', () => {
     dhtListenPort: 29130,
     userAgent: '',
     logLevel: 'warn',
+    aria2LogsEnabled: false,
     tempFilesDir: '',
     hardwareRendering: false,
     extensionApiPort: 29110,
@@ -759,6 +765,7 @@ describe('proxy configuration invariants', () => {
       dhtListenPort: 29130,
       userAgent: '',
       logLevel: 'debug',
+      aria2LogsEnabled: false,
       tempFilesDir: '',
       hardwareRendering: false,
       extensionApiPort: 29110,
@@ -809,6 +816,7 @@ describe('proxy configuration invariants', () => {
       dhtListenPort: 29130,
       userAgent: '',
       logLevel: 'debug',
+      aria2LogsEnabled: false,
       tempFilesDir: '',
       hardwareRendering: false,
       extensionApiPort: 29110,
@@ -858,6 +866,7 @@ describe('proxy configuration invariants', () => {
       dhtListenPort: 29130,
       userAgent: '',
       logLevel: 'debug',
+      aria2LogsEnabled: false,
       tempFilesDir: '',
       hardwareRendering: false,
       extensionApiPort: 29110,
@@ -925,6 +934,7 @@ describe('transformAdvancedForStore — hardwareRendering', () => {
       dhtListenPort: 29130,
       userAgent: '',
       logLevel: 'warn',
+      aria2LogsEnabled: false,
       tempFilesDir: '',
       hardwareRendering: true,
       extensionApiPort: 29110,

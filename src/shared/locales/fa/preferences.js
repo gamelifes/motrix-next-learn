@@ -226,6 +226,8 @@ export default {
   'export-diagnostic-logs-failed': 'صادرات گزارش‌ها ناموفق بود',
   'log-level': 'سطح گزارش',
   'log-level-restart-confirm': 'تغییر سطح گزارش پس از راه‌اندازی مجدد برنامه اعمال خواهد شد.',
+  'aria2-logs': 'گزارش‌های Aria2 Next',
+  'aria2-logs-hint': 'گزارش‌های دقیق موتور را برای عیب‌یابی ثبت می‌کند.',
   'restart-now': 'الان راه‌اندازی مجدد',
   'db-integrity-check': 'بررسی یکپارچگی',
   'db-integrity-check-running': 'در حال بررسی یکپارچگی پایگاه داده...',

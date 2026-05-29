@@ -227,6 +227,8 @@ export default {
   'export-diagnostic-logs-failed': 'Не вдалося експортувати журнали',
   'log-level': 'Рівень журналювання',
   'log-level-restart-confirm': 'Зміна рівня журналювання набуде чинності після перезапуску додатка.',
+  'aria2-logs': 'Журнали Aria2 Next',
+  'aria2-logs-hint': 'Записує докладні журнали рушія для діагностики.',
   'restart-now': 'Перезапустити зараз',
   'db-integrity-check': 'Перевірка цілісності',
   'db-integrity-check-running': 'Перевірка цілісності бази даних...',

@@ -48,6 +48,7 @@ const userKeys = [
   'last-sync-tracker-time',
   'locale',
   'log-level',
+  'aria2-logs-enabled',
   'lightweight-mode',
   'max-tries',
 
@@ -193,6 +194,7 @@ const needRestartKeys = [
   'bt-peer-exchange-enabled',
   'bt-require-crypto',
   'dht-listen-port',
+  'aria2-logs-enabled',
   'dns-resolver',
   'ed2k-listen-port',
   'ed2k-node-list',

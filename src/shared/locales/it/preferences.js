@@ -230,6 +230,8 @@ export default {
   'export-diagnostic-logs-failed': 'Esportazione dei registri fallita',
   'log-level': 'Livello di registro',
   'log-level-restart-confirm': "La modifica del livello di registro avrà effetto dopo il riavvio dell'applicazione.",
+  'aria2-logs': 'Log Aria2 Next',
+  'aria2-logs-hint': 'Registra log dettagliati del motore per la diagnosi.',
   'restart-now': 'Riavvia ora',
   'db-integrity-check': 'Controllo integrità',
   'db-integrity-check-running': 'Controllo integrità del database in corso...',

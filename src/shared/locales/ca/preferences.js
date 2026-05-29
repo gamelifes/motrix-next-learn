@@ -229,6 +229,8 @@ export default {
   'export-diagnostic-logs-failed': 'Error en exportar els registres',
   'log-level': 'Nivell de registre',
   'log-level-restart-confirm': "El canvi de nivell de registre s'aplicarà després de reiniciar l'aplicació.",
+  'aria2-logs': 'Registres d\'Aria2 Next',
+  'aria2-logs-hint': 'Registra registres detallats del motor per al diagnòstic.',
   'restart-now': 'Reiniciar ara',
   'db-integrity-check': "Comprovació d'integritat",
   'db-integrity-check-running': 'Comprovant la integritat de la base de dades...',

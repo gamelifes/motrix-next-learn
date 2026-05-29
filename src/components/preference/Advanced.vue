@@ -636,6 +636,15 @@ onMounted(async () => {
           </NButton>
         </div>
       </NFormItem>
+      <NFormItem class="hinted-form-item">
+        <template #label>
+          <div class="form-label-with-hint">
+            <span>{{ t('preferences.aria2-logs') }}</span>
+            <div class="info-text">{{ t('preferences.aria2-logs-hint') }}</div>
+          </div>
+        </template>
+        <NSwitch v-model:value="form.aria2LogsEnabled" />
+      </NFormItem>
 
       <NDivider title-placement="left">{{ t('preferences.history-section') }}</NDivider>
       <NFormItem :show-label="false">

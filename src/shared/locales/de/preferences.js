@@ -228,6 +228,8 @@ export default {
   'export-diagnostic-logs-failed': 'Export der Protokolle fehlgeschlagen',
   'log-level': 'Protokollstufe',
   'log-level-restart-confirm': 'Die Änderung der Protokollstufe wird nach dem Neustart der App wirksam.',
+  'aria2-logs': 'Aria2 Next-Protokolle',
+  'aria2-logs-hint': 'Zeichnet detaillierte Engine-Protokolle zur Diagnose auf.',
   'restart-now': 'Jetzt neu starten',
   'db-integrity-check': 'Integritätsprüfung',
   'db-integrity-check-running': 'Datenbankintegrität wird geprüft...',

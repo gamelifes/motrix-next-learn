@@ -228,6 +228,8 @@ export default {
   'export-diagnostic-logs-failed': 'Günlükler dışa aktarılamadı',
   'log-level': 'Günlük seviyesi',
   'log-level-restart-confirm': 'Günlük seviyesi değişikliği uygulamayı yeniden başlattıktan sonra uygulanacaktır.',
+  'aria2-logs': 'Aria2 Next Günlükleri',
+  'aria2-logs-hint': 'Tanılama için ayrıntılı motor günlükleri kaydeder.',
   'restart-now': 'Şimdi yeniden başlat',
   'db-integrity-check': 'Bütünlük kontrolü',
   'db-integrity-check-running': 'Veritabanı bütünlüğü kontrol ediliyor...',

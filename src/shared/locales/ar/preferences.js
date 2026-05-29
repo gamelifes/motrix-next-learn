@@ -224,6 +224,8 @@ export default {
   'export-diagnostic-logs-failed': 'فشل تصدير السجلات',
   'log-level': 'مستوى السجل',
   'log-level-restart-confirm': 'سيتم تطبيق تغيير مستوى السجل بعد إعادة تشغيل التطبيق.',
+  'aria2-logs': 'سجلات Aria2 Next',
+  'aria2-logs-hint': 'يسجل سجلات مفصلة للمحرك لتسهيل التشخيص.',
   'restart-now': 'إعادة التشغيل الآن',
   'db-integrity-check': 'فحص السلامة',
   'db-integrity-check-running': 'جارٍ فحص سلامة قاعدة البيانات...',

@@ -227,6 +227,8 @@ export default {
   'export-diagnostic-logs-failed': 'Exportul jurnalelor a eșuat',
   'log-level': 'Nivel jurnal',
   'log-level-restart-confirm': 'Modificarea nivelului de jurnal va fi aplicată după repornirea aplicației.',
+  'aria2-logs': 'Jurnale Aria2 Next',
+  'aria2-logs-hint': 'Înregistrează jurnale detaliate ale motorului pentru diagnosticare.',
   'restart-now': 'Repornește acum',
   'db-integrity-check': 'Verificare integritate',
   'db-integrity-check-running': 'Verificarea integrității bazei de date...',
