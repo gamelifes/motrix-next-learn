@@ -354,7 +354,7 @@ export const DEFAULT_APP_CONFIG = {
   userAgent:
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36',
   logLevel: 'debug',
-  aria2LogLevel: 'warn',
+  aria2LogLevel: 'notice',
   cookie: '',
   runMode: '',
   engineBinPath: '',

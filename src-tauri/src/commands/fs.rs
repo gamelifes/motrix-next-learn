@@ -464,7 +464,7 @@ mod export_tests {
 
     #[test]
     fn config_aria2_log_level_reads_current_field_only() {
-        assert_eq!(config_aria2_log_level(None), "warn");
+        assert_eq!(config_aria2_log_level(None), "notice");
         assert_eq!(
             config_aria2_log_level(Some(&serde_json::json!({
                 "preferences": { "aria2LogLevel": "debug" }
@@ -481,13 +481,13 @@ mod export_tests {
             config_aria2_log_level(Some(&serde_json::json!({
                 "preferences": { "aria2LogLevel": "verbose" }
             }))),
-            "warn"
+            "notice"
         );
         assert_eq!(
             config_aria2_log_level(Some(&serde_json::json!({
                 "preferences": { "aria2LogsEnabled": false }
             }))),
-            "warn"
+            "notice"
         );
     }
 }

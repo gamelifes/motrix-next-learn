@@ -177,7 +177,7 @@ describe('buildAdvancedForm', () => {
     expect(form.listenPort).toBe(29120)
     expect(form.dhtListenPort).toBe(29130)
     expect(form.logLevel).toBe('debug')
-    expect(form.aria2LogLevel).toBe('warn')
+    expect(form.aria2LogLevel).toBe('notice')
     expect(form.enableUpnp).toBe(true)
   })
 

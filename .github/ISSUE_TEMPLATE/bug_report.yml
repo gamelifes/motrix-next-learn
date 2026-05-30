@@ -1,7 +1,7 @@
 name: 🐛 Bug Report
 description: Report a bug in Motrix Next
-title: "[BUG]: "
-labels: ["bug"]
+title: '[BUG]: '
+labels: ['bug']
 body:
   - type: markdown
     attributes:
@@ -21,8 +21,8 @@ body:
     id: version
     attributes:
       label: Motrix Next Version
-      description: "The version shown in About panel (e.g. 3.4.1)"
-      placeholder: "3.4.1"
+      description: 'The version shown in About panel (e.g. 3.4.1)'
+      placeholder: '3.4.1'
     validations:
       required: true
 
@@ -46,8 +46,8 @@ body:
     id: os-version
     attributes:
       label: OS Version
-      description: "e.g. macOS 15.3, Windows 11 24H2, Ubuntu 24.04"
-      placeholder: "macOS 15.3"
+      description: 'e.g. macOS 15.3, Windows 11 24H2, Ubuntu 24.04'
+      placeholder: 'macOS 15.3'
     validations:
       required: true
 
@@ -68,7 +68,7 @@ body:
     attributes:
       label: Diagnostic Logs
       description: |
-        Please export logs via **Advanced Settings → Export Diagnostic Logs**. Keep **Motrix Next Log Level** at `debug` and **Aria2 Next Log Level** at `info` unless maintainers ask otherwise.
+        Please export logs via **Advanced Settings → Export Diagnostic Logs**. Keep **Motrix Next Log Level** at `debug` and **Aria2 Next Log Level** at `notice` unless maintainers ask otherwise.
         You can upload the exported `.zip` file directly here — no need to extract it.
     validations:
       required: true

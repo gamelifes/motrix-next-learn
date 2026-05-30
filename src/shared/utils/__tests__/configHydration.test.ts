@@ -156,7 +156,7 @@ describe('hydrateAppConfig', () => {
     expect(UPDATE_CHANNELS).toContain(DEFAULT_APP_CONFIG.updateChannel)
     expect(APP_LOG_LEVELS).toContain(DEFAULT_APP_CONFIG.logLevel)
     expect(ARIA2_LOG_LEVELS).toContain(DEFAULT_APP_CONFIG.aria2LogLevel)
-    expect(DEFAULT_APP_CONFIG.aria2LogLevel).toBe('warn')
+    expect(DEFAULT_APP_CONFIG.aria2LogLevel).toBe('notice')
     expect(FILE_ALLOCATION_OPTIONS).toContain(DEFAULT_APP_CONFIG.fileAllocation)
     expect(DEFAULT_APP_CONFIG.proxy.scope).toEqual(PROXY_SCOPE_OPTIONS)
   })
