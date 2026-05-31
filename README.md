@@ -1,11 +1,6 @@
 <div align="center">
   <img src="src/assets/logo.png" alt="Motrix Next" width="128" height="128" style="border-radius: 24px;" />
-  <h1>
-    Motrix Next<br />
-    <a href="https://trendshift.io/repositories/24525">
-      <img src="https://trendshift.io/api/badge/repositories/24525" alt="AnInsomniacy/motrix-next on Trendshift" width="250" height="55" />
-    </a>
-  </h1>
+  <h1>Motrix Next</h1>
   <p>A full-featured download manager — rebuilt from the ground up.</p>
 
 [![GitHub release](https://img.shields.io/github/v/release/AnInsomniacy/motrix-next.svg)](https://github.com/AnInsomniacy/motrix-next/releases)
@@ -17,6 +12,10 @@
 
 [![Website](https://img.shields.io/badge/Website-E0A422?style=for-the-badge&logo=safari&logoColor=white)](https://motrix-next.pages.dev)
 [![Browser Extension](https://img.shields.io/badge/Extension-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)](https://github.com/AnInsomniacy/motrix-next-extension)
+
+<a href="https://trendshift.io/repositories/24525">
+  <img src="https://trendshift.io/api/badge/repositories/24525" alt="AnInsomniacy/motrix-next on Trendshift" width="250" height="55" />
+</a>
 
 </div>
 
