@@ -106,8 +106,6 @@ pub struct Aria2Ed2kInfo {
     #[serde(default)]
     pub search_result_count: Option<String>,
     #[serde(default)]
-    pub shared_file_count: Option<String>,
-    #[serde(default)]
     pub uploading_peer_count: Option<String>,
     #[serde(default)]
     pub waiting_upload_peer_count: Option<String>,

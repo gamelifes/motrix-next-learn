@@ -44,7 +44,6 @@ const NON_HOT_RELOADABLE: &[&str] = &[
     "ed2k-node-list",
     "ed2k-server",
     "ed2k-server-list",
-    "ed2k-share-file",
     "ed2k-udp-listen-port",
     "ed2k-upload-slots",
     "listen-port",

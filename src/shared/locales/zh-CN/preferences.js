@@ -365,8 +365,6 @@ export default {
   'ed2k-server-list': 'server.met 路径',
   'ed2k-node-list': 'nodes.dat 路径',
   'ed2k-upload-slots': '上传槽位',
-  'ed2k-share-files': '共享文件',
-  'ed2k-share-files-placeholder': '每行一个本地文件路径',
   'ed2k-search': 'ED2K 搜索',
   'ed2k-search-keyword': '关键词',
   'ed2k-search-keyword-required': '请输入搜索关键词。',

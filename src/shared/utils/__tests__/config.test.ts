@@ -34,9 +34,9 @@ describe('changeKeysToKebabCase', () => {
   })
 
   it('keeps ED2K as one aria2 option prefix', () => {
-    expect(changeKeysToKebabCase({ ed2kListenPort: 4663, ed2kShareFiles: ['/tmp/shared.bin'] })).toEqual({
+    expect(changeKeysToKebabCase({ ed2kListenPort: 4663, ed2kServerList: '/tmp/server.met' })).toEqual({
       'ed2k-listen-port': 4663,
-      'ed2k-share-files': ['/tmp/shared.bin'],
+      'ed2k-server-list': '/tmp/server.met',
     })
   })
 
@@ -152,7 +152,6 @@ describe('checkIsNeedRestart', () => {
     expect(checkIsNeedRestart({ ed2kServerList: '/tmp/server.met' })).toBe(true)
     expect(checkIsNeedRestart({ ed2kNodeList: '/tmp/nodes.dat' })).toBe(true)
     expect(checkIsNeedRestart({ ed2kUploadSlots: 4 })).toBe(true)
-    expect(checkIsNeedRestart({ ed2kShareFiles: ['/tmp/shared.bin'] })).toBe(true)
   })
   it('returns false for non-restart keys', () => {
     expect(checkIsNeedRestart({ theme: 'dark' })).toBe(false)

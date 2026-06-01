@@ -19,6 +19,7 @@ import type { VNodeChild } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
 import type { Aria2Task } from '@shared/types'
 import { getTaskDisplayName } from '@shared/utils'
+import type { TaskSharingKind } from '@shared/utils/task'
 import { logger } from '@shared/logger'
 import { isMetadataTask } from '@/composables/useTaskLifecycle'
 import { renderCompletionToast } from '@/composables/useNotificationToast'
@@ -57,15 +58,16 @@ export function handleTaskComplete(task: Aria2Task, deps: NotifyDeps): void {
 }
 
 /**
- * Handle a BT download entering seeding state (download phase complete).
+ * Handle a P2P download entering shared-upload state.
  * Always sends in-app toast. Native OS notification is sent by Rust monitor.
  *
  * When action callbacks are provided, the toast includes inline buttons
  * for "Open File" and "Show in Folder".
  */
-export function handleBtComplete(task: Aria2Task, deps: NotifyDeps): void {
+export function handleSharingComplete(task: Aria2Task, kind: TaskSharingKind, deps: NotifyDeps): void {
   const taskName = getTaskDisplayName(task)
-  const body = deps.t('task.bt-download-complete-message', { taskName })
+  const bodyKey = kind === 'bt' ? 'task.bt-download-complete-message' : 'task.ed2k-download-complete-message'
+  const body = deps.t(bodyKey, { taskName })
 
   const toastContent = renderCompletionToast({
     body,
@@ -74,7 +76,7 @@ export function handleBtComplete(task: Aria2Task, deps: NotifyDeps): void {
     onShowInFolder: deps.onShowInFolder ? () => deps.onShowInFolder!(task) : undefined,
   })
   deps.messageSuccess(toastContent)
-  logger.info('TaskNotify.btComplete', `gid=${task.gid} name="${taskName}" → seeding`)
+  logger.info('TaskNotify.sharingComplete', `gid=${task.gid} kind=${kind} name="${taskName}"`)
 }
 
 /**

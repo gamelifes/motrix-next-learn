@@ -373,8 +373,6 @@ export default {
   'ed2k-server-list': 'server.met Path',
   'ed2k-node-list': 'nodes.dat Path',
   'ed2k-upload-slots': '업로드 슬롯',
-  'ed2k-share-files': '공유 파일',
-  'ed2k-share-files-placeholder': 'One local file path per line',
   'ed2k-search': 'ED2K 검색',
   'ed2k-search-keyword': '키워드',
   'ed2k-search-keyword-required': '검색어를 입력하세요.',

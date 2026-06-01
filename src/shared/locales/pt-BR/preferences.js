@@ -381,8 +381,6 @@ export default {
   'ed2k-server-list': 'server.met Path',
   'ed2k-node-list': 'nodes.dat Path',
   'ed2k-upload-slots': 'Slots de upload',
-  'ed2k-share-files': 'Arquivos compartilhados',
-  'ed2k-share-files-placeholder': 'One local file path per line',
   'ed2k-search': 'Busca ED2K',
   'ed2k-search-keyword': 'Palavra-chave',
   'ed2k-search-keyword-required': 'Insira uma palavra-chave de busca.',

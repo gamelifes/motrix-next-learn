@@ -22,7 +22,7 @@ interface TaskActionsDeps {
     removeTask: (task: Aria2Task) => Promise<unknown>
     removeTaskRecord: (task: Aria2Task) => Promise<unknown>
     restartTask: (task: Aria2Task) => Promise<unknown>
-    stopSeeding: (task: Aria2Task) => Promise<unknown>
+    stopSharing: (task: Aria2Task) => Promise<unknown>
     showTaskDetail: (task: Aria2Task) => void
     fetchList: () => Promise<unknown>
     taskList: Aria2Task[]
@@ -250,16 +250,16 @@ export function useTaskActions(deps: TaskActionsDeps) {
     }
   }
 
-  async function handleStopSeeding(task: Aria2Task) {
+  async function handleStopSharing(task: Aria2Task) {
     if (stoppingGids.value.includes(task.gid)) return
     stoppingGids.value = [...stoppingGids.value, task.gid]
     try {
-      await taskStore.stopSeeding(task)
+      await taskStore.stopSharing(task)
       stoppingGids.value = stoppingGids.value.filter((g) => g !== task.gid)
-      message.success(t('task.stop-seeding-success'))
+      message.success(t('task.stop-sharing-success'))
       await taskStore.fetchList()
     } catch (e) {
-      logger.warn('[TaskView] stopSeeding failed:', String(e))
+      logger.warn('[TaskView] stopSharing failed:', String(e))
       stoppingGids.value = stoppingGids.value.filter((g) => g !== task.gid)
     }
   }
@@ -273,6 +273,6 @@ export function useTaskActions(deps: TaskActionsDeps) {
     handleShowInfo,
     handleShowInFolder,
     handleOpenFile,
-    handleStopSeeding,
+    handleStopSharing,
   }
 }

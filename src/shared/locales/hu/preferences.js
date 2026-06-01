@@ -379,8 +379,6 @@ export default {
   'ed2k-server-list': 'server.met Path',
   'ed2k-node-list': 'nodes.dat Path',
   'ed2k-upload-slots': 'Upload Slots',
-  'ed2k-share-files': 'Shared Files',
-  'ed2k-share-files-placeholder': 'One local file path per line',
   'ed2k-search': 'ED2K Search',
   'ed2k-search-keyword': 'Keyword',
   'ed2k-search-keyword-required': 'Adjon meg egy keresési kulcsszót.',

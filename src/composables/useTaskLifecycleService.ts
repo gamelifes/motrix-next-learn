@@ -3,7 +3,7 @@
  *
  * Runs independently of TaskView and currentList. Polls aria2 for
  * active + stopped tasks and feeds them to an internal notifier for
- * completion / error / BT-seeding detection.
+ * completion / error / shared-upload detection.
  *
  * Architecture decision: this service does NOT use taskStore.fetchList()
  * because fetchList() is coupled to UI state (currentList, taskList ref,
@@ -17,6 +17,7 @@ import { createTaskNotifier } from '@/stores/task/notifications'
 import { isEngineReady } from '@/api/aria2'
 import { logger } from '@shared/logger'
 import type { Aria2Task } from '@shared/types'
+import type { TaskSharingKind } from '@shared/utils/task'
 
 /** Maximum number of stopped tasks to scan per tick. */
 const STOPPED_SLICE_LIMIT = 50
@@ -24,7 +25,7 @@ const STOPPED_SLICE_LIMIT = 50
 interface LifecycleCallbacks {
   onTaskError: (task: Aria2Task) => void
   onTaskComplete: (task: Aria2Task) => void
-  onBtComplete: (task: Aria2Task) => void
+  onSharingComplete: (task: Aria2Task, kind: TaskSharingKind) => void
 }
 
 interface LifecycleApi {

@@ -9,7 +9,8 @@ import {
   isBtMetadataTask,
   checkTaskIsBT,
   checkTaskIsEd2kSearch,
-  checkTaskIsSeeder,
+  checkTaskIsSharing,
+  getTaskSharingKind,
   getFileNameFromFile,
   getTaskDisplayName,
   buildMagnetLink,
@@ -417,17 +418,29 @@ describe('checkTaskIsEd2kSearch', () => {
   })
 })
 
-describe('checkTaskIsSeeder', () => {
-  it('returns true when BT task has seeder=true', () => {
+describe('task sharing state', () => {
+  it('identifies BT seeding without treating the helper as BT-only', () => {
     const task = createMockTask({
       bittorrent: { info: { name: 'test' } },
       seeder: 'true',
     })
-    expect(checkTaskIsSeeder(task)).toBe(true)
+    expect(getTaskSharingKind(task)).toBe('bt')
+    expect(checkTaskIsSharing(task)).toBe(true)
   })
 
-  it('returns false for non-BT task', () => {
-    expect(checkTaskIsSeeder(createMockTask())).toBe(false)
+  it('identifies ED2K sharing from the common seeder flag', () => {
+    const task = createMockTask({
+      ed2k: { name: 'sample.bin', hash: 'abcdef' },
+      seeder: 'true',
+    })
+
+    expect(getTaskSharingKind(task)).toBe('ed2k')
+    expect(checkTaskIsSharing(task)).toBe(true)
+  })
+
+  it('returns null for non-sharing tasks', () => {
+    expect(getTaskSharingKind(createMockTask())).toBeNull()
+    expect(checkTaskIsSharing(createMockTask())).toBe(false)
   })
 
   it('returns false when seeder is false string', () => {
@@ -435,7 +448,7 @@ describe('checkTaskIsSeeder', () => {
       bittorrent: { info: { name: 'test' } },
       seeder: 'false',
     })
-    expect(checkTaskIsSeeder(task)).toBe(false)
+    expect(getTaskSharingKind(task)).toBeNull()
   })
 
   it('returns false when seeder is true but task is paused', () => {
@@ -444,7 +457,7 @@ describe('checkTaskIsSeeder', () => {
       bittorrent: { info: { name: 'test' } },
       seeder: 'true',
     })
-    expect(checkTaskIsSeeder(task)).toBe(false)
+    expect(getTaskSharingKind(task)).toBeNull()
   })
 })
 

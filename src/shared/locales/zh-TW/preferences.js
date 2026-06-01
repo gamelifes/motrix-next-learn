@@ -366,8 +366,6 @@ export default {
   'ed2k-server-list': 'server.met 路徑',
   'ed2k-node-list': 'nodes.dat 路徑',
   'ed2k-upload-slots': '上傳槽位',
-  'ed2k-share-files': '共享檔案',
-  'ed2k-share-files-placeholder': '每行一個本機檔案路徑',
   'ed2k-search': 'ED2K 搜尋',
   'ed2k-search-keyword': '關鍵字',
   'ed2k-search-keyword-required': '請輸入搜尋關鍵字。',

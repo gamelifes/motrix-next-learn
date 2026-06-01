@@ -640,35 +640,35 @@ describe('TaskStore', () => {
     expect(store.currentTaskPeers).toEqual([])
   })
 
-  // ─── seedingList ────────────────────────────────────────
+  // ─── sharingList ────────────────────────────────────────
 
-  it('addToSeedingList adds new gid', () => {
-    store.addToSeedingList('gid1')
-    expect(store.seedingList).toContain('gid1')
+  it('addToSharingList adds new gid', () => {
+    store.addToSharingList('gid1')
+    expect(store.sharingList).toContain('gid1')
   })
 
-  it('addToSeedingList ignores duplicates', () => {
-    store.addToSeedingList('gid1')
-    store.addToSeedingList('gid1')
-    expect(store.seedingList).toEqual(['gid1'])
+  it('addToSharingList ignores duplicates', () => {
+    store.addToSharingList('gid1')
+    store.addToSharingList('gid1')
+    expect(store.sharingList).toEqual(['gid1'])
   })
 
-  it('removeFromSeedingList removes existing gid', () => {
-    store.addToSeedingList('gid1')
-    store.addToSeedingList('gid2')
-    store.removeFromSeedingList('gid1')
-    expect(store.seedingList).toEqual(['gid2'])
+  it('removeFromSharingList removes existing gid', () => {
+    store.addToSharingList('gid1')
+    store.addToSharingList('gid2')
+    store.removeFromSharingList('gid1')
+    expect(store.sharingList).toEqual(['gid2'])
   })
 
-  it('removeFromSeedingList ignores non-existent gid', () => {
-    store.addToSeedingList('gid1')
-    store.removeFromSeedingList('gid999')
-    expect(store.seedingList).toEqual(['gid1'])
+  it('removeFromSharingList ignores non-existent gid', () => {
+    store.addToSharingList('gid1')
+    store.removeFromSharingList('gid999')
+    expect(store.sharingList).toEqual(['gid1'])
   })
 
-  // ─── stopSeeding ────────────────────────────────────────
+  // ─── stopSharing ────────────────────────────────────────
 
-  it('stopSeeding calls forcePause then removeTask then writes DB', async () => {
+  it('stopSharing calls forcePause then removeTask then writes DB', async () => {
     const callOrder: string[] = []
     mockApi.forcePauseTask.mockImplementation(() => {
       callOrder.push('forcePause')
@@ -680,7 +680,7 @@ describe('TaskStore', () => {
     })
 
     const task = makeMockTask('gid1', 'active', { bittorrent: { info: { name: 'seed' } }, seeder: 'true' })
-    await store.stopSeeding(task)
+    await store.stopSharing(task)
 
     expect(mockApi.forcePauseTask).toHaveBeenCalledWith({ gid: 'gid1' })
     expect(mockApi.removeTask).toHaveBeenCalledWith({ gid: 'gid1' })
@@ -689,23 +689,23 @@ describe('TaskStore', () => {
     expect(mockHistoryFns.addRecord).toHaveBeenCalledWith(expect.objectContaining({ gid: 'gid1', status: 'complete' }))
   })
 
-  it('stopSeeding does not call removeTask if forcePause fails', async () => {
+  it('stopSharing does not call removeTask if forcePause fails', async () => {
     mockApi.forcePauseTask.mockRejectedValueOnce(new Error('pause failed'))
 
     const task = makeMockTask('gid1', 'active', { bittorrent: { info: { name: 'x' } }, seeder: 'true' })
-    await expect(store.stopSeeding(task)).rejects.toThrow('pause failed')
+    await expect(store.stopSharing(task)).rejects.toThrow('pause failed')
     expect(mockApi.forcePauseTask).toHaveBeenCalledWith({ gid: 'gid1' })
     expect(mockApi.removeTask).not.toHaveBeenCalled()
     expect(mockHistoryFns.addRecord).not.toHaveBeenCalled()
   })
 
-  // ─── stopAllSeeding ─────────────────────────────────────
+  // ─── stopAllSharing ─────────────────────────────────────
 
-  it('stopAllSeeding calls two-step stop + DB write for every seeding task', async () => {
+  it('stopAllSharing calls two-step stop + DB write for every sharing task', async () => {
     const seeder1 = makeMockTask('s1', 'active', { bittorrent: { info: { name: 'a' } }, seeder: 'true' })
     const seeder2 = makeMockTask('s2', 'active', { bittorrent: { info: { name: 'b' } }, seeder: 'true' })
     store.taskList = [seeder1, seeder2]
-    const count = await store.stopAllSeeding()
+    const count = await store.stopAllSharing()
     expect(count).toBe(2)
     expect(mockApi.forcePauseTask).toHaveBeenCalledWith({ gid: 's1' })
     expect(mockApi.forcePauseTask).toHaveBeenCalledWith({ gid: 's2' })
@@ -715,11 +715,11 @@ describe('TaskStore', () => {
     expect(mockHistoryFns.addRecord).toHaveBeenCalledTimes(2)
   })
 
-  it('stopAllSeeding skips non-seeding tasks', async () => {
+  it('stopAllSharing skips non-sharing tasks', async () => {
     const active = makeMockTask('a1', 'active')
     const seeder = makeMockTask('s1', 'active', { bittorrent: { info: { name: 'x' } }, seeder: 'true' })
     store.taskList = [active, seeder]
-    const count = await store.stopAllSeeding()
+    const count = await store.stopAllSharing()
     expect(count).toBe(1)
     expect(mockApi.forcePauseTask).toHaveBeenCalledTimes(1)
     expect(mockApi.forcePauseTask).toHaveBeenCalledWith({ gid: 's1' })
@@ -727,20 +727,20 @@ describe('TaskStore', () => {
     expect(mockApi.removeTask).toHaveBeenCalledWith({ gid: 's1' })
   })
 
-  it('stopAllSeeding returns 0 when no seeding tasks exist', async () => {
+  it('stopAllSharing returns 0 when no sharing tasks exist', async () => {
     store.taskList = [makeMockTask('a1', 'active')]
-    const count = await store.stopAllSeeding()
+    const count = await store.stopAllSharing()
     expect(count).toBe(0)
     expect(mockApi.forcePauseTask).not.toHaveBeenCalled()
     expect(mockApi.removeTask).not.toHaveBeenCalled()
   })
 
-  it('stopAllSeeding continues even if one task fails', async () => {
+  it('stopAllSharing continues even if one task fails', async () => {
     const seeder1 = makeMockTask('s1', 'active', { bittorrent: { info: { name: 'a' } }, seeder: 'true' })
     const seeder2 = makeMockTask('s2', 'active', { bittorrent: { info: { name: 'b' } }, seeder: 'true' })
     store.taskList = [seeder1, seeder2]
     mockApi.forcePauseTask.mockRejectedValueOnce(new Error('fail'))
-    const count = await store.stopAllSeeding()
+    const count = await store.stopAllSharing()
     expect(count).toBe(2)
     // Both tasks attempted — s1 failed at forcePause, s2 succeeded with both steps
     expect(mockApi.forcePauseTask).toHaveBeenCalledTimes(2)

@@ -379,8 +379,6 @@ export default {
   'ed2k-server-list': 'server.met Path',
   'ed2k-node-list': 'nodes.dat Path',
   'ed2k-upload-slots': 'Слоты отдачи',
-  'ed2k-share-files': 'Общие файлы',
-  'ed2k-share-files-placeholder': 'One local file path per line',
   'ed2k-search': 'Поиск ED2K',
   'ed2k-search-keyword': 'Ключевое слово',
   'ed2k-search-keyword-required': 'Введите ключевое слово для поиска.',

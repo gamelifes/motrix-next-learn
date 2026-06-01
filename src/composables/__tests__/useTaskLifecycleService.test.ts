@@ -3,14 +3,14 @@
  *
  * createTaskLifecycleService runs independently of route/tab state.
  * It polls aria2 for active + stopped tasks and feeds them to an
- * internal notifier for completion / error / BT-seeding detection.
+ * internal notifier for completion / error / shared-upload detection.
  *
  * Core guarantees:
  *   1. Polls both 'active' and 'stopped' task lists on each tick.
  *   2. Suppresses callbacks during the initial scan (startup).
  *   3. Fires onTaskComplete for newly completed tasks after initial scan.
  *   4. Fires onTaskError for newly errored tasks after initial scan.
- *   5. Fires onBtComplete for newly seeding BT tasks after initial scan.
+ *   5. Fires onSharingComplete for newly sharing P2P tasks after initial scan.
  *   6. Never re-fires for an already-seen GID.
  *   7. Skips scanning when engine is not ready.
  *   8. start() begins periodic polling; stop() halts it.
@@ -73,7 +73,7 @@ function createMockCallbacks() {
   return {
     onTaskError: vi.fn(),
     onTaskComplete: vi.fn(),
-    onBtComplete: vi.fn(),
+    onSharingComplete: vi.fn(),
   }
 }
 
@@ -287,7 +287,7 @@ describe('createTaskLifecycleService', () => {
 
   // ── BT seeding detection ──────────────────────────────────────
 
-  it('fires onBtComplete for BT tasks entering seeding state', async () => {
+  it('fires onSharingComplete for BT tasks entering shared-upload state', async () => {
     api.fetchTaskList.mockResolvedValue([])
 
     const service = createTaskLifecycleService(api, callbacks)
@@ -309,13 +309,13 @@ describe('createTaskLifecycleService', () => {
     })
 
     await vi.advanceTimersByTimeAsync(500)
-    expect(callbacks.onBtComplete).toHaveBeenCalledTimes(1)
-    expect(callbacks.onBtComplete).toHaveBeenCalledWith(expect.objectContaining({ gid: 'bt1' }))
+    expect(callbacks.onSharingComplete).toHaveBeenCalledTimes(1)
+    expect(callbacks.onSharingComplete).toHaveBeenCalledWith(expect.objectContaining({ gid: 'bt1' }), 'bt')
 
     service.stop()
   })
 
-  it('does not fire onBtComplete for restored complete BT tasks that report seeder later', async () => {
+  it('does not fire onSharingComplete for restored complete BT tasks that report seeder later', async () => {
     api.fetchTaskList.mockImplementation(({ type }: { type: string }) => {
       if (type === 'active') {
         return Promise.resolve([
@@ -353,12 +353,12 @@ describe('createTaskLifecycleService', () => {
 
     await vi.advanceTimersByTimeAsync(500)
 
-    expect(callbacks.onBtComplete).not.toHaveBeenCalled()
+    expect(callbacks.onSharingComplete).not.toHaveBeenCalled()
 
     service.stop()
   })
 
-  it('does not fire onBtComplete for restored BT tasks that start as zero length', async () => {
+  it('does not fire onSharingComplete for restored BT tasks that start as zero length', async () => {
     api.fetchTaskList.mockImplementation(({ type }: { type: string }) => {
       if (type === 'active') {
         return Promise.resolve([
@@ -395,7 +395,7 @@ describe('createTaskLifecycleService', () => {
 
     await vi.advanceTimersByTimeAsync(500)
 
-    expect(callbacks.onBtComplete).not.toHaveBeenCalled()
+    expect(callbacks.onSharingComplete).not.toHaveBeenCalled()
 
     service.stop()
   })
@@ -467,7 +467,7 @@ describe('createTaskLifecycleService', () => {
     })
 
     await vi.advanceTimersByTimeAsync(500)
-    expect(callbacks.onBtComplete).toHaveBeenCalledTimes(1)
+    expect(callbacks.onSharingComplete).toHaveBeenCalledTimes(1)
     expect(callbacks.onTaskComplete).toHaveBeenCalledTimes(1)
 
     service.stop()

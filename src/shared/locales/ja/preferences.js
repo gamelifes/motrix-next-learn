@@ -379,8 +379,6 @@ export default {
   'ed2k-server-list': 'server.met Path',
   'ed2k-node-list': 'nodes.dat Path',
   'ed2k-upload-slots': 'アップロードスロット',
-  'ed2k-share-files': '共有ファイル',
-  'ed2k-share-files-placeholder': 'One local file path per line',
   'ed2k-search': 'ED2K 検索',
   'ed2k-search-keyword': 'キーワード',
   'ed2k-search-keyword-required': '検索キーワードを入力してください。',

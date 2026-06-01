@@ -449,14 +449,6 @@ onMounted(() => {
       <NFormItem :label="t('preferences.ed2k-upload-slots')">
         <NInputNumber v-model:value="form.ed2kUploadSlots" :min="1" :max="100" style="width: 160px" />
       </NFormItem>
-      <NFormItem :label="t('preferences.ed2k-share-files')">
-        <NInput
-          v-model:value="form.ed2kShareFiles"
-          type="textarea"
-          :autosize="{ minRows: 2, maxRows: 5 }"
-          :placeholder="t('preferences.ed2k-share-files-placeholder')"
-        />
-      </NFormItem>
 
       <NDivider title-placement="left">{{ t('preferences.ed2k-search') }}</NDivider>
       <NFormItem :label="t('preferences.ed2k-search-keyword')">

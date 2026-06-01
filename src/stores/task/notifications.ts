@@ -8,18 +8,18 @@
  * Usage:
  *   const notifier = createTaskNotifier()
  *   // Inside fetchList polling loop:
- *   notifier.scanTasks(tasksToScan, { onTaskError, onTaskComplete, onBtComplete })
+ *   notifier.scanTasks(tasksToScan, { onTaskError, onTaskComplete, onSharingComplete })
  */
 import { TASK_STATUS } from '@shared/constants'
-import { checkTaskIsSeeder } from '@shared/utils'
+import { getTaskSharingKind, type TaskSharingKind } from '@shared/utils'
 import { logger } from '@shared/logger'
 import type { Aria2Task } from '@shared/types'
 
 interface ScanCallbacks {
   onTaskError?: ((task: Aria2Task) => void) | null
   onTaskComplete?: ((task: Aria2Task) => void) | null
-  /** Fires when a BT task first enters seeding state (download phase complete). */
-  onBtComplete?: ((task: Aria2Task) => void) | null
+  /** Fires when a P2P task first enters shared-upload state. */
+  onSharingComplete?: ((task: Aria2Task, kind: TaskSharingKind) => void) | null
 }
 
 export interface TaskNotifier {
@@ -39,28 +39,36 @@ export interface TaskNotifier {
 export function createTaskNotifier(): TaskNotifier {
   const notifiedErrorGids = new Set<string>()
   const notifiedCompleteGids = new Set<string>()
-  const notifiedBtCompleteGids = new Set<string>()
-  const restoredBtCompleteKeys = new Set<string>()
+  const notifiedSharingKeys = new Set<string>()
+  const restoredSharingKeys = new Set<string>()
   let scanCount = 0
 
   function initialScanDone(): boolean {
     return scanCount > 0
   }
 
-  function btCompletionKey(task: Aria2Task): string {
-    return task.infoHash || task.gid
+  function sharingCompletionKey(task: Aria2Task, kind: TaskSharingKind): string {
+    if (kind === 'bt') return `bt:${task.infoHash || task.gid}`
+    return `ed2k:${task.ed2k?.hash || task.gid}`
   }
 
-  function btRestoreKeys(task: Aria2Task): string[] {
-    return task.infoHash ? [task.gid, task.infoHash] : [task.gid]
+  function sharingRestoreKeys(task: Aria2Task, kind: TaskSharingKind): string[] {
+    if (kind === 'bt') return task.infoHash ? [`bt:${task.gid}`, `bt:${task.infoHash}`] : [`bt:${task.gid}`]
+    return task.ed2k?.hash ? [`ed2k:${task.gid}`, `ed2k:${task.ed2k.hash}`] : [`ed2k:${task.gid}`]
   }
 
-  function isRestoredBt(task: Aria2Task): boolean {
-    return btRestoreKeys(task).some((key) => restoredBtCompleteKeys.has(key))
+  function initialSharingKind(task: Aria2Task): TaskSharingKind | null {
+    if (task.bittorrent) return 'bt'
+    if (task.ed2k) return 'ed2k'
+    return null
+  }
+
+  function isRestoredSharing(task: Aria2Task, kind: TaskSharingKind): boolean {
+    return sharingRestoreKeys(task, kind).some((key) => restoredSharingKeys.has(key))
   }
 
   function scanTasks(tasks: Aria2Task[], callbacks: ScanCallbacks): void {
-    const { onTaskError, onTaskComplete, onBtComplete } = callbacks
+    const { onTaskError, onTaskComplete, onSharingComplete } = callbacks
 
     // Detect newly errored tasks
     if (onTaskError) {
@@ -91,21 +99,23 @@ export function createTaskNotifier(): TaskNotifier {
       }
     }
 
-    // Detect BT tasks entering seeding state (download phase complete)
-    if (onBtComplete) {
+    // Detect P2P tasks entering shared-upload state.
+    if (onSharingComplete) {
       for (const task of tasks) {
-        if (!initialScanDone() && task.bittorrent) {
-          for (const key of btRestoreKeys(task)) {
-            restoredBtCompleteKeys.add(key)
+        const initialKind = initialSharingKind(task)
+        if (!initialScanDone() && initialKind) {
+          for (const key of sharingRestoreKeys(task, initialKind)) {
+            restoredSharingKeys.add(key)
           }
         }
 
-        if (checkTaskIsSeeder(task)) {
-          const key = btCompletionKey(task)
-          if (!notifiedBtCompleteGids.has(key)) {
-            notifiedBtCompleteGids.add(key)
-            if (initialScanDone() && !isRestoredBt(task)) {
-              onBtComplete(task)
+        const kind = getTaskSharingKind(task)
+        if (kind) {
+          const key = sharingCompletionKey(task, kind)
+          if (!notifiedSharingKeys.has(key)) {
+            notifiedSharingKeys.add(key)
+            if (initialScanDone() && !isRestoredSharing(task, kind)) {
+              onSharingComplete(task, kind)
             }
           }
         }
@@ -122,8 +132,8 @@ export function createTaskNotifier(): TaskNotifier {
   function reset(): void {
     notifiedErrorGids.clear()
     notifiedCompleteGids.clear()
-    notifiedBtCompleteGids.clear()
-    restoredBtCompleteKeys.clear()
+    notifiedSharingKeys.clear()
+    restoredSharingKeys.clear()
     scanCount = 0
   }
 

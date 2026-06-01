@@ -85,11 +85,11 @@ describe('TaskItemActions', () => {
       expect(actions.length).toBeGreaterThanOrEqual(3 + 3)
     })
 
-    it('shows stop-seeding+delete for SEEDING tasks', () => {
-      const wrapper = createWrapper(TASK_STATUS.SEEDING)
+    it('shows stop-sharing+delete for SHARING tasks', () => {
+      const wrapper = createWrapper(TASK_STATUS.SHARING)
       const actions = wrapper.findAll('.task-item-action')
-      const hasStopSeeding = actions.some((a) => a.classes().includes('stop-seeding'))
-      expect(hasStopSeeding).toBe(true)
+      const hasStopSharing = actions.some((a) => a.classes().includes('stop-sharing'))
+      expect(hasStopSharing).toBe(true)
     })
   })
 
@@ -103,12 +103,12 @@ describe('TaskItemActions', () => {
       expect(Object.keys(wrapper.emitted()).length).toBeGreaterThan(0)
     })
 
-    it('emits stop-seeding when stop action is clicked on SEEDING task', async () => {
-      const wrapper = createWrapper(TASK_STATUS.SEEDING)
-      const stopAction = wrapper.findAll('.task-item-action').find((a) => a.classes().includes('stop-seeding'))
+    it('emits stop-sharing when stop action is clicked on SHARING task', async () => {
+      const wrapper = createWrapper(TASK_STATUS.SHARING)
+      const stopAction = wrapper.findAll('.task-item-action').find((a) => a.classes().includes('stop-sharing'))
       expect(stopAction).toBeDefined()
       await stopAction!.trigger('click')
-      expect(wrapper.emitted('stop-seeding')).toBeTruthy()
+      expect(wrapper.emitted('stop-sharing')).toBeTruthy()
     })
   })
 
@@ -125,10 +125,10 @@ describe('TaskItemActions', () => {
       expect(actions.length).toBeGreaterThanOrEqual(3 + 3)
     })
 
-    it('non-seeder statuses do not have stop-seeding button', () => {
+    it('non-sharing statuses do not have stop-sharing button', () => {
       const wrapper = createWrapper(TASK_STATUS.ACTIVE)
-      const hasStopSeeding = wrapper.findAll('.task-item-action').some((a) => a.classes().includes('stop-seeding'))
-      expect(hasStopSeeding).toBe(false)
+      const hasStopSharing = wrapper.findAll('.task-item-action').some((a) => a.classes().includes('stop-sharing'))
+      expect(hasStopSharing).toBe(false)
     })
   })
 
@@ -137,7 +137,7 @@ describe('TaskItemActions', () => {
       const wrapper = mount(TaskItemActions, {
         props: {
           task: { gid: 'stopping-gid' } as never,
-          status: TASK_STATUS.SEEDING,
+          status: TASK_STATUS.SHARING,
         },
         global: {
           provide: {
@@ -146,7 +146,7 @@ describe('TaskItemActions', () => {
         },
       })
 
-      const stopAction = wrapper.findAll('.task-item-action').find((a) => a.classes().includes('stop-seeding'))
+      const stopAction = wrapper.findAll('.task-item-action').find((a) => a.classes().includes('stop-sharing'))
       expect(stopAction?.classes()).toContain('is-stopping')
     })
 
@@ -154,7 +154,7 @@ describe('TaskItemActions', () => {
       const wrapper = mount(TaskItemActions, {
         props: {
           task: { gid: 'other-gid' } as never,
-          status: TASK_STATUS.SEEDING,
+          status: TASK_STATUS.SHARING,
         },
         global: {
           provide: {
@@ -163,7 +163,7 @@ describe('TaskItemActions', () => {
         },
       })
 
-      const stopAction = wrapper.findAll('.task-item-action').find((a) => a.classes().includes('stop-seeding'))
+      const stopAction = wrapper.findAll('.task-item-action').find((a) => a.classes().includes('stop-sharing'))
       expect(stopAction?.classes()).not.toContain('is-stopping')
     })
 
@@ -171,7 +171,7 @@ describe('TaskItemActions', () => {
       const wrapper = mount(TaskItemActions, {
         props: {
           task: { gid: 'spin-gid' } as never,
-          status: TASK_STATUS.SEEDING,
+          status: TASK_STATUS.SHARING,
         },
         global: {
           provide: {
@@ -185,12 +185,12 @@ describe('TaskItemActions', () => {
     })
   })
 
-  describe('seeder styling', () => {
-    it('seeding stop button has stop-seeding class for green color', () => {
-      const wrapper = createWrapper(TASK_STATUS.SEEDING)
-      const stopAction = wrapper.findAll('.task-item-action').find((a) => a.classes().includes('stop-seeding'))
+  describe('sharing styling', () => {
+    it('sharing stop button has stop-sharing class for green color', () => {
+      const wrapper = createWrapper(TASK_STATUS.SHARING)
+      const stopAction = wrapper.findAll('.task-item-action').find((a) => a.classes().includes('stop-sharing'))
       expect(stopAction).toBeDefined()
-      expect(stopAction!.classes()).toContain('stop-seeding')
+      expect(stopAction!.classes()).toContain('stop-sharing')
     })
   })
 

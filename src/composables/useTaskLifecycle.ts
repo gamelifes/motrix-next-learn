@@ -88,7 +88,7 @@ export function buildHistoryRecord(task: Aria2Task): HistoryRecord {
   const name = btName || (pathName ? decodePathSegment(pathName) : '') || 'Unknown'
 
   const uri = firstFile?.uris?.[0]?.uri
-  const taskType = task.bittorrent ? 'bt' : 'uri'
+  const taskType = task.bittorrent ? 'bt' : task.ed2k ? 'ed2k' : 'uri'
 
   // Build structured meta snapshot (centralised — no inline JSON.stringify elsewhere)
   const meta = buildHistoryMeta(task)
@@ -107,16 +107,16 @@ export function buildHistoryRecord(task: Aria2Task): HistoryRecord {
   }
 }
 
-/** Build a history record for a BT task entering seeding state.
+/** Build a history record for a task entering shared-upload state.
  *
- * Seeding means the download phase is complete — all pieces verified.
- * Aria2 still reports status='active' for seeders, but from the user's
+ * Shared upload means the download phase is complete and verified.
+ * Aria2 still reports status='active' for these tasks, but from the user's
  * perspective the download is done. This function overrides status to
  * 'complete' so the record correctly reflects download completion.
  *
  * Used by both the lifecycle service (automatic detection) and
- * stopSeeding (manual stop) to avoid duplicating the override logic. */
-export function buildBtCompletionRecord(task: Aria2Task): HistoryRecord {
+ * stopSharing (manual stop) to avoid duplicating the override logic. */
+export function buildSharingCompletionRecord(task: Aria2Task): HistoryRecord {
   const record = buildHistoryRecord(task)
   record.status = 'complete'
   return record

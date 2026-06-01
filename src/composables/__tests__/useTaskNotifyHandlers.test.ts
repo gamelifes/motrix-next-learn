@@ -10,7 +10,7 @@
  *
  * Key behaviors under test:
  *   1. onComplete handler always sends in-app toast; Rust sends native OS notification.
- *   2. onBtComplete handler always sends in-app toast; Rust sends native OS notification.
+ *   2. onSharingComplete handler always sends in-app toast; Rust sends native OS notification.
  *   3. onError handler logs the frontend toast path; Rust sends native OS notification.
  *   4. Metadata tasks are excluded from completion notifications.
  *   5. When action callbacks are provided, toast contains a render function.
@@ -38,7 +38,7 @@ vi.mock('../useNotificationToast', () => ({
   },
 }))
 
-import { handleTaskComplete, handleBtComplete, handleTaskError, handleTaskStart } from '../useTaskNotifyHandlers'
+import { handleTaskComplete, handleSharingComplete, handleTaskError, handleTaskStart } from '../useTaskNotifyHandlers'
 
 // ── Test data factory ────────────────────────────────────────────────
 
@@ -88,6 +88,9 @@ function makeDeps(overrides: Partial<NotifyDeps> = {}): NotifyDeps {
       }
       if (key === 'task.bt-download-complete-message' && params?.taskName) {
         return `${params.taskName} — download complete, seeding...`
+      }
+      if (key === 'task.ed2k-download-complete-message' && params?.taskName) {
+        return `${params.taskName} — download complete, sharing...`
       }
       if (key === 'task.error-unknown') return 'Unknown error'
       return key
@@ -172,9 +175,9 @@ describe('handleTaskComplete', () => {
   })
 })
 
-// ── handleBtComplete ─────────────────────────────────────────────────
+// ── handleSharingComplete ─────────────────────────────────────────────
 
-describe('handleBtComplete', () => {
+describe('handleSharingComplete', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -183,10 +186,20 @@ describe('handleBtComplete', () => {
     const deps = makeDeps()
     const task = makeTask({ bittorrent: { info: { name: 'Big Archive' } } })
 
-    handleBtComplete(task, deps)
+    handleSharingComplete(task, 'bt', deps)
 
     expect(deps.messageSuccess).toHaveBeenCalledOnce()
     expect(deps.messageSuccess).toHaveBeenCalledWith('Big Archive — download complete, seeding...')
+  })
+
+  it('uses ED2K sharing wording for ED2K tasks', () => {
+    const deps = makeDeps()
+    const task = makeTask({ ed2k: { name: 'Big Archive', hash: 'ed2khash' } })
+
+    handleSharingComplete(task, 'ed2k', deps)
+
+    expect(deps.messageSuccess).toHaveBeenCalledOnce()
+    expect(deps.messageSuccess).toHaveBeenCalledWith('test-file.zip — download complete, sharing...')
   })
 
   it('sends render function when action callbacks are provided', () => {
@@ -195,7 +208,7 @@ describe('handleBtComplete', () => {
     const deps = makeDeps({ onOpenFile, onShowInFolder })
     const task = makeTask({ bittorrent: { info: { name: 'Big Archive' } } })
 
-    handleBtComplete(task, deps)
+    handleSharingComplete(task, 'bt', deps)
 
     expect(deps.messageSuccess).toHaveBeenCalledOnce()
     const arg = (deps.messageSuccess as ReturnType<typeof vi.fn>).mock.calls[0][0]

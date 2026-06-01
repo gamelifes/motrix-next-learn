@@ -42,7 +42,7 @@ const {
   handleShowInfo,
   handleShowInFolder,
   handleOpenFile,
-  handleStopSeeding,
+  handleStopSharing,
 } = useTaskActions({
   taskStore,
   preferenceConfig: () => preferenceStore.config,
@@ -141,7 +141,7 @@ onBeforeUnmount(() => {
           @show-info="handleShowInfo"
           @folder="handleShowInFolder"
           @open-file="handleOpenFile"
-          @stop-seeding="handleStopSeeding"
+          @stop-sharing="handleStopSharing"
         />
       </div>
     </div>

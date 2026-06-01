@@ -7,7 +7,8 @@
  *   2. Fire onTaskError for newly errored tasks on subsequent polls.
  *   3. Fire onTaskComplete for newly completed tasks on subsequent polls.
  *   4. Never re-fire for an already-seen GID.
- *   5. Ignore tasks with errorCode '0' (not a real error).
+ *   5. Fire sharing completion for BT seeding and ED2K sharing.
+ *   6. Ignore tasks with errorCode '0' (not a real error).
  */
 import { describe, it, expect, vi } from 'vitest'
 import { createTaskNotifier } from '../task/notifications'
@@ -176,10 +177,10 @@ describe('createTaskNotifier', () => {
     expect(onComplete).toHaveBeenCalledTimes(1)
   })
 
-  // ── BT seeding restoration ───────────────────────────────────
+  // ── Shared upload restoration ───────────────────────────────────
 
-  it('does not fire onBtComplete when a restored complete BT task reports seeder later', () => {
-    const onBtComplete = vi.fn()
+  it('does not fire onSharingComplete when a restored complete BT task reports seeder later', () => {
+    const onSharingComplete = vi.fn()
     const notifier = createTaskNotifier()
 
     notifier.scanTasks(
@@ -192,7 +193,7 @@ describe('createTaskNotifier', () => {
           seeder: 'false',
         }),
       ],
-      { onBtComplete },
+      { onSharingComplete },
     )
 
     notifier.scanTasks(
@@ -205,14 +206,14 @@ describe('createTaskNotifier', () => {
           seeder: 'true',
         }),
       ],
-      { onBtComplete },
+      { onSharingComplete },
     )
 
-    expect(onBtComplete).not.toHaveBeenCalled()
+    expect(onSharingComplete).not.toHaveBeenCalled()
   })
 
-  it('does not fire onBtComplete when a restored BT task starts as zero length', () => {
-    const onBtComplete = vi.fn()
+  it('does not fire onSharingComplete when a restored BT task starts as zero length', () => {
+    const onSharingComplete = vi.fn()
     const notifier = createTaskNotifier()
 
     notifier.scanTasks(
@@ -224,7 +225,7 @@ describe('createTaskNotifier', () => {
           seeder: 'false',
         }),
       ],
-      { onBtComplete },
+      { onSharingComplete },
     )
 
     notifier.scanTasks(
@@ -237,17 +238,17 @@ describe('createTaskNotifier', () => {
           seeder: 'true',
         }),
       ],
-      { onBtComplete },
+      { onSharingComplete },
     )
 
-    expect(onBtComplete).not.toHaveBeenCalled()
+    expect(onSharingComplete).not.toHaveBeenCalled()
   })
 
-  it('fires onBtComplete when a non-restored BT download enters seeding', () => {
-    const onBtComplete = vi.fn()
+  it('fires onSharingComplete when a non-restored BT download enters seeding', () => {
+    const onSharingComplete = vi.fn()
     const notifier = createTaskNotifier()
 
-    notifier.scanTasks([], { onBtComplete })
+    notifier.scanTasks([], { onSharingComplete })
 
     notifier.scanTasks(
       [
@@ -258,7 +259,7 @@ describe('createTaskNotifier', () => {
           seeder: 'false',
         }),
       ],
-      { onBtComplete },
+      { onSharingComplete },
     )
 
     notifier.scanTasks(
@@ -270,7 +271,7 @@ describe('createTaskNotifier', () => {
           seeder: 'false',
         }),
       ],
-      { onBtComplete },
+      { onSharingComplete },
     )
 
     notifier.scanTasks(
@@ -282,11 +283,43 @@ describe('createTaskNotifier', () => {
           seeder: 'true',
         }),
       ],
-      { onBtComplete },
+      { onSharingComplete },
     )
 
-    expect(onBtComplete).toHaveBeenCalledTimes(1)
-    expect(onBtComplete).toHaveBeenCalledWith(expect.objectContaining({ gid: 'bt1' }))
+    expect(onSharingComplete).toHaveBeenCalledTimes(1)
+    expect(onSharingComplete).toHaveBeenCalledWith(expect.objectContaining({ gid: 'bt1' }), 'bt')
+  })
+
+  it('fires onSharingComplete when an ED2K download enters sharing', () => {
+    const onSharingComplete = vi.fn()
+    const notifier = createTaskNotifier()
+
+    notifier.scanTasks([], { onSharingComplete })
+    notifier.scanTasks(
+      [
+        makeMockTask('ed2k1', 'active', {
+          ed2k: { name: 'linux.iso', hash: 'ed2khash' },
+          completedLength: '500',
+          totalLength: '1000',
+          seeder: 'false',
+        }),
+      ],
+      { onSharingComplete },
+    )
+    notifier.scanTasks(
+      [
+        makeMockTask('ed2k1', 'active', {
+          ed2k: { name: 'linux.iso', hash: 'ed2khash' },
+          completedLength: '1000',
+          totalLength: '1000',
+          seeder: 'true',
+        }),
+      ],
+      { onSharingComplete },
+    )
+
+    expect(onSharingComplete).toHaveBeenCalledTimes(1)
+    expect(onSharingComplete).toHaveBeenCalledWith(expect.objectContaining({ gid: 'ed2k1' }), 'ed2k')
   })
 
   // ── Optional callbacks ────────────────────────────────────

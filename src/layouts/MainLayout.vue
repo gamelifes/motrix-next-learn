@@ -11,15 +11,16 @@ import { logger } from '@shared/logger'
 import { createTaskLifecycleService } from '@/composables/useTaskLifecycleService'
 import {
   buildHistoryRecord,
-  buildBtCompletionRecord,
+  buildSharingCompletionRecord,
   isMetadataTask,
   updateHistoryFilePath,
 } from '@/composables/useTaskLifecycle'
 import { setArchivedPath, resolveTaskFilePath, requestFileRecheck } from '@/composables/useArchivedPaths'
-import { handleTaskComplete, handleBtComplete, handleTaskError } from '@/composables/useTaskNotifyHandlers'
+import { handleTaskComplete, handleSharingComplete, handleTaskError } from '@/composables/useTaskNotifyHandlers'
 import { shouldDeleteTorrent, trashTorrentFile } from '@/composables/useDownloadCleanup'
 import { cleanupAria2ControlFile } from '@/composables/useFileDelete'
-import { getTaskDisplayName, resolveOpenTarget, checkTaskIsSeeder } from '@shared/utils'
+import { getTaskDisplayName, resolveOpenTarget, checkTaskIsSharing } from '@shared/utils'
+import type { TaskSharingKind } from '@shared/utils/task'
 import type { Aria2Task } from '@shared/types'
 import { ARIA2_ERROR_CODES } from '@shared/aria2ErrorCodes'
 import { TASK_STATUS } from '@shared/constants'
@@ -525,7 +526,7 @@ function skipShutdownOnce() {
 /**
  * Event-driven shutdown condition check.
  *
- * Called from lifecycle callbacks (onTaskComplete / onBtComplete) instead
+ * Called from lifecycle callbacks (onTaskComplete / onSharingComplete) instead
  * of a stat watcher. Queries aria2 directly for real-time task state,
  * bypassing the stale taskStore.taskList and the unreliable
  * appStore.stat.numActive (which counts seeders as active).
@@ -536,8 +537,8 @@ async function checkShutdownCondition() {
 
   try {
     const activeTasks = await aria2Api.fetchTaskList({ type: 'active' })
-    const activeNonSeeders = activeTasks.filter((t) => !checkTaskIsSeeder(t))
-    if (activeNonSeeders.length > 0) return
+    const activeDownloads = activeTasks.filter((t) => !checkTaskIsSharing(t))
+    if (activeDownloads.length > 0) return
 
     const waitingTasks = await aria2Api.fetchTaskList({ type: 'waiting' })
     if (waitingTasks.length > 0) return
@@ -711,30 +712,30 @@ onMounted(async () => {
       // ── Auto-shutdown: check after task completion ──
       checkShutdownCondition()
     },
-    onBtComplete: async (task) => {
-      // Persist immediately — download is complete, seeding is just uploading.
+    onSharingComplete: async (task, kind: TaskSharingKind) => {
+      // Persist immediately — download is complete, sharing is just uploading.
       // INSERT OR REPLACE: safe if onTaskComplete later writes the same GID.
       if (!isMetadataTask(task)) {
-        // Clean up stale DB records from previous sessions (different GID, same infoHash)
-        if (task.infoHash) {
+        if (kind === 'bt' && task.infoHash) {
           historyStore
             .removeByInfoHash(task.infoHash, task.gid)
-            .catch((e) => logger.debug('Lifecycle.btComplete.cleanStale', e))
+            .catch((e) => logger.debug('Lifecycle.sharingComplete.cleanStale', e))
         }
-        const record = buildBtCompletionRecord(task)
-        historyStore.addRecord(record).catch((e) => logger.debug('Lifecycle.btComplete.history', e))
+        const record = buildSharingCompletionRecord(task)
+        historyStore.addRecord(record).catch((e) => logger.debug('Lifecycle.sharingComplete.history', e))
       }
-      handleBtComplete(task, {
+      handleSharingComplete(task, kind, {
         messageSuccess: message.success,
         t,
         onOpenFile: openFileFromNotification,
         onShowInFolder: showInFolderFromNotification,
       })
 
-      // ── Auto-shutdown: check after BT download completion ──
+      // ── Auto-shutdown: check after P2P download completion ──
       // Must be BEFORE shouldDeleteTorrent early return to avoid being skipped.
       checkShutdownCondition()
 
+      if (kind !== 'bt') return
       if (!shouldDeleteTorrent(preferenceStore.config)) return
       const sourcePath = task.infoHash ? taskStore.consumeTorrentSource(task.infoHash) : undefined
       if (sourcePath) {

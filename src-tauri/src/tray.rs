@@ -80,7 +80,7 @@ pub fn get_or_create_main_window(app: &AppHandle) -> Option<tauri::WebviewWindow
     let mut builder = WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
         .title("Motrix Next")
         .inner_size(1068.0, 680.0)
-        .min_inner_size(970.0, 560.0)
+        .min_inner_size(560.0, 360.0)
         .visible(false);
 
     // macOS: native traffic lights via overlay title bar (matches tauri.macos.conf.json).

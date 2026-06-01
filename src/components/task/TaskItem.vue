@@ -4,7 +4,8 @@ import { computed, ref, watch, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { TASK_STATUS } from '@shared/constants'
 import {
-  checkTaskIsSeeder,
+  checkTaskIsSharing,
+  getTaskSharingKind,
   getTaskDisplayName,
   calcProgress,
   bytesToSize,
@@ -43,7 +44,7 @@ const emit = defineEmits<{
   'show-info': [task: Aria2Task]
   folder: [task: Aria2Task]
   'open-file': [task: Aria2Task]
-  'stop-seeding': [task: Aria2Task]
+  'stop-sharing': [task: Aria2Task]
 }>()
 
 const { t } = useI18n()
@@ -52,10 +53,16 @@ const taskFullName = computed(() =>
   getTaskDisplayName(props.task, { defaultName: t('task.get-task-name') || 'Unknown' }),
 )
 
-const isSeeder = computed(() => checkTaskIsSeeder(props.task))
+const sharingKind = computed(() => getTaskSharingKind(props.task))
+const isSharing = computed(() => checkTaskIsSharing(props.task))
+const sharingLabel = computed(() => {
+  if (sharingKind.value === 'bt') return t('task.seeding') || 'Seeding'
+  if (sharingKind.value === 'ed2k') return t('task.sharing') || 'Sharing'
+  return ''
+})
 const isBT = computed(() => checkTaskIsBT(props.task))
 const isMetadataFetching = computed(() => isBtMetadataTask(props.task))
-const taskStatus = computed(() => (isSeeder.value ? TASK_STATUS.SEEDING : props.task.status))
+const taskStatus = computed(() => (isSharing.value ? TASK_STATUS.SHARING : props.task.status))
 const isActive = computed(() => props.task.status === TASK_STATUS.ACTIVE)
 
 const completedLengthValue = computed(() => getTaskCompletedLength(props.task))
@@ -96,7 +103,7 @@ const statusColorMap = computed<Record<string, string>>(() => ({
   error: cssVar('--m3-status-error', '#F56C6C'),
   complete: cssVar('--m3-status-success', '#67C23A'),
   removed: cssVar('--m3-status-paused', '#909399'),
-  seeding: cssVar('--m3-status-success', '#67C23A'),
+  sharing: cssVar('--m3-status-success', '#67C23A'),
 }))
 
 const progressColor = computed(() => statusColorMap.value[taskStatus.value] || cssVar('--m3-status-active', ''))
@@ -125,7 +132,7 @@ const finishedTag = computed(() => {
 })
 
 function onDblClick() {
-  if (isSeeder.value) return
+  if (isSharing.value) return
   const s = props.task.status
   if (s === TASK_STATUS.COMPLETE) {
     emit('open-file', props.task)
@@ -189,17 +196,17 @@ onBeforeUnmount(() => {
   }
 })
 
-// ── M3 seeding state entrance animation ───────────────────────────
+// ── M3 sharing state entrance animation ───────────────────────────
 // CSS transitions fail here because the store's polling cycle replaces
 // task objects entirely — even though Vue reuses the DOM element (same
 // gid key), NProgress internally rebuilds its fill node, losing the
 // transition starting point. @keyframes animations do not depend on
 // property value continuity — they always play from→to.
-const seedingEnter = ref(false)
+const sharingEnter = ref(false)
 
-watch(isSeeder, (now, was) => {
+watch(isSharing, (now, was) => {
   if (now && !was) {
-    seedingEnter.value = true
+    sharingEnter.value = true
   }
 })
 
@@ -241,14 +248,14 @@ onBeforeUnmount(() => {
     class="task-item"
     :class="{
       'file-missing': fileMissing,
-      'is-seeding': isSeeder,
-      'seeding-enter': seedingEnter,
+      'is-sharing': isSharing,
+      'sharing-enter': sharingEnter,
     }"
     @dblclick="onDblClick"
     @pointerdown="onCardPress"
     @pointerup="onCardRelease"
     @pointerleave="onCardRelease"
-    @animationend="seedingEnter = false"
+    @animationend="sharingEnter = false"
   >
     <MTooltip placement="bottom-start">
       <template #trigger>
@@ -259,12 +266,12 @@ onBeforeUnmount(() => {
           <Transition name="name-crossfade" mode="out-in">
             <span :key="taskFullName">{{ taskFullName }}</span>
           </Transition>
-          <div class="tags-wrapper" :class="{ 'has-tags': isSeeder || finishedTag || fileMissing }">
+          <div class="tags-wrapper" :class="{ 'has-tags': isSharing || finishedTag || fileMissing }">
             <div class="tags-inner">
-              <div v-if="isSeeder || finishedTag || fileMissing" class="task-tags">
-                <span v-if="isSeeder" class="seeding-tag">
+              <div v-if="isSharing || finishedTag || fileMissing" class="task-tags">
+                <span v-if="isSharing" class="sharing-tag">
                   <NIcon :size="13"><CloudUploadOutline /></NIcon>
-                  {{ t('task.seeding') || 'Seeding' }}
+                  {{ sharingLabel }}
                 </span>
                 <span v-else-if="finishedTag" class="status-tag" :style="{ color: finishedTag.color }">
                   <NIcon :size="13"><component :is="finishedTag.icon" /></NIcon>
@@ -293,7 +300,7 @@ onBeforeUnmount(() => {
       @show-info="emit('show-info', task)"
       @folder="emit('folder', task)"
       @open-file="emit('open-file', task)"
-      @stop-seeding="emit('stop-seeding', task)"
+      @stop-sharing="emit('stop-sharing', task)"
     />
     <div class="task-progress">
       <NProgress
@@ -353,7 +360,7 @@ onBeforeUnmount(() => {
   padding: 16px 12px;
   background-color: var(--task-item-bg);
   border: 1px solid var(--m3-outline-variant);
-  /* Reserve 3px left border at base color so seeding only animates color */
+  /* Reserve 3px left border at base color so sharing only animates color */
   border-left: 3px solid var(--m3-outline-variant);
   border-radius: 6px;
   transition: border-color 0.2s cubic-bezier(0.2, 0, 0, 1);
@@ -369,16 +376,16 @@ onBeforeUnmount(() => {
   pointer-events: none;
 }
 /* ── Seeding state (static) ────────────────────────────────────────── */
-.task-item.is-seeding {
+.task-item.is-sharing {
   border-left-color: var(--m3-success);
 }
-.task-item.is-seeding::before {
+.task-item.is-sharing::before {
   opacity: 1;
 }
 /* ── Seeding entrance animation (triggered by Vue watch) ───────────── */
 /* @keyframes always plays from→to regardless of prior DOM state,       */
 /* unlike CSS transitions which break when the element is re-rendered.  */
-@keyframes seeding-border-enter {
+@keyframes sharing-border-enter {
   from {
     border-left-color: var(--m3-outline-variant);
   }
@@ -386,7 +393,7 @@ onBeforeUnmount(() => {
     border-left-color: var(--m3-success);
   }
 }
-@keyframes seeding-overlay-enter {
+@keyframes sharing-overlay-enter {
   from {
     opacity: 0;
   }
@@ -394,11 +401,11 @@ onBeforeUnmount(() => {
     opacity: 1;
   }
 }
-.task-item.seeding-enter {
-  animation: seeding-border-enter 1s cubic-bezier(0.05, 0.7, 0.1, 1) forwards;
+.task-item.sharing-enter {
+  animation: sharing-border-enter 1s cubic-bezier(0.05, 0.7, 0.1, 1) forwards;
 }
-.task-item.seeding-enter::before {
-  animation: seeding-overlay-enter 1.2s cubic-bezier(0.05, 0.7, 0.1, 1) forwards;
+.task-item.sharing-enter::before {
+  animation: sharing-overlay-enter 1.2s cubic-bezier(0.05, 0.7, 0.1, 1) forwards;
 }
 .task-item:hover {
   border-color: var(--task-item-hover-border);
@@ -552,7 +559,7 @@ onBeforeUnmount(() => {
 /* Wrapper is always in the DOM. grid-template-rows transitions from    */
 /* 0fr (collapsed, zero height) to 1fr (natural height). The inner      */
 /* element uses overflow:hidden + min-height:0 to clip during collapse.  */
-/* Works for all tags: seeding, completed, removed, file-missing.       */
+/* Works for all tags: sharing, completed, removed, file-missing.       */
 .tags-wrapper {
   display: grid;
   grid-template-rows: 0fr;
@@ -565,7 +572,7 @@ onBeforeUnmount(() => {
   overflow: hidden;
   min-height: 0;
 }
-.seeding-tag {
+.sharing-tag {
   display: inline-flex;
   align-items: center;
   gap: 3px;

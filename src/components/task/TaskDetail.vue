@@ -6,7 +6,8 @@ import { TASK_STATUS } from '@shared/constants'
 import { logger } from '@shared/logger'
 import {
   checkTaskIsBT,
-  checkTaskIsSeeder,
+  checkTaskIsSharing,
+  getTaskSharingKind,
   getTaskDisplayName,
   bytesToSize,
   calcProgress,
@@ -177,10 +178,17 @@ watch(visibleTabs, (tabs) => {
     prevTabIndex.value = 0
   }
 })
-const isSeeder = computed(() => (props.task ? checkTaskIsSeeder(props.task) : false))
+const sharingKind = computed(() => (props.task ? getTaskSharingKind(props.task) : null))
+const isSharing = computed(() => (props.task ? checkTaskIsSharing(props.task) : false))
 const isMetadataFetching = computed(() => (props.task ? isBtMetadataTask(props.task) : false))
 const taskStatusKey = computed(() =>
-  isSeeder.value ? TASK_STATUS.SEEDING : isMetadataFetching.value ? 'bt-metadata-fetching' : props.task?.status,
+  isSharing.value
+    ? sharingKind.value === 'bt'
+      ? 'seeding'
+      : 'sharing'
+    : isMetadataFetching.value
+      ? 'bt-metadata-fetching'
+      : props.task?.status,
 )
 const taskStatus = computed(() => {
   const key = taskStatusKey.value
@@ -1035,9 +1043,6 @@ function handleClose() {
                 </NDescriptionsItem>
                 <NDescriptionsItem :label="t('task.task-ed2k-search-result-count')">
                   {{ ed2kInfo.searchResultCount || 0 }}
-                </NDescriptionsItem>
-                <NDescriptionsItem :label="t('task.task-ed2k-shared-file-count')">
-                  {{ ed2kInfo.sharedFileCount || 0 }}
                 </NDescriptionsItem>
                 <NDescriptionsItem :label="t('task.task-ed2k-uploading-peer-count')">
                   {{ ed2kSummary.uploadingPeerCount }}

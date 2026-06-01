@@ -26,7 +26,6 @@ const baseForm: Ed2kForm = {
   ed2kServerList: '',
   ed2kNodeList: '',
   ed2kUploadSlots: 3,
-  ed2kShareFiles: '',
   ed2kSearchTimeout: 20,
 }
 
@@ -40,18 +39,15 @@ describe('buildEd2kForm', () => {
     expect(form.ed2kServerList).toBe('')
     expect(form.ed2kNodeList).toBe('')
     expect(form.ed2kUploadSlots).toBe(3)
-    expect(form.ed2kShareFiles).toBe('')
     expect(form.ed2kSearchTimeout).toBe(20)
   })
 
-  it('renders persisted server and shared file lists as one item per line', () => {
+  it('renders persisted server list as one item per line', () => {
     const form = buildEd2kForm({
       ed2kServer: 'server-one.example:4661,server-two.example:4661',
-      ed2kShareFiles: ['/downloads/a.bin', '/downloads/b.bin'],
     } as AppConfig)
 
     expect(form.ed2kServer).toBe('server-one.example:4661\nserver-two.example:4661')
-    expect(form.ed2kShareFiles).toBe('/downloads/a.bin\n/downloads/b.bin')
   })
 })
 
@@ -62,7 +58,6 @@ describe('buildEd2kSystemConfig', () => {
       ed2kServer: 'server-one.example:4661\nserver-two.example:4661',
       ed2kServerList: '/lists/server.met',
       ed2kNodeList: '/lists/nodes.dat',
-      ed2kShareFiles: '/downloads/a.bin\n/downloads/b.bin',
     })
 
     expect(config).toEqual({
@@ -72,7 +67,6 @@ describe('buildEd2kSystemConfig', () => {
       'ed2k-server-list': '/lists/server.met',
       'ed2k-node-list': '/lists/nodes.dat',
       'ed2k-upload-slots': '3',
-      'ed2k-share-file': '/downloads/a.bin\n/downloads/b.bin',
     })
   })
 })
@@ -84,7 +78,6 @@ describe('transformEd2kForStore', () => {
       ed2kServer: ' server-one.example:4661 \n\nserver-two.example:4661 ',
       ed2kServerList: ' /lists/server.met ',
       ed2kNodeList: ' /lists/nodes.dat ',
-      ed2kShareFiles: ' /downloads/a.bin \n /downloads/b.bin ',
       ed2kSearchTimeout: 120,
     })
 
@@ -95,7 +88,6 @@ describe('transformEd2kForStore', () => {
       ed2kServerList: '/lists/server.met',
       ed2kNodeList: '/lists/nodes.dat',
       ed2kUploadSlots: 3,
-      ed2kShareFiles: ['/downloads/a.bin', '/downloads/b.bin'],
       ed2kSearchTimeout: 120,
     })
   })

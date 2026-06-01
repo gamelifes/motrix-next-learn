@@ -34,7 +34,7 @@ export const useTaskStore = defineStore('task', () => {
   const currentTaskItem = ref<Aria2Task | null>(null)
   const currentTaskFiles = ref<Aria2File[]>([])
   const currentTaskPeers = ref<Aria2Peer[]>([])
-  const seedingList = ref<string[]>([])
+  const sharingList = ref<string[]>([])
   const taskList = ref<Aria2Task[]>([])
   const selectedGidList = ref<string[]>([])
 
@@ -323,15 +323,15 @@ export const useTaskStore = defineStore('task', () => {
     return api.batchPauseTask({ gids: selectedGidList.value })
   }
 
-  function addToSeedingList(gid: string) {
-    if (seedingList.value.includes(gid)) return
-    seedingList.value = [...seedingList.value, gid]
+  function addToSharingList(gid: string) {
+    if (sharingList.value.includes(gid)) return
+    sharingList.value = [...sharingList.value, gid]
   }
 
-  function removeFromSeedingList(gid: string) {
-    const idx = seedingList.value.indexOf(gid)
+  function removeFromSharingList(gid: string) {
+    const idx = sharingList.value.indexOf(gid)
     if (idx === -1) return
-    seedingList.value = [...seedingList.value.slice(0, idx), ...seedingList.value.slice(idx + 1)]
+    sharingList.value = [...sharingList.value.slice(0, idx), ...sharingList.value.slice(idx + 1)]
   }
 
   async function restartTask(task: Aria2Task) {
@@ -347,7 +347,7 @@ export const useTaskStore = defineStore('task', () => {
     currentTaskItem,
     currentTaskFiles,
     currentTaskPeers,
-    seedingList,
+    sharingList,
     taskList,
     selectedGidList,
     setApi,
@@ -375,10 +375,10 @@ export const useTaskStore = defineStore('task', () => {
     pauseAllTask: () => taskOps.pauseAllTask(),
     resumeAllTask: () => taskOps.resumeAllTask(),
     toggleTask: (task: Aria2Task) => taskOps.toggleTask(task),
-    addToSeedingList,
-    removeFromSeedingList,
-    stopSeeding: (task: Aria2Task) => taskOps.stopSeeding(task),
-    stopAllSeeding: () => taskOps.stopAllSeeding(),
+    addToSharingList,
+    removeFromSharingList,
+    stopSharing: (task: Aria2Task) => taskOps.stopSharing(task),
+    stopAllSharing: () => taskOps.stopAllSharing(),
     removeTaskRecord: (task: Aria2Task) => taskOps.removeTaskRecord(task),
     purgeTaskRecord: () => taskOps.purgeTaskRecord(),
     saveSession: () => taskOps.saveSession(),

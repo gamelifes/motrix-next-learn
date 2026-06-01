@@ -1,7 +1,7 @@
 /**
  * @fileoverview Pure functions for the ED2K preference tab.
  *
- * ED2K uses server endpoints, server.met, nodes.dat, and shared files.
+ * ED2K uses server endpoints, server.met, nodes.dat, upload slots, and search.
  * These options are Aria2 Next startup options, so changes require an engine
  * restart instead of hot reloading through changeGlobalOption.
  */
@@ -24,7 +24,6 @@ export interface Ed2kForm {
   ed2kServerList: string
   ed2kNodeList: string
   ed2kUploadSlots: number
-  ed2kShareFiles: string
   ed2kSearchTimeout: number
 }
 
@@ -39,13 +38,6 @@ function joinLines(value: string): string {
   return splitLines(value).join('\n')
 }
 
-function normalizePathLines(value: string): string[] {
-  return value
-    .split(/\r?\n/)
-    .map((item) => item.trim())
-    .filter(Boolean)
-}
-
 export function buildEd2kForm(config: AppConfig): Ed2kForm {
   return {
     ed2kListenPort: Number(config.ed2kListenPort ?? D.ed2kListenPort),
@@ -54,7 +46,6 @@ export function buildEd2kForm(config: AppConfig): Ed2kForm {
     ed2kServerList: config.ed2kServerList ?? D.ed2kServerList,
     ed2kNodeList: config.ed2kNodeList ?? D.ed2kNodeList,
     ed2kUploadSlots: Number(config.ed2kUploadSlots ?? D.ed2kUploadSlots),
-    ed2kShareFiles: (config.ed2kShareFiles ?? D.ed2kShareFiles).join('\n'),
     ed2kSearchTimeout: Number(config.ed2kSearchTimeout ?? D.ed2kSearchTimeout),
   }
 }
@@ -67,7 +58,6 @@ export function buildEd2kSystemConfig(f: Ed2kForm): Record<string, string> {
     'ed2k-server-list': String(f.ed2kServerList).trim(),
     'ed2k-node-list': String(f.ed2kNodeList).trim(),
     'ed2k-upload-slots': String(f.ed2kUploadSlots),
-    'ed2k-share-file': normalizePathLines(f.ed2kShareFiles).join('\n'),
   }
 }
 
@@ -79,7 +69,6 @@ export function transformEd2kForStore(f: Ed2kForm): Partial<AppConfig> {
     ed2kServerList: String(f.ed2kServerList).trim(),
     ed2kNodeList: String(f.ed2kNodeList).trim(),
     ed2kUploadSlots: Number(f.ed2kUploadSlots),
-    ed2kShareFiles: normalizePathLines(f.ed2kShareFiles),
     ed2kSearchTimeout: Number(f.ed2kSearchTimeout),
   }
 }

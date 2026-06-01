@@ -15,7 +15,7 @@ vi.mock('@tauri-apps/plugin-fs', () => ({
 
 const {
   buildHistoryRecord,
-  buildBtCompletionRecord,
+  buildSharingCompletionRecord,
   isMetadataTask,
   shouldRunStaleCleanup,
   historyRecordToTask,
@@ -257,16 +257,16 @@ describe('buildHistoryRecord', () => {
   })
 })
 
-// ── buildBtCompletionRecord ──────────────────────────────────────────
+// ── buildSharingCompletionRecord ──────────────────────────────────────────
 
-describe('buildBtCompletionRecord', () => {
-  it('overrides status to "complete" for a seeding task (aria2 status=active)', () => {
+describe('buildSharingCompletionRecord', () => {
+  it('overrides status to "complete" for a shared-upload task (aria2 status=active)', () => {
     const task = makeTask({
       status: 'active',
       bittorrent: { info: { name: 'Ubuntu 24.04' } },
       seeder: 'true',
     } as Partial<Aria2Task>)
-    const record = buildBtCompletionRecord(task)
+    const record = buildSharingCompletionRecord(task)
     expect(record.status).toBe('complete')
   })
 
@@ -279,7 +279,7 @@ describe('buildBtCompletionRecord', () => {
       bittorrent: { info: { name: 'Big Archive' } },
       infoHash: 'abc123def456',
     } as Partial<Aria2Task>)
-    const record = buildBtCompletionRecord(task)
+    const record = buildSharingCompletionRecord(task)
 
     // status overridden
     expect(record.status).toBe('complete')
@@ -294,9 +294,9 @@ describe('buildBtCompletionRecord', () => {
     expect(meta.infoHash).toBe('abc123def456')
   })
 
-  it('works for non-seeding active tasks (defensive)', () => {
+  it('works for active tasks defensively', () => {
     const task = makeTask({ status: 'active' })
-    const record = buildBtCompletionRecord(task)
+    const record = buildSharingCompletionRecord(task)
     expect(record.status).toBe('complete')
   })
 })

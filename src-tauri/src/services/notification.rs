@@ -127,7 +127,7 @@ fn trim_linux_notifications_to_limit(
 pub enum TaskNotificationKind {
     Start,
     Complete,
-    BtComplete,
+    SharingComplete,
     Error,
 }
 
@@ -164,7 +164,7 @@ pub fn linux_notification_identity() -> LinuxNotificationIdentity {
 fn kind_for_event(event_name: &str) -> Option<TaskNotificationKind> {
     match event_name {
         events::TASK_COMPLETE => Some(TaskNotificationKind::Complete),
-        events::BT_COMPLETE => Some(TaskNotificationKind::BtComplete),
+        events::SHARING_COMPLETE => Some(TaskNotificationKind::SharingComplete),
         events::TASK_ERROR => Some(TaskNotificationKind::Error),
         _ => None,
     }
@@ -177,7 +177,7 @@ fn notification_enabled(kind: TaskNotificationKind, config: &RuntimeConfig) -> b
 
     match kind {
         TaskNotificationKind::Start => config.notify_on_start,
-        TaskNotificationKind::Complete | TaskNotificationKind::BtComplete => {
+        TaskNotificationKind::Complete | TaskNotificationKind::SharingComplete => {
             config.notify_on_complete
         }
         TaskNotificationKind::Error => true,
@@ -209,10 +209,19 @@ pub fn build_task_notification(
             texts.download_complete_title.to_string(),
             format_task_message(texts.download_complete_body, task_name),
         ),
-        TaskNotificationKind::BtComplete => (
-            texts.bt_complete_title.to_string(),
-            format_task_message(texts.bt_complete_body, task_name),
-        ),
+        TaskNotificationKind::SharingComplete => {
+            if event.sharing_kind == Some("ed2k") {
+                (
+                    texts.ed2k_complete_title.to_string(),
+                    format_task_message(texts.ed2k_complete_body, task_name),
+                )
+            } else {
+                (
+                    texts.bt_complete_title.to_string(),
+                    format_task_message(texts.bt_complete_body, task_name),
+                )
+            }
+        }
         TaskNotificationKind::Error => {
             let reason = event
                 .error_message
@@ -483,6 +492,8 @@ mod tests {
             completed_length: "1".to_string(),
             info_hash: None,
             is_bt: false,
+            is_ed2k: false,
+            sharing_kind: None,
             files: Vec::new(),
             announce_list: Vec::new(),
         }
@@ -499,10 +510,24 @@ mod tests {
 
     #[test]
     fn builds_localised_bt_complete_notification() {
-        let content = build_task_notification(events::BT_COMPLETE, &event(), &cfg()).unwrap();
-        assert_eq!(content.kind, TaskNotificationKind::BtComplete);
+        let mut ev = event();
+        ev.is_bt = true;
+        ev.sharing_kind = Some("bt");
+        let content = build_task_notification(events::SHARING_COMPLETE, &ev, &cfg()).unwrap();
+        assert_eq!(content.kind, TaskNotificationKind::SharingComplete);
         assert_eq!(content.title, "BT Download Complete");
         assert_eq!(content.body, "Seeding started: file.zip");
+    }
+
+    #[test]
+    fn builds_localised_ed2k_sharing_notification() {
+        let mut ev = event();
+        ev.is_ed2k = true;
+        ev.sharing_kind = Some("ed2k");
+        let content = build_task_notification(events::SHARING_COMPLETE, &ev, &cfg()).unwrap();
+        assert_eq!(content.kind, TaskNotificationKind::SharingComplete);
+        assert_eq!(content.title, "ED2K Download Complete");
+        assert_eq!(content.body, "Sharing started: file.zip");
     }
 
     #[test]

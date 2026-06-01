@@ -15,7 +15,7 @@ const emit = defineEmits<{
   'show-info': [task: Aria2Task]
   folder: [task: Aria2Task]
   'open-file': [task: Aria2Task]
-  'stop-seeding': [task: Aria2Task]
+  'stop-sharing': [task: Aria2Task]
 }>()
 
 const taskStore = useTaskStore()
@@ -69,7 +69,7 @@ function handleItemClick(task: Aria2Task, event: MouseEvent) {
           @show-info="emit('show-info', item)"
           @folder="emit('folder', item)"
           @open-file="emit('open-file', item)"
-          @stop-seeding="emit('stop-seeding', item)"
+          @stop-sharing="emit('stop-sharing', item)"
         />
       </div>
     </div>

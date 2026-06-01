@@ -22,7 +22,7 @@ const mockResumeAllTask = vi.fn().mockResolvedValue(undefined)
 const mockPauseAllTask = vi.fn().mockResolvedValue(undefined)
 const mockPurgeTaskRecord = vi.fn().mockResolvedValue(undefined)
 const mockBatchRemoveTask = vi.fn().mockResolvedValue(undefined)
-const mockStopAllSeeding = vi.fn().mockResolvedValue(2)
+const mockStopAllSharing = vi.fn().mockResolvedValue(2)
 const mockDeleteTaskFiles = vi.fn().mockResolvedValue(undefined)
 
 // Dialog mock: captures onPositiveClick so we can invoke it in tests
@@ -164,7 +164,7 @@ const createWrapper = () =>
 
 /**
  * Click the Nth button in the component (0-indexed).
- * Button order in template: [0]Add [1]Refresh [2]ResumeAll [3]PauseAll [4]StopAllSeed [5]DeleteAll
+ * Button order in template: [0]Add [1]Refresh [2]ResumeAll [3]PauseAll [4]StopAllSharing [5]DeleteAll
  * When currentList === 'stopped': [0]Add [1]Refresh [2]Purge
  */
 async function clickButton(wrapper: ReturnType<typeof createWrapper>, index: number) {
@@ -191,7 +191,7 @@ describe('TaskActions', () => {
     taskStore.pauseAllTask = mockPauseAllTask
     taskStore.purgeTaskRecord = mockPurgeTaskRecord
     taskStore.batchRemoveTask = mockBatchRemoveTask
-    taskStore.stopAllSeeding = mockStopAllSeeding
+    taskStore.stopAllSharing = mockStopAllSharing
   })
 
   afterEach(() => {
@@ -208,7 +208,7 @@ describe('TaskActions', () => {
   it('renders all 7 action buttons when list is not stopped', () => {
     const wrapper = createWrapper()
     const buttons = wrapper.findAll('button')
-    // Add + Refresh + Sort + ResumeAll + PauseAll + StopAllSeed + DeleteAll = 7
+    // Add + Refresh + Sort + ResumeAll + PauseAll + StopAllSharing + DeleteAll = 7
     expect(buttons.length).toBe(7)
   })
 
@@ -291,7 +291,7 @@ describe('TaskActions', () => {
   describe('disabled state guards', () => {
     it('Resume All button is disabled when taskList is empty', () => {
       const wrapper = createWrapper()
-      // Button order: [0]Add [1]Refresh [2]ResumeAll [3]PauseAll [4]StopAllSeed [5]DeleteAll
+      // Button order: [0]Add [1]Refresh [2]ResumeAll [3]PauseAll [4]StopAllSharing [5]DeleteAll
       const resumeBtn = wrapper.findAll('button')[3]
       expect(resumeBtn.attributes('disabled')).toBeDefined()
     })
@@ -354,7 +354,7 @@ describe('TaskActions', () => {
       expect(pauseBtn.attributes('disabled')).toBeUndefined()
     })
 
-    it('Resume All button remains disabled with completed/error/seeding tasks', () => {
+    it('Resume All button remains disabled with completed/error/sharing tasks', () => {
       const taskStore = useTaskStore()
       taskStore.taskList = [
         { gid: 'c1', status: 'complete' },
@@ -573,10 +573,10 @@ describe('TaskActions', () => {
     })
   })
 
-  // ── Stop All Seeding Animation Linkage ──────────────────────────
+  // ── Stop All Sharing Animation Linkage ──────────────────────────
 
-  describe('stop all seeding animation', () => {
-    it('pushes all seeder gids into stoppingGids on positive click', async () => {
+  describe('stop all sharing animation', () => {
+    it('pushes all sharing gids into stoppingGids on positive click', async () => {
       const taskStore = useTaskStore()
       taskStore.taskList = [
         { gid: 's1', status: 'active', bittorrent: { info: { name: 'a' } }, seeder: 'true' },
@@ -585,7 +585,7 @@ describe('TaskActions', () => {
       ] as never
 
       const wrapper = createWrapper()
-      await clickButton(wrapper, 5) // Stop All Seeding
+      await clickButton(wrapper, 5) // Stop All Sharing
 
       const onPositiveClick = lastDialogOptions!.onPositiveClick as () => Promise<void>
       onPositiveClick() // fire-and-forget — watcher keeps spinning
@@ -596,7 +596,7 @@ describe('TaskActions', () => {
       expect(stoppingGids.value).not.toContain('a1')
     })
 
-    it('shows spinning while snapshotted seeder tasks still have seeder=true', async () => {
+    it('shows spinning while snapshotted sharing tasks still have seeder=true', async () => {
       const taskStore = useTaskStore()
       taskStore.taskList = [
         { gid: 's1', status: 'active', bittorrent: { info: { name: 'x' } }, seeder: 'true' },
@@ -609,10 +609,10 @@ describe('TaskActions', () => {
       onPositiveClick()
       await wrapper.vm.$nextTick()
 
-      // Task still seeding → button should spin
+      // Task still sharing, so the button should spin.
       expect(wrapper.find('.stop-all-spinning').exists()).toBe(true)
 
-      // Simulate task exiting seeding state
+      // Simulate task exiting sharing state.
       taskStore.taskList = [{ gid: 's1', bittorrent: { info: { name: 'x' } }, seeder: 'false' }] as never
       await wrapper.vm.$nextTick()
 
@@ -620,7 +620,7 @@ describe('TaskActions', () => {
       expect(wrapper.find('.stop-all-spinning').exists()).toBe(false)
     })
 
-    it('ignores new seeders appearing during batch stop', async () => {
+    it('ignores new sharing tasks appearing during batch stop', async () => {
       const taskStore = useTaskStore()
       taskStore.taskList = [
         { gid: 's1', status: 'active', bittorrent: { info: { name: 'a' } }, seeder: 'true' },
@@ -635,7 +635,7 @@ describe('TaskActions', () => {
 
       expect(wrapper.find('.stop-all-spinning').exists()).toBe(true)
 
-      // Original seeder exits, but a NEW seeder appears
+      // Original task exits, but a new sharing task appears.
       taskStore.taskList = [
         { gid: 's1', bittorrent: { info: { name: 'a' } }, seeder: 'false' },
         { gid: 's_new', status: 'active', bittorrent: { info: { name: 'new' } }, seeder: 'true' },
@@ -646,7 +646,7 @@ describe('TaskActions', () => {
       expect(wrapper.find('.stop-all-spinning').exists()).toBe(false)
     })
 
-    it('calls stopAllSeeding store method on confirm', async () => {
+    it('calls stopAllSharing store method on confirm', async () => {
       const taskStore = useTaskStore()
       taskStore.taskList = [
         { gid: 's1', status: 'active', bittorrent: { info: { name: 'x' } }, seeder: 'true' },
@@ -658,10 +658,10 @@ describe('TaskActions', () => {
       const onPositiveClick = lastDialogOptions!.onPositiveClick as () => Promise<void>
       await onPositiveClick()
 
-      expect(mockStopAllSeeding).toHaveBeenCalledOnce()
+      expect(mockStopAllSharing).toHaveBeenCalledOnce()
     })
 
-    it('stops spinning after safety timeout even if tasks remain seeding', async () => {
+    it('stops spinning after safety timeout even if tasks remain sharing', async () => {
       const taskStore = useTaskStore()
       taskStore.taskList = [
         { gid: 's1', status: 'active', bittorrent: { info: { name: 'x' } }, seeder: 'true' },
@@ -692,7 +692,7 @@ describe('TaskActions', () => {
       taskStore.currentList = 'all'
       const wrapper = createWrapper()
       const buttons = wrapper.findAll('button')
-      // Add + Refresh + Sort + ResumeAll + PauseAll + StopAllSeed + DeleteAll + Purge = 8
+      // Add + Refresh + Sort + ResumeAll + PauseAll + StopAllSharing + DeleteAll + Purge = 8
       expect(buttons.length).toBe(8)
     })
 
@@ -707,7 +707,7 @@ describe('TaskActions', () => {
       ] as never
 
       const wrapper = createWrapper()
-      // Button order in 'all': [0]Add [1]Refresh [2]ResumeAll [3]PauseAll [4]StopAllSeed [5]DeleteAll [6]Purge
+      // Button order in 'all': [0]Add [1]Refresh [2]ResumeAll [3]PauseAll [4]StopAllSharing [5]DeleteAll [6]Purge
       await clickButton(wrapper, 6) // Delete All
 
       expect(mockDialogWarning).toHaveBeenCalledOnce()

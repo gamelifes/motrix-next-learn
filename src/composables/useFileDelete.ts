@@ -81,7 +81,7 @@ export async function removePath(path: string): Promise<boolean> {
  * Path resolution mirrors `deleteTaskFiles()` for consistency.
  *
  * Safe to call after BT download completes:
- * - From `stopSeeding()` (user manually stops)
+ * - From `stopSharing()` (user manually stops)
  * - From `onTaskComplete()` (aria2 auto-stops via seed-time/seed-ratio)
  */
 export async function cleanupAria2ControlFile(task: Aria2Task): Promise<void> {

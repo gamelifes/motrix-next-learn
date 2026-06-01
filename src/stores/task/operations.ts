@@ -2,16 +2,16 @@
  * @fileoverview Extracted task CRUD operations from the Pinia task store.
  *
  * Contains: removeTask, pauseTask, resumeTask, pauseAllTask, resumeAllTask,
- * toggleTask, stopSeeding, stopAllSeeding, removeTaskRecord, purgeTaskRecord,
+ * toggleTask, stopSharing, stopAllSharing, removeTaskRecord, purgeTaskRecord,
  * batchRemoveTask.
  *
  * Uses dependency injection — accepts API + store refs instead of importing
  * them directly, enabling testability and keeping the task store thin.
  */
 import { TASK_STATUS } from '@shared/constants'
-import { checkTaskIsBT, checkTaskIsSeeder } from '@shared/utils'
+import { checkTaskIsBT, checkTaskIsSharing, getTaskSharingKind } from '@shared/utils'
 import { logger } from '@shared/logger'
-import { buildBtCompletionRecord } from '@/composables/useTaskLifecycle'
+import { buildSharingCompletionRecord } from '@/composables/useTaskLifecycle'
 import { cleanupAria2ControlFile, deleteTaskFiles } from '@/composables/useFileDelete'
 import { cleanupAria2MetadataFiles } from '@/composables/useDownloadCleanup'
 import { useHistoryStore } from '@/stores/history'
@@ -179,15 +179,15 @@ export function createTaskOperations(deps: TaskOperationsDeps) {
 
   async function pauseAllTask() {
     try {
-      const nonSeeders = taskList.value.filter(
-        (t) => (t.status === TASK_STATUS.ACTIVE || t.status === TASK_STATUS.WAITING) && !checkTaskIsSeeder(t),
+      const pausableTasks = taskList.value.filter(
+        (t) => (t.status === TASK_STATUS.ACTIVE || t.status === TASK_STATUS.WAITING) && !checkTaskIsSharing(t),
       )
-      if (nonSeeders.length > 0) {
-        await Promise.allSettled(nonSeeders.map((t) => api.forcePauseTask({ gid: t.gid })))
+      if (pausableTasks.length > 0) {
+        await Promise.allSettled(pausableTasks.map((t) => api.forcePauseTask({ gid: t.gid })))
       }
       logger.info(
         'TaskOps.pauseAllTask',
-        `paused=${nonSeeders.length} gids=[${nonSeeders.map((t) => t.gid).join(',')}]`,
+        `paused=${pausableTasks.length} gids=[${pausableTasks.map((t) => t.gid).join(',')}]`,
       )
     } finally {
       await fetchList()
@@ -207,13 +207,14 @@ export function createTaskOperations(deps: TaskOperationsDeps) {
 
   function toggleTask(task: Aria2Task) {
     const { status } = task
-    if (status === TASK_STATUS.ACTIVE && !checkTaskIsSeeder(task)) return pauseTask(task)
+    if (status === TASK_STATUS.ACTIVE && !checkTaskIsSharing(task)) return pauseTask(task)
     if (status === TASK_STATUS.WAITING || status === TASK_STATUS.PAUSED) return resumeTask(task)
-    logger.debug('TaskOps.toggleTask', `no-op gid=${task.gid} status=${status} seeder=${checkTaskIsSeeder(task)}`)
+    logger.debug('TaskOps.toggleTask', `no-op gid=${task.gid} status=${status} sharing=${checkTaskIsSharing(task)}`)
   }
 
-  async function stopSeeding(task: Aria2Task) {
+  async function stopSharing(task: Aria2Task) {
     const { gid } = task
+    const protocolKind = getTaskSharingKind(task) ?? (task.bittorrent ? 'bt' : task.ed2k ? 'ed2k' : null)
     try {
       await api.forcePauseTask({ gid })
       await api.removeTask({ gid })
@@ -221,52 +222,48 @@ export function createTaskOperations(deps: TaskOperationsDeps) {
       try {
         await api.removeTaskRecord({ gid })
       } catch (e) {
-        logger.debug('TaskOps.stopSeeding', `removeTaskRecord gid=${gid} skipped: ${e}`)
+        logger.debug('TaskOps.stopSharing', `removeTaskRecord gid=${gid} skipped: ${e}`)
       }
-      // Also purge the parent metadata task from aria2's stopped list.
-      // For magnet links, the metadata resolution task (GID-A) stays in
-      // tellStopped with followedBy=[this GID] and the same infoHash.
-      // If not cleaned up, its infoHash poisons mergeHistoryIntoTasks
-      // dedup, causing the download task's history record to be discarded.
-      if (task.following) {
+      if (protocolKind === 'bt' && task.following) {
         try {
           await api.removeTaskRecord({ gid: task.following })
         } catch (e) {
-          logger.debug('TaskOps.stopSeeding', `removeTaskRecord following=${task.following} skipped: ${e}`)
+          logger.debug('TaskOps.stopSharing', `removeTaskRecord following=${task.following} skipped: ${e}`)
         }
       }
-      const record = buildBtCompletionRecord(task)
+      const record = buildSharingCompletionRecord(task)
       const historyStore = useHistoryStore()
-      // Clean up stale DB records from previous sessions (different GID, same infoHash)
-      if (task.infoHash) {
+      if (protocolKind === 'bt' && task.infoHash) {
         await historyStore.removeByInfoHash(task.infoHash, task.gid)
       }
       await historyStore.addRecord(record)
-      try {
-        await cleanupAria2ControlFile(task)
-      } catch (e) {
-        logger.debug('TaskOps.stopSeeding', `cleanupControlFile gid=${gid} skipped: ${e}`)
-      }
-      if (task.dir && task.infoHash) {
+      if (protocolKind === 'bt') {
         try {
-          await cleanupAria2MetadataFiles(task.dir, task.infoHash)
+          await cleanupAria2ControlFile(task)
         } catch (e) {
-          logger.debug('TaskOps.stopSeeding', `cleanupMetadata gid=${gid} skipped: ${e}`)
+          logger.debug('TaskOps.stopSharing', `cleanupControlFile gid=${gid} skipped: ${e}`)
+        }
+        if (task.dir && task.infoHash) {
+          try {
+            await cleanupAria2MetadataFiles(task.dir, task.infoHash)
+          } catch (e) {
+            logger.debug('TaskOps.stopSharing', `cleanupMetadata gid=${gid} skipped: ${e}`)
+          }
         }
       }
-      logger.info('TaskOps.stopSeeding', `gid=${gid} infoHash=${task.infoHash ?? 'n/a'}`)
+      logger.info('TaskOps.stopSharing', `gid=${gid} kind=${protocolKind ?? 'unknown'}`)
     } finally {
       await fetchList()
       await api.saveSession()
     }
   }
 
-  async function stopAllSeeding(): Promise<number> {
-    const seeders = taskList.value.filter(checkTaskIsSeeder)
-    if (seeders.length === 0) return 0
-    await Promise.allSettled(seeders.map((t) => stopSeeding(t)))
-    logger.info('TaskOps.stopAllSeeding', `stopped ${seeders.length} seeder(s)`)
-    return seeders.length
+  async function stopAllSharing(): Promise<number> {
+    const sharingTasks = taskList.value.filter(checkTaskIsSharing)
+    if (sharingTasks.length === 0) return 0
+    await Promise.allSettled(sharingTasks.map((t) => stopSharing(t)))
+    logger.info('TaskOps.stopAllSharing', `stopped ${sharingTasks.length} sharing task(s)`)
+    return sharingTasks.length
   }
 
   async function removeTaskRecord(task: Aria2Task) {
@@ -319,7 +316,7 @@ export function createTaskOperations(deps: TaskOperationsDeps) {
     try {
       const tasks = await api.fetchTaskList({ type: TASK_STATUS.ACTIVE })
       return tasks.some(
-        (t) => (t.status === TASK_STATUS.ACTIVE && !checkTaskIsSeeder(t)) || t.status === TASK_STATUS.WAITING,
+        (t) => (t.status === TASK_STATUS.ACTIVE && !checkTaskIsSharing(t)) || t.status === TASK_STATUS.WAITING,
       )
     } catch (e) {
       logger.debug('TaskOps.hasActiveTasks', `fetchTaskList failed: ${e}`)
@@ -349,8 +346,8 @@ export function createTaskOperations(deps: TaskOperationsDeps) {
     pauseAllTask,
     resumeAllTask,
     toggleTask,
-    stopSeeding,
-    stopAllSeeding,
+    stopSharing,
+    stopAllSharing,
     removeTaskRecord,
     purgeTaskRecord,
     batchRemoveTask,

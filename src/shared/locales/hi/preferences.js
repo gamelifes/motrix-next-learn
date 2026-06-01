@@ -376,8 +376,6 @@ export default {
   'ed2k-server-list': 'server.met पथ',
   'ed2k-node-list': 'nodes.dat पथ',
   'ed2k-upload-slots': 'Upload slots',
-  'ed2k-share-files': 'Shared files',
-  'ed2k-share-files-placeholder': 'हर line में एक local file path',
   'ed2k-search': 'ED2K Search',
   'ed2k-search-keyword': 'Keyword',
   'ed2k-search-keyword-required': 'Search keyword दर्ज करें।',

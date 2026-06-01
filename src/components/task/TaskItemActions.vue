@@ -33,7 +33,7 @@ const emit = defineEmits<{
   'show-info': []
   folder: []
   'open-file': []
-  'stop-seeding': []
+  'stop-sharing': []
 }>()
 
 const { t } = useI18n()
@@ -78,16 +78,14 @@ const actionsMap = computed<Record<string, ActionDef[]>>(() => ({
     { key: 'restart', icon: RefreshOutline, label: t('task.restart-task'), event: 'resume' },
     { key: 'trash', icon: TrashOutline, label: t('task.remove-record'), event: 'delete-record' },
   ],
-  [TASK_STATUS.SEEDING]: [
+  [TASK_STATUS.SHARING]: [
     {
       key: 'stop',
       icon: StopOutline,
-      label: t('task.stop-seeding') || 'Stop Seeding',
-      event: 'stop-seeding',
-      tooltip:
-        t('task.stop-seeding-tip') ||
-        'Download complete. You are sharing this file with others via BT. Click to stop seeding.',
-      cls: 'stop-seeding',
+      label: t('task.stop-sharing') || 'Stop Sharing',
+      event: 'stop-sharing',
+      tooltip: t('task.stop-sharing-tip') || 'Download complete. Click to stop sharing.',
+      cls: 'stop-sharing',
     },
     { key: 'delete', icon: CloseOutline, label: t('task.delete-task'), event: 'delete' },
   ],
@@ -137,8 +135,8 @@ function onAction(event: string) {
     case 'open-file':
       emit('open-file')
       break
-    case 'stop-seeding':
-      emit('stop-seeding')
+    case 'stop-sharing':
+      emit('stop-sharing')
       break
   }
 }
@@ -180,7 +178,7 @@ function onRelease(ev: PointerEvent) {
       :class="[
         action.cls,
         {
-          'is-stopping': action.event === 'stop-seeding' && isStopping,
+          'is-stopping': action.event === 'stop-sharing' && isStopping,
         },
       ]"
       @pointerdown="onPress"
@@ -190,7 +188,7 @@ function onRelease(ev: PointerEvent) {
     >
       <MTooltip :style="action.tooltip ? 'max-width: 220px' : ''">
         <template #trigger>
-          <span v-if="action.event === 'stop-seeding'" class="stop-icon-wrapper">
+          <span v-if="action.event === 'stop-sharing'" class="stop-icon-wrapper">
             <span class="stop-icon-static" :class="{ 'fade-out': isStopping }">
               <NIcon :size="20"><StopOutline /></NIcon>
             </span>
@@ -202,8 +200,8 @@ function onRelease(ev: PointerEvent) {
             <NIcon :key="action.event" :size="20"><component :is="action.icon" /></NIcon>
           </Transition>
         </template>
-        <template v-if="action.event === 'stop-seeding' && isStopping">
-          {{ t('task.stopping-seeding') || 'Stopping…' }}
+        <template v-if="action.event === 'stop-sharing' && isStopping">
+          {{ t('task.stopping-sharing') || 'Stopping…' }}
         </template>
         <template v-else>
           {{ action.tooltip || action.label }}
@@ -265,10 +263,10 @@ function onRelease(ev: PointerEvent) {
   transform: scale(0.85);
   transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1);
 }
-.task-item-action.stop-seeding {
+.task-item-action.stop-sharing {
   color: var(--m3-success);
 }
-.task-item-action.stop-seeding:hover {
+.task-item-action.stop-sharing:hover {
   color: var(--m3-success);
 }
 .task-item-action.is-stopping {

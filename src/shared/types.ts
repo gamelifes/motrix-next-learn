@@ -50,7 +50,6 @@ export interface Aria2Ed2kInfo {
   searchActive?: boolean
   searchMoreResults?: boolean
   searchResultCount?: string
-  sharedFileCount?: string
   uploadingPeerCount?: string
   waitingUploadPeerCount?: string
   peerCreditCount?: string
@@ -339,7 +338,6 @@ export interface AppConfig {
   ed2kServerList: string
   ed2kNodeList: string
   ed2kUploadSlots: number
-  ed2kShareFiles: string[]
   ed2kSearchTimeout: number
   btTracker: string
   btForceEncryption: boolean

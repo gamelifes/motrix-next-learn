@@ -61,7 +61,7 @@ export const TASK_STATUS = {
   ERROR: 'error',
   COMPLETE: 'complete',
   REMOVED: 'removed',
-  SEEDING: 'seeding',
+  SHARING: 'sharing',
 }
 
 export const APP_LOG_LEVELS = ['error', 'warn', 'info', 'debug'] as const
@@ -338,7 +338,6 @@ export const DEFAULT_APP_CONFIG = {
   ed2kServerList: '',
   ed2kNodeList: '',
   ed2kUploadSlots: 3,
-  ed2kShareFiles: [] as string[],
   ed2kSearchTimeout: 20,
   proxy: {
     mode: 'direct' as const,
