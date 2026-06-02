@@ -645,10 +645,12 @@ onMounted(async () => {
       const record = buildHistoryRecord(task)
       historyStore.addRecord(record).catch((e) => logger.debug('Lifecycle.historyRecord.error', e))
       const i18nKey = task.errorCode ? ARIA2_ERROR_CODES[task.errorCode] : undefined
-      const taskName = getTaskDisplayName(task, { defaultName: 'Unknown' })
       const errorText = i18nKey ? t(i18nKey) : task.errorMessage || t('task.error-unknown')
-      message.error(`${taskName}: ${errorText}`)
-      handleTaskError(task, `${taskName}: ${errorText}`)
+      handleTaskError(task, errorText, {
+        messageSuccess: message.success,
+        messageError: message.error,
+        t,
+      })
     },
     onTaskComplete: async (task) => {
       if (isMetadataTask(task)) return
@@ -661,6 +663,7 @@ onMounted(async () => {
       historyStore.addRecord(record).catch((e) => logger.debug('Lifecycle.historyRecord', e))
       handleTaskComplete(task, {
         messageSuccess: message.success,
+        messageError: message.error,
         t,
         onOpenFile: openFileFromNotification,
         onShowInFolder: showInFolderFromNotification,
@@ -725,6 +728,7 @@ onMounted(async () => {
       }
       handleSharingComplete(task, kind, {
         messageSuccess: message.success,
+        messageError: message.error,
         t,
         onOpenFile: openFileFromNotification,
         onShowInFolder: showInFolderFromNotification,

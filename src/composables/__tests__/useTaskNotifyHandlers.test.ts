@@ -82,6 +82,7 @@ import type { NotifyDeps, StartNotifyDeps } from '../useTaskNotifyHandlers'
 function makeDeps(overrides: Partial<NotifyDeps> = {}): NotifyDeps {
   return {
     messageSuccess: vi.fn() as unknown as NotifyDeps['messageSuccess'],
+    messageError: vi.fn() as unknown as NotifyDeps['messageError'],
     t: vi.fn((key: string, params?: Record<string, unknown>) => {
       if (key === 'task.download-complete-message' && params?.taskName) {
         return `Saved: ${params.taskName}`
@@ -91,6 +92,9 @@ function makeDeps(overrides: Partial<NotifyDeps> = {}): NotifyDeps {
       }
       if (key === 'task.ed2k-download-complete-message' && params?.taskName) {
         return `Sharing: ${params.taskName}`
+      }
+      if (key === 'task.download-fail-message' && params?.taskName && params?.reason) {
+        return `${params.taskName}: ${params.reason}`
       }
       if (key === 'task.error-unknown') return 'Unknown error'
       return key
@@ -223,15 +227,18 @@ describe('handleTaskError', () => {
     vi.clearAllMocks()
   })
 
-  it('logs error notification path without sending start notification', () => {
+  it('sends error toast with the same task and reason format as native notification', () => {
+    const deps = makeDeps()
     const task = makeTask({
       status: 'error',
       errorCode: '6',
       errorMessage: 'Network problem',
     })
 
-    handleTaskError(task, 'test-file.zip: Network problem')
+    handleTaskError(task, 'Network problem', deps)
 
+    expect(deps.messageError).toHaveBeenCalledOnce()
+    expect(deps.messageError).toHaveBeenCalledWith('test-file.zip: Network problem')
     expect(mockInvoke).not.toHaveBeenCalled()
   })
 })

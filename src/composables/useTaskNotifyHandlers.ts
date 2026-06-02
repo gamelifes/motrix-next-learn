@@ -27,6 +27,7 @@ import { renderCompletionToast } from '@/composables/useNotificationToast'
 /** Dependency interface for testability. */
 export interface NotifyDeps {
   messageSuccess: (content: string | (() => VNodeChild)) => void
+  messageError: (content: string) => void
   t: (key: string, params?: Record<string, unknown>) => string
   /** Optional: open the downloaded file with the default application. */
   onOpenFile?: (task: Aria2Task) => void
@@ -80,11 +81,14 @@ export function handleSharingComplete(task: Aria2Task, kind: TaskSharingKind, de
 }
 
 /**
- * Handle a download error. The in-app error toast is already handled by the
- * caller in MainLayout, and native OS notification is sent by Rust monitor.
+ * Handle a download error.
+ * Always sends in-app toast. Native OS notification is sent by Rust monitor.
  */
-export function handleTaskError(_task: Aria2Task, errorText: string): void {
-  logger.warn('TaskNotify.error', `gid=${_task.gid} error="${errorText}"`)
+export function handleTaskError(task: Aria2Task, reason: string, deps: NotifyDeps): void {
+  const taskName = getTaskDisplayName(task, { defaultName: 'Unknown' })
+  const body = deps.t('task.download-fail-message', { taskName, reason })
+  deps.messageError(body)
+  logger.warn('TaskNotify.error', `gid=${task.gid} error="${body}"`)
 }
 
 // ── Download-start notification ─────────────────────────────────────
