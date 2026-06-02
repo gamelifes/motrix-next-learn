@@ -3,6 +3,7 @@
 import { ref, computed, onMounted, h, nextTick } from 'vue'
 import type { VNodeChild } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
+import { openUrl } from '@tauri-apps/plugin-opener'
 import { useI18n } from 'vue-i18n'
 import { usePreferenceStore } from '@/stores/preference'
 import { usePreferenceForm } from '@/composables/usePreferenceForm'
@@ -107,6 +108,10 @@ function renderCustomOption(info: {
       [h(NIcon, { size: 18 }, { default: () => h(CloseCircleOutline) })],
     ),
   ])
+}
+
+function openTrackerSource(url: string) {
+  openUrl(url).catch((e) => logger.error('BT.openTrackerSource', e))
 }
 
 const customPlaceholder = computed(() =>
@@ -418,17 +423,16 @@ onMounted(() => {
       <NFormItem :show-label="false">
         <div class="info-text">
           {{ t('preferences.bt-tracker-tips') }}
-          <a target="_blank" href="https://github.com/ngosang/trackerslist" rel="noopener noreferrer" class="info-link">
+          <button class="info-link" type="button" @click="openTrackerSource('https://github.com/ngosang/trackerslist')">
             ngosang/trackerslist ↗
-          </a>
-          <a
-            target="_blank"
-            href="https://github.com/XIU2/TrackersListCollection"
-            rel="noopener noreferrer"
+          </button>
+          <button
             class="info-link pref-meta-link"
+            type="button"
+            @click="openTrackerSource('https://github.com/XIU2/TrackersListCollection')"
           >
             XIU2/TrackersListCollection ↗
-          </a>
+          </button>
         </div>
       </NFormItem>
       <NFormItem :label="t('preferences.auto-sync')">
@@ -458,11 +462,18 @@ onMounted(() => {
   word-wrap: break-word;
 }
 .info-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
   color: var(--color-primary);
+  cursor: pointer;
   text-decoration: none;
   font-size: 12px;
 }
 .info-link:hover {
   text-decoration: underline;
+}
+.info-text .pref-meta-link {
+  margin-left: 18px;
 }
 </style>
