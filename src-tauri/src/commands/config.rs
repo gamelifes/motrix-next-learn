@@ -39,12 +39,14 @@ pub fn save_system_config(app: AppHandle, config: Value) -> Result<(), AppError>
 
 #[tauri::command]
 pub fn read_settings_backup_file(path: String) -> Result<String, AppError> {
-    std::fs::read_to_string(&path).map_err(|e| AppError::Io(format!("Failed to read settings backup: {e}")))
+    std::fs::read_to_string(&path)
+        .map_err(|e| AppError::Io(format!("Failed to read settings backup: {e}")))
 }
 
 #[tauri::command]
 pub fn write_settings_backup_file(path: String, content: String) -> Result<(), AppError> {
-    std::fs::write(&path, content).map_err(|e| AppError::Io(format!("Failed to write settings backup: {e}")))
+    std::fs::write(&path, content)
+        .map_err(|e| AppError::Io(format!("Failed to write settings backup: {e}")))
 }
 
 /// Clears user, system, and preference stores, resetting the app to defaults.
