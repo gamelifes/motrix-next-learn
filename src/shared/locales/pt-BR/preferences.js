@@ -7,6 +7,7 @@ export default {
   save: 'Salvar e aplicar',
   'save-success-message': 'Preferências salvas',
   'save-fail-message': 'Falha ao salvar preferências',
+  'changes-restored': 'Alterações restauradas',
   discard: 'Descartar',
   startup: 'Inicialização',
   'open-at-login': 'Abrir ao fazer login',

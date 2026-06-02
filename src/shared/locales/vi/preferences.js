@@ -7,6 +7,7 @@ export default {
   save: 'Lưu và áp dụng',
   'save-success-message': 'Đã lưu tùy chọn',
   'save-fail-message': 'Lưu tùy chọn thất bại',
+  'changes-restored': 'Đã khôi phục thay đổi',
   discard: 'Hủy bỏ',
   startup: 'Khởi động',
   'open-at-login': 'Mở khi đăng nhập',

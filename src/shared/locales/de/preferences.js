@@ -7,6 +7,7 @@ export default {
   save: 'Speichern und anwenden',
   'save-success-message': 'Einstellungen gespeichert',
   'save-fail-message': 'Speichern fehlgeschlagen',
+  'changes-restored': 'Änderungen wiederhergestellt',
   discard: 'Verwerfen',
   startup: 'Start',
   'open-at-login': 'Bei Anmeldung starten',

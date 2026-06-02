@@ -7,6 +7,7 @@ export default {
   save: '저장 및 적용',
   'save-success-message': '설정이 저장되었습니다',
   'save-fail-message': '설정 저장 실패',
+  'changes-restored': '변경 사항이 복원되었습니다',
   discard: '취소',
   startup: '시작',
   'open-at-login': '로그인 시 자동 시작',

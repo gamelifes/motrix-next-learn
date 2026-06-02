@@ -7,6 +7,7 @@ export default {
   save: 'Simpan dan terapkan',
   'save-success-message': 'Preferensi tersimpan',
   'save-fail-message': 'Gagal menyimpan preferensi',
+  'changes-restored': 'Perubahan dipulihkan',
   discard: 'Buang',
   startup: 'Pengaktifan',
   'open-at-login': 'Buka saat masuk',

@@ -7,6 +7,7 @@ export default {
   save: 'Lagre og bruk',
   'save-success-message': 'Innstillinger lagret',
   'save-fail-message': 'Kunne ikke lagre innstillinger',
+  'changes-restored': 'Endringer gjenopprettet',
   discard: 'Forkast',
   startup: 'Oppstart',
   'open-at-login': 'Åpne ved innlogging',

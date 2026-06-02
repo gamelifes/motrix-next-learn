@@ -7,6 +7,7 @@ export default {
   save: 'Mentés és alkalmazás',
   'save-success-message': 'Beállítások mentve',
   'save-fail-message': 'A beállítások mentése sikertelen',
+  'changes-restored': 'Módosítások visszaállítva',
   discard: 'Elvetés',
   startup: 'Indítás',
   'open-at-login': 'Megnyitás bejelentkezéskor',

@@ -122,8 +122,12 @@ export function usePreferenceForm<T extends Record<string, unknown>>(options: Us
   }
 
   function handleReset(): void {
+    const hadChanges = isDirty.value
     Object.assign(form.value as Record<string, unknown>, options.buildForm())
     savedSnapshot.value = JSON.parse(JSON.stringify(form.value)) as T
+    if (hadChanges) {
+      message.success(t('preferences.changes-restored'))
+    }
   }
 
   /** Marks the current form state as the saved baseline (clears dirty flag). */

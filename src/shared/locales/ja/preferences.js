@@ -7,6 +7,7 @@ export default {
   save: '保存して適用',
   'save-success-message': '設定を保存しました',
   'save-fail-message': '設定の保存に失敗しました',
+  'changes-restored': '変更を元に戻しました',
   discard: '破棄',
   startup: '起動',
   'open-at-login': 'ログイン時に起動',

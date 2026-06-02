@@ -7,6 +7,7 @@ export default {
   save: 'Salvează și aplică',
   'save-success-message': 'Preferințele au fost salvate',
   'save-fail-message': 'Salvarea preferințelor a eșuat',
+  'changes-restored': 'Modificări restaurate',
   discard: 'Renunță',
   startup: 'Pornire',
   'open-at-login': 'Deschide la autentificare',

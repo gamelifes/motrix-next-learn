@@ -7,6 +7,7 @@ export default {
   save: 'Сохранить и применить',
   'save-success-message': 'Настройки сохранены',
   'save-fail-message': 'Не удалось сохранить настройки',
+  'changes-restored': 'Изменения восстановлены',
   discard: 'Отменить',
   startup: 'Запуск',
   'open-at-login': 'Открывать при входе в систему',

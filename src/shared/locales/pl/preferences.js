@@ -7,6 +7,7 @@ export default {
   save: 'Zapisz i zastosuj',
   'save-success-message': 'Ustawienia zapisane',
   'save-fail-message': 'Nie udało się zapisać ustawień',
+  'changes-restored': 'Zmiany przywrócone',
   discard: 'Odrzuć',
   startup: 'Uruchamianie',
   'open-at-login': 'Otwieraj przy logowaniu',

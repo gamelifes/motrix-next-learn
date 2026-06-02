@@ -7,6 +7,7 @@ export default {
   save: 'ذخیره و اعمال',
   'save-success-message': 'تنظیمات ذخیره شد',
   'save-fail-message': 'ذخیره تنظیمات ناموفق بود',
+  'changes-restored': 'تغییرات بازیابی شد',
   discard: 'صرف‌نظر',
   startup: 'راه‌اندازی',
   'open-at-login': 'باز شدن هنگام ورود',

@@ -7,6 +7,7 @@ export default {
   save: 'Запиши и приложи',
   'save-success-message': 'Настройките са запазени',
   'save-fail-message': 'Неуспешно запазване на настройките',
+  'changes-restored': 'Промените са възстановени',
   discard: 'Отхвърли',
   startup: 'Стартиране',
   'open-at-login': 'Отваряй при влизане',

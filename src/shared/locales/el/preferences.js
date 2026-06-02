@@ -7,6 +7,7 @@ export default {
   save: 'Αποθήκευση και εφαρμογή',
   'save-success-message': 'Οι προτιμήσεις αποθηκεύτηκαν',
   'save-fail-message': 'Αποτυχία αποθήκευσης',
+  'changes-restored': 'Οι αλλαγές επαναφέρθηκαν',
   discard: 'Απόρριψη',
   startup: 'Εκκίνηση',
   'open-at-login': 'Άνοιγμα κατά τη σύνδεση',

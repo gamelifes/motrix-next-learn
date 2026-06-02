@@ -7,6 +7,7 @@ export default {
   save: '保存并应用',
   'save-success-message': '偏好设置已保存',
   'save-fail-message': '偏好设置保存失败',
+  'changes-restored': '更改已还原',
   discard: '放弃',
   startup: '启动',
   'open-at-login': '登录时自动启动',

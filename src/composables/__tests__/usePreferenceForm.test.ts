@@ -163,6 +163,27 @@ describe('usePreferenceForm', () => {
     unmount()
   })
 
+  it('handleReset shows a restored toast only when changes existed', async () => {
+    const { result, unmount } = withSetup(() => usePreferenceForm(makeOptions()))
+    const { form, handleReset } = result
+
+    handleReset()
+    expect(mockMessage.success).not.toHaveBeenCalled()
+
+    form.value.dir = '/modified'
+    await nextTick()
+
+    handleReset()
+    await new Promise((resolve) => setTimeout(resolve, 100))
+    expect(mockMessage.success).toHaveBeenCalledTimes(1)
+    expect(mockMessage.success).toHaveBeenCalledWith(
+      'preferences.changes-restored',
+      expect.objectContaining({ closable: true }),
+    )
+
+    unmount()
+  })
+
   it('handleSave persists to store and calls save_system_config IPC', async () => {
     const store = usePreferenceStore()
     store.updateAndSave = vi.fn().mockResolvedValue(true)

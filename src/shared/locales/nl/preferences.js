@@ -7,6 +7,7 @@ export default {
   save: 'Opslaan en toepassen',
   'save-success-message': 'Instellingen opgeslagen',
   'save-fail-message': 'Opslaan mislukt',
+  'changes-restored': 'Wijzigingen hersteld',
   discard: 'Verwerpen',
   startup: 'Opstarten',
   'open-at-login': 'Openen bij inloggen',
