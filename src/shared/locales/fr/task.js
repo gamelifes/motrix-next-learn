@@ -296,6 +296,7 @@ export default {
   'task-completed-at': 'Terminé le',
   'restart-not-available': 'Aucun lien de téléchargement disponible pour redémarrer',
   'torrent-trashed': 'Téléchargement de "{taskName}" terminé — fichier torrent déplacé dans la corbeille',
+  'sort-manual': 'Manuel',
   'sort-by': 'Trier par',
   'sort-added-at': "Date d'ajout",
   'sort-completed-at': 'Date de fin',

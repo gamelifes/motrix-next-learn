@@ -16,6 +16,7 @@ import {
   normalizeUserAgentProfiles,
   normalizeUserAgentRules,
 } from '@shared/utils/userAgentPolicy'
+import { DEFAULT_TASK_MANUAL_ORDER, type TaskManualOrderConfig } from '@/composables/useTaskSort'
 
 export interface HydratedAppConfig {
   config: AppConfig
@@ -149,6 +150,26 @@ function normalizePortRecovery(value: unknown, repairs: string[]): PortConflictR
   }
 }
 
+function normalizeTaskManualOrder(value: unknown, repairs: string[]): TaskManualOrderConfig {
+  const saved = isRecord(value) ? value : {}
+  const normalizeList = (key: keyof TaskManualOrderConfig): string[] => {
+    const raw = saved[key]
+    if (!Array.isArray(raw)) {
+      if (raw !== undefined) repairs.push(`taskManualOrder.${key}`)
+      return [...DEFAULT_TASK_MANUAL_ORDER[key]]
+    }
+    const result = raw.filter((item): item is string => typeof item === 'string' && item.length > 0)
+    if (result.length !== raw.length) repairs.push(`taskManualOrder.${key}`)
+    return Array.from(new Set(result))
+  }
+
+  return {
+    active: normalizeList('active'),
+    stopped: normalizeList('stopped'),
+    all: normalizeList('all'),
+  }
+}
+
 function normalizeScalarValues(config: Record<string, unknown>, repairs: string[]): void {
   repairEnum(config, 'theme', ['auto', 'light', 'dark'] as const, DEFAULT_APP_CONFIG.theme, repairs)
   repairEnum(config, 'taskCardMode', ['full', 'compact'] as const, DEFAULT_APP_CONFIG.taskCardMode, repairs)
@@ -272,6 +293,7 @@ export function hydrateAppConfig(saved?: Partial<AppConfig> | null): HydratedApp
     input?.portConflictRecovery ?? merged.portConflictRecovery,
     repairs,
   )
+  merged.taskManualOrder = normalizeTaskManualOrder(input?.taskManualOrder ?? merged.taskManualOrder, repairs)
 
   normalizeScalarValues(record, repairs)
   normalizeSecrets(merged, input, repairs)

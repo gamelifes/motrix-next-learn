@@ -115,6 +115,31 @@ describe('TaskStore', () => {
     expect(mockApi.fetchTaskList).toHaveBeenCalledWith({ type: 'active' })
   })
 
+  it('manual active order survives polling and inserts new tasks above stored tasks', async () => {
+    const { usePreferenceStore } = await import('@/stores/preference')
+    const preferenceStore = usePreferenceStore()
+    preferenceStore.updatePreference({
+      taskSort: {
+        active: { field: 'manual', direction: 'desc' },
+        stopped: { field: 'added-at', direction: 'desc' },
+        all: { field: 'added-at', direction: 'desc' },
+      },
+      taskManualOrder: {
+        active: ['old-2', 'old-1'],
+        stopped: [],
+        all: [],
+      },
+    })
+    registerAddedAt('old-1', '2024-01-01T00:00:00Z')
+    registerAddedAt('old-2', '2024-01-02T00:00:00Z')
+    registerAddedAt('fresh', '2024-01-03T00:00:00Z')
+    mockApi.fetchTaskList.mockResolvedValueOnce([makeMockTask('old-1'), makeMockTask('fresh'), makeMockTask('old-2')])
+
+    await store.fetchList()
+
+    expect(store.taskList.map((task) => task.gid)).toEqual(['fresh', 'old-2', 'old-1'])
+  })
+
   it('fetchList prunes selectedGidList to valid gids only', async () => {
     store.selectTasks(['gid1', 'gid_invalid'])
     await store.fetchList()

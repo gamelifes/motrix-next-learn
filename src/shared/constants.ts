@@ -1,5 +1,5 @@
 /** @fileoverview Application-wide constants: themes, intervals, suffixes, limits. */
-import { DEFAULT_TASK_SORT } from '@/composables/useTaskSort'
+import { DEFAULT_TASK_MANUAL_ORDER, DEFAULT_TASK_SORT } from '@/composables/useTaskSort'
 export const EMPTY_STRING = ''
 export const IS_PORTABLE = false
 
@@ -484,6 +484,7 @@ export const DEFAULT_APP_CONFIG = {
 
   // ── Task Sorting ─────────────────────────────────────────────
   taskSort: DEFAULT_TASK_SORT,
+  taskManualOrder: DEFAULT_TASK_MANUAL_ORDER,
 }
 
 export const FILE_ALLOCATION_OPTIONS = ['none', 'trunc', 'prealloc', 'falloc'] as const

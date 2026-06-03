@@ -13,10 +13,13 @@ import type { Aria2Task, HistoryRecord } from '@shared/types'
 import {
   sortTasks,
   sortRecords,
+  applyManualOrder,
+  createManualOrderSnapshot,
   ACTIVE_SORT_FIELDS,
   STOPPED_SORT_FIELDS,
   ALL_SORT_FIELDS,
   DEFAULT_TASK_SORT,
+  DEFAULT_TASK_MANUAL_ORDER,
 } from '../useTaskSort'
 
 // ── Factories ────────────────────────────────────────────────────────
@@ -417,21 +420,50 @@ describe('sortRecords', () => {
   })
 })
 
+describe('manual task order', () => {
+  it('keeps stored tasks in manual order and inserts new tasks at the top by fallback order', () => {
+    const tasks = [
+      mockTask('old-1'),
+      mockTask('newer', { totalLength: '3000' }),
+      mockTask('old-2'),
+      mockTask('newest', { totalLength: '4000' }),
+    ]
+
+    applyManualOrder(tasks, ['old-2', 'old-1'], (fresh) => {
+      sortTasks(
+        fresh,
+        'added-at',
+        'desc',
+        new Map([
+          ['newer', '2024-01-02T00:00:00Z'],
+          ['newest', '2024-01-03T00:00:00Z'],
+        ]),
+      )
+    })
+
+    expect(gids(tasks)).toEqual(['newest', 'newer', 'old-2', 'old-1'])
+  })
+
+  it('creates a manual order snapshot from the current rendered list', () => {
+    expect(createManualOrderSnapshot([mockTask('a'), mockTask('b'), mockTask('c')])).toEqual(['a', 'b', 'c'])
+  })
+})
+
 // ═════════════════════════════════════════════════════════════════════
 // Constants and type contracts
 // ═════════════════════════════════════════════════════════════════════
 
 describe('sort constants', () => {
   it('ACTIVE_SORT_FIELDS contains exactly 5 fields', () => {
-    expect(ACTIVE_SORT_FIELDS).toEqual(['added-at', 'name', 'size', 'progress', 'speed'])
+    expect(ACTIVE_SORT_FIELDS).toEqual(['manual', 'added-at', 'name', 'size', 'progress', 'speed'])
   })
 
   it('STOPPED_SORT_FIELDS contains exactly 4 fields', () => {
-    expect(STOPPED_SORT_FIELDS).toEqual(['added-at', 'completed-at', 'name', 'size'])
+    expect(STOPPED_SORT_FIELDS).toEqual(['manual', 'added-at', 'completed-at', 'name', 'size'])
   })
 
   it('ALL_SORT_FIELDS contains exactly 3 fields', () => {
-    expect(ALL_SORT_FIELDS).toEqual(['added-at', 'name', 'size'])
+    expect(ALL_SORT_FIELDS).toEqual(['manual', 'added-at', 'name', 'size'])
   })
 
   it('DEFAULT_TASK_SORT has valid defaults for all tabs', () => {
@@ -452,5 +484,13 @@ describe('sort constants', () => {
     for (const field of ALL_SORT_FIELDS) {
       expect(ACTIVE_SORT_FIELDS).toContain(field)
     }
+  })
+
+  it('DEFAULT_TASK_MANUAL_ORDER starts empty for every tab', () => {
+    expect(DEFAULT_TASK_MANUAL_ORDER).toEqual({
+      active: [],
+      stopped: [],
+      all: [],
+    })
   })
 })

@@ -177,6 +177,24 @@ describe('hydrateAppConfig', () => {
     expect(result.repairs).toEqual(expect.arrayContaining(['proxy.mode', 'portConflictRecovery.range']))
   })
 
+  it('repairs invalid manual task order entries', () => {
+    const result = hydrateAppConfig({
+      configVersion: CONFIG_VERSION,
+      taskManualOrder: {
+        active: ['a', '', 'a', 1],
+        stopped: 'bad',
+        all: ['z'],
+      } as never,
+    })
+
+    expect(result.config.taskManualOrder).toEqual({
+      active: ['a'],
+      stopped: [],
+      all: ['z'],
+    })
+    expect(result.repairs).toEqual(expect.arrayContaining(['taskManualOrder.active', 'taskManualOrder.stopped']))
+  })
+
   it('repairs legacy auto proxy mode to disabled direct mode', () => {
     const result = hydrateAppConfig({
       configVersion: CONFIG_VERSION,

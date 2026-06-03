@@ -401,6 +401,8 @@ export interface AppConfig {
   asyncDns: boolean
   /** Per-tab sort configuration (field + direction), persisted independently per tab. */
   taskSort: import('@/composables/useTaskSort').TaskSortConfig
+  /** Per-tab manual task order. Unknown tasks are inserted above stored tasks. */
+  taskManualOrder: import('@/composables/useTaskSort').TaskManualOrderConfig
   [key: string]: unknown
 }
 

@@ -295,6 +295,7 @@ export default {
   'task-completed-at': 'Завершено',
   'restart-not-available': 'Немає доступних посилань для повторного завантаження',
   'torrent-trashed': 'Завантаження "{taskName}" завершено — торент-файл переміщено до кошика',
+  'sort-manual': 'Вручну',
   'sort-by': 'Сортувати за',
   'sort-added-at': 'Час додавання',
   'sort-completed-at': 'Час завершення',

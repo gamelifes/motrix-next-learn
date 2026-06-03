@@ -295,6 +295,7 @@ export default {
   'task-completed-at': 'Hoàn thành lúc',
   'restart-not-available': 'Không có URL tải xuống để khởi động lại',
   'torrent-trashed': 'Tải "{taskName}" hoàn tất — tệp torrent đã chuyển vào thùng rác',
+  'sort-manual': 'Thủ công',
   'sort-by': 'Sắp xếp theo',
   'sort-added-at': 'Thời gian thêm',
   'sort-completed-at': 'Thời gian hoàn thành',

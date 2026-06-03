@@ -295,6 +295,7 @@ export default {
   'task-completed-at': 'Completed At',
   'restart-not-available': 'No download URL available for restart',
   'torrent-trashed': '"{taskName}" download complete — torrent file moved to Trash',
+  'sort-manual': 'Manual',
   'sort-by': 'Sort by',
   'sort-added-at': 'Added Time',
   'sort-completed-at': 'Completed Time',

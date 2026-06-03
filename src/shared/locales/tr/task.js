@@ -295,6 +295,7 @@ export default {
   'task-completed-at': 'Tamamlanma Tarihi',
   'restart-not-available': 'Yeniden başlatmak için indirme bağlantısı yok',
   'torrent-trashed': '"{taskName}" indirmesi tamamlandı, torrent dosyası çöp kutusuna taşındı',
+  'sort-manual': 'Manuel',
   'sort-by': 'Sırala',
   'sort-added-at': 'Eklenme Zamanı',
   'sort-completed-at': 'Tamamlanma Zamanı',

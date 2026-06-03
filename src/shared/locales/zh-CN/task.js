@@ -295,6 +295,7 @@ export default {
   'task-completed-at': '完成时间',
   'restart-not-available': '没有可用的下载链接，无法重新下载',
   'torrent-trashed': '"{taskName}" 下载完成，种子文件已移至废纸篓',
+  'sort-manual': '手动排序',
   'sort-by': '排序方式',
   'sort-added-at': '添加时间',
   'sort-completed-at': '完成时间',

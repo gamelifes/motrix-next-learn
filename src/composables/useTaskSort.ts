@@ -22,9 +22,9 @@ import type { Aria2Task, HistoryRecord } from '@shared/types'
 
 export type SortDirection = 'asc' | 'desc'
 
-export type ActiveSortField = 'added-at' | 'name' | 'size' | 'progress' | 'speed'
-export type StoppedSortField = 'added-at' | 'completed-at' | 'name' | 'size'
-export type AllSortField = 'added-at' | 'name' | 'size'
+export type ActiveSortField = 'manual' | 'added-at' | 'name' | 'size' | 'progress' | 'speed'
+export type StoppedSortField = 'manual' | 'added-at' | 'completed-at' | 'name' | 'size'
+export type AllSortField = 'manual' | 'added-at' | 'name' | 'size'
 
 /** Unified sort configuration persisted in AppConfig. */
 export interface TaskSortConfig {
@@ -33,18 +33,37 @@ export interface TaskSortConfig {
   all: { field: AllSortField; direction: SortDirection }
 }
 
+export interface TaskManualOrderConfig {
+  active: string[]
+  stopped: string[]
+  all: string[]
+}
+
 // ── Constants ───────────────────────────────────────────────────────
 
-export const ACTIVE_SORT_FIELDS: readonly ActiveSortField[] = ['added-at', 'name', 'size', 'progress', 'speed']
+export const ACTIVE_SORT_FIELDS: readonly ActiveSortField[] = [
+  'manual',
+  'added-at',
+  'name',
+  'size',
+  'progress',
+  'speed',
+]
 
-export const STOPPED_SORT_FIELDS: readonly StoppedSortField[] = ['added-at', 'completed-at', 'name', 'size']
+export const STOPPED_SORT_FIELDS: readonly StoppedSortField[] = ['manual', 'added-at', 'completed-at', 'name', 'size']
 
-export const ALL_SORT_FIELDS: readonly AllSortField[] = ['added-at', 'name', 'size']
+export const ALL_SORT_FIELDS: readonly AllSortField[] = ['manual', 'added-at', 'name', 'size']
 
 export const DEFAULT_TASK_SORT: TaskSortConfig = {
   active: { field: 'added-at', direction: 'desc' },
   stopped: { field: 'added-at', direction: 'desc' },
   all: { field: 'added-at', direction: 'desc' },
+}
+
+export const DEFAULT_TASK_MANUAL_ORDER: TaskManualOrderConfig = {
+  active: [],
+  stopped: [],
+  all: [],
 }
 
 // ── Internal comparators ────────────────────────────────────────────
@@ -64,7 +83,7 @@ function compareNumbers(a: number, b: number, dir: SortDirection): number {
 /** Extract a comparable value from an Aria2Task for the given sort field. */
 function taskSortValue(
   task: Aria2Task,
-  field: ActiveSortField | AllSortField,
+  field: Exclude<ActiveSortField | AllSortField, 'manual'>,
   addedAtIndex: Map<string, string>,
 ): string | number {
   switch (field) {
@@ -84,7 +103,7 @@ function taskSortValue(
 }
 
 /** Extract a comparable value from a HistoryRecord for the given sort field. */
-function recordSortValue(record: HistoryRecord, field: StoppedSortField): string | number {
+function recordSortValue(record: HistoryRecord, field: Exclude<StoppedSortField, 'manual'>): string | number {
   switch (field) {
     case 'added-at':
       return record.added_at ?? record.completed_at ?? ''
@@ -112,9 +131,11 @@ export function sortTasks(
   direction: SortDirection,
   addedAtIndex: Map<string, string>,
 ): void {
+  if (field === 'manual') return
+  const sortableField = field
   tasks.sort((a, b) => {
-    const va = taskSortValue(a, field, addedAtIndex)
-    const vb = taskSortValue(b, field, addedAtIndex)
+    const va = taskSortValue(a, sortableField, addedAtIndex)
+    const vb = taskSortValue(b, sortableField, addedAtIndex)
     if (typeof va === 'string' && typeof vb === 'string') {
       return compareStrings(va, vb, direction)
     }
@@ -130,12 +151,37 @@ export function sortTasks(
  * user-selected sort fields.
  */
 export function sortRecords(records: HistoryRecord[], field: StoppedSortField, direction: SortDirection): void {
+  if (field === 'manual') return
+  const sortableField = field
   records.sort((a, b) => {
-    const va = recordSortValue(a, field)
-    const vb = recordSortValue(b, field)
+    const va = recordSortValue(a, sortableField)
+    const vb = recordSortValue(b, sortableField)
     if (typeof va === 'string' && typeof vb === 'string') {
       return compareStrings(va, vb, direction)
     }
     return compareNumbers(va as number, vb as number, direction)
   })
+}
+
+export function applyManualOrder<T extends { gid: string }>(
+  items: T[],
+  manualOrder: readonly string[],
+  fallbackSort: (items: T[]) => void,
+): void {
+  const position = new Map(manualOrder.map((gid, index) => [gid, index]))
+  const known: T[] = []
+  const fresh: T[] = []
+
+  for (const item of items) {
+    if (position.has(item.gid)) known.push(item)
+    else fresh.push(item)
+  }
+
+  fallbackSort(fresh)
+  known.sort((a, b) => position.get(a.gid)! - position.get(b.gid)!)
+  items.splice(0, items.length, ...fresh, ...known)
+}
+
+export function createManualOrderSnapshot(items: readonly { gid: string }[]): string[] {
+  return items.map((item) => item.gid)
 }

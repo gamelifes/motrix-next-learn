@@ -15,7 +15,7 @@ import {
   loadAddedAtFromRecords,
   buildSortableAddedAtMap,
 } from '@/composables/useTaskOrder'
-import { sortTasks, sortRecords } from '@/composables/useTaskSort'
+import { applyManualOrder, createManualOrderSnapshot, sortTasks, sortRecords } from '@/composables/useTaskSort'
 import { DEFAULT_TASK_SORT } from '@/composables/useTaskSort'
 import { useHistoryStore } from '@/stores/history'
 import { useHttpAuthStore } from '@/stores/httpAuth'
@@ -80,7 +80,13 @@ export const useTaskStore = defineStore('task', () => {
         const historyStore = useHistoryStore()
         const records = await historyStore.getRecords()
         const { field, direction } = sortConfig.stopped
-        sortRecords(records, field, direction)
+        if (field === 'manual') {
+          applyManualOrder(records, usePreferenceStore().config.taskManualOrder.stopped, (fresh) => {
+            sortRecords(fresh, 'added-at', 'desc')
+          })
+        } else {
+          sortRecords(records, field, direction)
+        }
         data = records.map(historyRecordToTask)
       } else if (currentList.value === 'all') {
         const ALL_STOPPED_LIMIT = 128
@@ -116,7 +122,13 @@ export const useTaskStore = defineStore('task', () => {
 
         const addedAtIndex = buildSortableAddedAtMap(data, historyRecords)
         const { field, direction } = sortConfig.all
-        sortTasks(data, field, direction, addedAtIndex)
+        if (field === 'manual') {
+          applyManualOrder(data, usePreferenceStore().config.taskManualOrder.all, (fresh) => {
+            sortTasks(fresh, 'added-at', 'desc', addedAtIndex)
+          })
+        } else {
+          sortTasks(data, field, direction, addedAtIndex)
+        }
       } else {
         // Active tab: aria2 returns insertion-order; apply user sort.
         data = await api.fetchTaskList({ type: currentList.value })
@@ -124,7 +136,13 @@ export const useTaskStore = defineStore('task', () => {
         trackFirstSeen(data)
         const addedAtIndex = buildSortableAddedAtMap(data, [])
         const { field, direction } = sortConfig.active
-        sortTasks(data, field, direction, addedAtIndex)
+        if (field === 'manual') {
+          applyManualOrder(data, usePreferenceStore().config.taskManualOrder.active, (fresh) => {
+            sortTasks(fresh, 'added-at', 'desc', addedAtIndex)
+          })
+        } else {
+          sortTasks(data, field, direction, addedAtIndex)
+        }
       }
 
       taskList.value = data
@@ -147,6 +165,27 @@ export const useTaskStore = defineStore('task', () => {
 
   function selectTasks(list: string[]) {
     selectedGidList.value = list
+  }
+
+  async function saveManualOrder(gids: string[]) {
+    const preferenceStore = usePreferenceStore()
+    const tab = currentList.value === 'stopped' ? 'stopped' : currentList.value === 'all' ? 'all' : 'active'
+    const taskSort = {
+      ...preferenceStore.config.taskSort,
+      [tab]: {
+        ...preferenceStore.config.taskSort[tab],
+        field: 'manual',
+      },
+    }
+    const taskManualOrder = {
+      ...preferenceStore.config.taskManualOrder,
+      [tab]: [...gids],
+    }
+    await preferenceStore.updateAndSave({ taskSort, taskManualOrder })
+  }
+
+  async function saveCurrentManualOrder() {
+    await saveManualOrder(createManualOrderSnapshot(taskList.value))
   }
 
   function selectAllTask() {
@@ -354,6 +393,8 @@ export const useTaskStore = defineStore('task', () => {
     changeCurrentList,
     fetchList,
     selectTasks,
+    saveManualOrder,
+    saveCurrentManualOrder,
     selectAllTask,
     fetchItem,
     showTaskDetail,

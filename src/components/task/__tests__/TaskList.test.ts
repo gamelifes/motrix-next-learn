@@ -6,7 +6,16 @@ import { usePreferenceStore } from '@/stores/preference'
 import type { Aria2Task } from '@shared/types'
 
 vi.mock('@formkit/auto-animate', () => ({
-  vAutoAnimate: {},
+  autoAnimate: vi.fn(() => ({
+    enable: vi.fn(),
+    disable: vi.fn(),
+    destroy: vi.fn(),
+  })),
+}))
+
+vi.mock('@vueuse/integrations/useSortable', () => ({
+  moveArrayElement: vi.fn(),
+  useSortable: vi.fn(),
 }))
 
 vi.mock('../TaskItem.vue', () => ({

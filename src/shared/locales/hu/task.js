@@ -296,6 +296,7 @@ export default {
   'task-completed-at': 'Befejezve',
   'restart-not-available': 'Nincs elérhető letöltési link az újraindításhoz',
   'torrent-trashed': 'A(z) "{taskName}" letöltése kész, a torrent fájl a kukába került',
+  'sort-manual': 'Kézi',
   'sort-by': 'Rendezés',
   'sort-added-at': 'Hozzáadás ideje',
   'sort-completed-at': 'Befejezés ideje',

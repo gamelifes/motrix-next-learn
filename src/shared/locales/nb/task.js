@@ -295,6 +295,7 @@ export default {
   'task-completed-at': 'Fullført',
   'restart-not-available': 'Ingen nedlastingslenker tilgjengelig for omstart',
   'torrent-trashed': 'Nedlasting av "{taskName}" fullført, torrentfilen er flyttet til papirkurven',
+  'sort-manual': 'Manuell',
   'sort-by': 'Sorter etter',
   'sort-added-at': 'Lagt til',
   'sort-completed-at': 'Fullført',

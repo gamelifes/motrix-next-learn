@@ -77,6 +77,7 @@ const userKeys = [
   'notify-on-start',
   'notify-on-complete',
   'task-sort',
+  'task-manual-order',
   'temp-files-dir',
   'theme',
   'timeout',

@@ -296,6 +296,7 @@ export default {
   'task-completed-at': 'पूरा हुआ',
   'restart-not-available': 'Restart के लिए कोई download URL available नहीं',
   'torrent-trashed': '"{taskName}" download complete, torrent file Trash में moved',
+  'sort-manual': 'Manual',
   'sort-by': 'इसके अनुसार sort करें',
   'sort-added-at': 'जोड़े जाने का समय',
   'sort-completed-at': 'पूरा होने का समय',

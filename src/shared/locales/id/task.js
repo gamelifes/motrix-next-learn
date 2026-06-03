@@ -295,6 +295,7 @@ export default {
   'task-completed-at': 'Selesai Pada',
   'restart-not-available': 'Tidak ada URL unduhan untuk memulai ulang',
   'torrent-trashed': 'Unduhan "{taskName}" selesai, file torrent dipindahkan ke tempat sampah',
+  'sort-manual': 'Manual',
   'sort-by': 'Urutkan',
   'sort-added-at': 'Waktu Ditambahkan',
   'sort-completed-at': 'Waktu Selesai',

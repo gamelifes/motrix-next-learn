@@ -50,6 +50,7 @@ const currentTab = computed(() => taskStore.currentList)
 
 /** Map sort field key to its i18n label. */
 const SORT_LABELS: Record<string, string> = {
+  manual: 'task.sort-manual',
   'added-at': 'task.sort-added-at',
   'completed-at': 'task.sort-completed-at',
   name: 'task.sort-name',
@@ -89,10 +90,19 @@ function onSortSelect(key: string) {
   const cfg = preferenceStore.config?.taskSort ?? { ...DEFAULT_TASK_SORT }
   const tab = currentTab.value === 'stopped' ? 'stopped' : currentTab.value === 'all' ? 'all' : 'active'
   const current = cfg[tab]
-  // Toggle direction if same field, otherwise switch to DESC
-  const direction: SortDirection = current.field === key ? (current.direction === 'desc' ? 'asc' : 'desc') : 'desc'
+  const direction: SortDirection =
+    key === 'manual' ? 'desc' : current.field === key ? (current.direction === 'desc' ? 'asc' : 'desc') : 'desc'
   const updated = { ...cfg, [tab]: { field: key as ActiveSortField | StoppedSortField | AllSortField, direction } }
-  preferenceStore.updateAndSave({ taskSort: updated })
+  const manualPatch =
+    key === 'manual'
+      ? {
+          taskManualOrder: {
+            ...preferenceStore.config.taskManualOrder,
+            [tab]: taskStore.taskList.map((task) => task.gid),
+          },
+        }
+      : {}
+  preferenceStore.updateAndSave({ taskSort: updated, ...manualPatch })
   sortPopoverVisible.value = false
   taskStore.fetchList()
 }
@@ -457,7 +467,8 @@ function onBtnRelease(ev: PointerEvent) {
           <span class="sort-item-label">{{ t(SORT_LABELS[field]) }}</span>
           <span v-if="field === currentSort.field" class="sort-item-dir">
             <NIcon :size="14">
-              <ArrowUpOutline v-if="currentSort.direction === 'asc'" />
+              <SwapVerticalOutline v-if="field === 'manual'" />
+              <ArrowUpOutline v-else-if="currentSort.direction === 'asc'" />
               <ArrowDownOutline v-else />
             </NIcon>
           </span>
