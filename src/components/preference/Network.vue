@@ -265,7 +265,11 @@ onMounted(() => {
             </template>
             <NInputGroup>
               <NInput v-model:value="form.proxy.server" class="pref-control-full" placeholder="http://host:port" />
-              <NButton class="pref-action-button" :loading="detectingProxy" @click="detectProxy">
+              <NButton
+                class="pref-action-button network-proxy-detect-button"
+                :loading="detectingProxy"
+                @click="detectProxy"
+              >
                 <template #icon>
                   <NIcon><SearchOutline /></NIcon>
                 </template>
@@ -292,6 +296,49 @@ onMounted(() => {
           </NFormItem>
         </div>
       </div>
+
+      <!-- User-Agent -->
+      <NDivider title-placement="left">{{ t('preferences.user-agent') }}</NDivider>
+      <NFormItem :label="t('preferences.mock-user-agent')">
+        <div class="ua-field-wrapper">
+          <NInput
+            v-model:value="form.userAgent"
+            type="textarea"
+            :autosize="{ minRows: 2, maxRows: 4 }"
+            placeholder="User-Agent"
+          />
+          <div class="ua-warn-collapse" :class="{ 'ua-warn-collapse--open': uaHasIssue }">
+            <div class="ua-warn-collapse__inner">
+              <div class="ua-warn-bar">
+                <span class="ua-warn-text">⚠ {{ t('preferences.ua-unsafe-chars-detected') }}</span>
+                <NButton size="tiny" type="primary" ghost @click="cleanUserAgent">
+                  {{ t('preferences.ua-sanitize') }}
+                </NButton>
+              </div>
+            </div>
+          </div>
+        </div>
+      </NFormItem>
+      <NFormItem label=" ">
+        <div class="ua-preset-row">
+          <NButtonGroup size="small">
+            <NButton @click="changeUA('chrome')">Chrome</NButton>
+            <NButton @click="changeUA('edge')">Edge</NButton>
+            <NButton @click="changeUA('safari')">Safari</NButton>
+            <NButton @click="changeUA('firefox')">Firefox</NButton>
+          </NButtonGroup>
+          <NButton class="ua-reset-btn" size="small" ghost @click="form.userAgent = ''">
+            {{ t('preferences.ua-reset') }}
+          </NButton>
+        </div>
+      </NFormItem>
+      <NFormItem :label="t('preferences.ua-saved')">
+        <UserAgentManager
+          v-model:profiles="form.userAgentProfiles"
+          v-model:rules="form.userAgentRules"
+          v-model:recent-profile-ids="form.recentUserAgentProfileIds"
+        />
+      </NFormItem>
 
       <!-- Port conflict recovery -->
       <NDivider title-placement="left">{{ t('preferences.port-conflict-recovery') }}</NDivider>
@@ -393,49 +440,6 @@ onMounted(() => {
         </NFormItem>
       </NCollapseTransition>
 
-      <!-- User-Agent -->
-      <NDivider title-placement="left">{{ t('preferences.user-agent') }}</NDivider>
-      <NFormItem :label="t('preferences.mock-user-agent')">
-        <div class="ua-field-wrapper">
-          <NInput
-            v-model:value="form.userAgent"
-            type="textarea"
-            :autosize="{ minRows: 2, maxRows: 4 }"
-            placeholder="User-Agent"
-          />
-          <div class="ua-warn-collapse" :class="{ 'ua-warn-collapse--open': uaHasIssue }">
-            <div class="ua-warn-collapse__inner">
-              <div class="ua-warn-bar">
-                <span class="ua-warn-text">⚠ {{ t('preferences.ua-unsafe-chars-detected') }}</span>
-                <NButton size="tiny" type="primary" ghost @click="cleanUserAgent">
-                  {{ t('preferences.ua-sanitize') }}
-                </NButton>
-              </div>
-            </div>
-          </div>
-        </div>
-      </NFormItem>
-      <NFormItem label=" ">
-        <div class="ua-preset-row">
-          <NButtonGroup size="small">
-            <NButton @click="changeUA('chrome')">Chrome</NButton>
-            <NButton @click="changeUA('edge')">Edge</NButton>
-            <NButton @click="changeUA('safari')">Safari</NButton>
-            <NButton @click="changeUA('firefox')">Firefox</NButton>
-          </NButtonGroup>
-          <NButton class="ua-reset-btn" size="small" ghost @click="form.userAgent = ''">
-            {{ t('preferences.ua-reset') }}
-          </NButton>
-        </div>
-      </NFormItem>
-      <NFormItem :label="t('preferences.ua-saved')">
-        <UserAgentManager
-          v-model:profiles="form.userAgentProfiles"
-          v-model:rules="form.userAgentRules"
-          v-model:recent-profile-ids="form.recentUserAgentProfileIds"
-        />
-      </NFormItem>
-
       <!-- Timeout & Disk -->
       <NDivider title-placement="left">{{ t('preferences.transfer-params') }}</NDivider>
       <NFormItem :label="t('preferences.connect-timeout')">
@@ -490,6 +494,9 @@ onMounted(() => {
   color: var(--m3-on-surface-variant);
   font-size: 12px;
   line-height: 1;
+}
+.network-proxy-detect-button {
+  min-width: fit-content;
 }
 /* ── UA preset row ───────────────────────────────────────────────── */
 .ua-preset-row {
