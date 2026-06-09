@@ -61,7 +61,7 @@ Pre-commit hooks (husky + lint-staged) auto-run `eslint --fix` and `prettier --w
 
 ## 🧪 Testing
 
-- Follow **TDD** (Red → Green → Refactor) for new utilities and guards.
+- Add focused tests for new utilities, guards, business rules, and regression fixes.
 - Test files live alongside source: `__tests__/filename.test.ts`.
 - Runtime type guards (in `guards.ts`) validate all external API responses.
 
@@ -118,11 +118,11 @@ Hard limits — PRs that exceed these will be closed without review:
 
 How to split a large change:
 
-| Instead of | Split into |
-|-----------|-----------|
+| Instead of                                 | Split into                                                                                                   |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
 | "Add error notification system" (1000 LOC) | PR 1: `errorNormalizer.ts` + tests → PR 2: `useAppNotification.ts` + tests → PR 3: integrate into components |
-| "Add feature + fix lint + update config" | PR 1: lint/config fixes → PR 2: the feature |
-| "Update i18n for 3 features" | One PR per feature, each updating all 27 locales |
+| "Add feature + fix lint + update config"   | PR 1: lint/config fixes → PR 2: the feature                                                                  |
+| "Update i18n for 3 features"               | One PR per feature, each updating all 27 locales                                                             |
 
 ### Before you start
 
@@ -169,12 +169,12 @@ Using AI tools (Copilot, Claude, ChatGPT, Cursor, etc.) to assist development is
 
 1. You must **review and understand every line** you submit, whether you wrote it or an AI did.
 2. You must be able to **explain any change** if asked during review.
-3. Tests must be written **before** implementation (TDD), not bolted on after.
-4. All checks must **pass locally** before pushing — not after a chain of fix commits.
+3. Tests are required for behavioral or risky logic changes. Pure copy, style, docs, and low-risk UI-only changes may skip tests, but the PR must explain why.
+4. All local checks and required GitHub Actions must pass before review.
 
 **Disclosure:**
 
-The PR template includes an AI usage disclosure section. Fill it out honestly. Following the [OpenInfra Foundation standard](https://openinfra.org), you may also add a commit trailer:
+The PR template includes an AI usage disclosure section. Fill it out honestly and include the exact model name when AI was used, such as `OpenAI GPT-5.5` or `Claude Opus 4.8`. Generic names such as `ChatGPT` or `Claude` are not enough. Following the [OpenInfra Foundation standard](https://openinfra.org), you may also add a commit trailer:
 
 ```
 feat: add speed limit control
