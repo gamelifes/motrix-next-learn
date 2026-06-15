@@ -479,6 +479,15 @@ watch(protocolHandlers.lastError, (error) => {
       </NFormItem>
 
       <NDivider title-placement="left">{{ t('preferences.engine-section') }}</NDivider>
+      <NFormItem>
+        <template #label>
+          <PreferenceHintLabel
+            :label="t('preferences.allow-remote-access')"
+            :hint="t('preferences.allow-remote-access-hint')"
+          />
+        </template>
+        <NSwitch v-model:value="form.allowRemoteAccess" />
+      </NFormItem>
       <NFormItem :label="t('preferences.temp-files-dir')">
         <NInputGroup>
           <NInput

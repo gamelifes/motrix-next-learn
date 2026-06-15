@@ -51,6 +51,7 @@ const userKeys = [
   'locale',
   'log-level',
   'aria2-log-level',
+  'allow-remote-access',
   'lightweight-mode',
   'max-tries',
 
@@ -209,6 +210,7 @@ const needRestartKeys = [
   'enable-peer-exchange',
   'listen-port',
   'rpc-listen-port',
+  'allow-remote-access',
   'rpc-secret',
 ]
 
