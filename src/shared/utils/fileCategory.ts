@@ -17,11 +17,9 @@
  * (see AbstractDiskWriter.cc:251), so no pre-creation is needed.
  */
 import type { FileCategory } from '@shared/types'
-import picomatch from 'picomatch'
 
 const MAX_URL_CANDIDATE_LENGTH = 4096
 const MAX_URL_PATTERN_LENGTH = 512
-const URL_PATTERN_MATCH_OPTIONS = { nocase: true, strictBrackets: true, maxLength: MAX_URL_PATTERN_LENGTH }
 
 export interface CategoryMatchContext {
   urls?: readonly string[]
@@ -29,7 +27,7 @@ export interface CategoryMatchContext {
 
 export interface CategoryUrlPatternValidationError {
   line: number
-  reason: 'invalid-wildcard' | 'invalid-regex' | 'too-long'
+  reason: 'invalid-regex' | 'too-long'
 }
 
 /**
@@ -122,13 +120,11 @@ export function validateCategoryUrlPatterns(
     try {
       if (normalizedMode === 'regex') {
         new RegExp(pattern, 'i')
-      } else {
-        picomatch.makeRe(pattern, URL_PATTERN_MATCH_OPTIONS)
       }
     } catch {
       return {
         line: index + 1,
-        reason: normalizedMode === 'regex' ? 'invalid-regex' : 'invalid-wildcard',
+        reason: 'invalid-regex',
       }
     }
   }
@@ -170,7 +166,8 @@ function urlCandidates(context?: CategoryMatchContext): string[] {
 }
 
 function wildcardMatches(pattern: string, url: string): boolean {
-  return picomatch.isMatch(url, pattern, URL_PATTERN_MATCH_OPTIONS)
+  const source = pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*')
+  return new RegExp(`^${source}$`, 'i').test(url)
 }
 
 function regexMatches(pattern: string, url: string): boolean {
@@ -216,6 +213,15 @@ export function resolveCategory(
   })
 }
 
+export function resolveDownloadCategory(
+  url: string,
+  categories: FileCategory[],
+  context?: CategoryMatchContext,
+): FileCategory | undefined {
+  const ext = extractExtension(url)
+  return resolveCategory(ext, categories, { urls: [url, ...(context?.urls ?? [])] })
+}
+
 /**
  * Resolves the effective download directory for a URI.
  *
@@ -238,7 +244,6 @@ export function resolveDownloadDir(
 ): string {
   if (!enabled) return baseDir
 
-  const ext = extractExtension(url)
-  const cat = resolveCategory(ext, categories, { urls: [url, ...(context?.urls ?? [])] })
+  const cat = resolveDownloadCategory(url, categories, context)
   return cat?.directory || baseDir
 }

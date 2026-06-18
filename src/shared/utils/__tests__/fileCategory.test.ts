@@ -280,13 +280,6 @@ describe('validateCategoryUrlPatterns', () => {
     expect(validateCategoryUrlPatterns(['*://*.example.com/logs/*'], 'wildcard')).toBeUndefined()
   })
 
-  it('reports the first invalid wildcard URL rule line', () => {
-    expect(validateCategoryUrlPatterns(['*://*.example.com/logs/*', 'https://[abc'], 'wildcard')).toEqual({
-      line: 2,
-      reason: 'invalid-wildcard',
-    })
-  })
-
   it('reports the first invalid regex URL rule line', () => {
     expect(validateCategoryUrlPatterns(['^https://reports\\.example\\.com/.+$', '^https://(.+'], 'regex')).toEqual({
       line: 2,
@@ -385,5 +378,21 @@ describe('resolveDownloadDir', () => {
     const result = resolveDownloadDir('https://reports.example.com/export/latest', BASE, true, categories)
 
     expect(result).toBe('/Users/test/Downloads/Reports')
+  })
+
+  it('treats wildcard URL rules as plain URL text patterns', () => {
+    const categories: FileCategory[] = [
+      {
+        label: 'Example',
+        extensions: [],
+        urlPatterns: ['*example.com*'],
+        urlPatternMode: 'wildcard',
+        directory: '/Users/test/Downloads/Example',
+      },
+    ]
+
+    const result = resolveDownloadDir('https://example.com/a/b/file.zip?token=1', BASE, true, categories)
+
+    expect(result).toBe('/Users/test/Downloads/Example')
   })
 })

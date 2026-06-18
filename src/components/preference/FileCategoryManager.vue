@@ -1,11 +1,14 @@
 <script setup lang="ts">
 /** @fileoverview Single-layer file category manager modal. */
-import { computed, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { open as openDialog } from '@tauri-apps/plugin-dialog'
+import Sortable from 'sortablejs'
 import { buildDefaultCategories, MAX_FILE_CATEGORIES } from '@shared/constants'
 import { normalizeFileCategory, validateCategoryUrlPatterns } from '@shared/utils/fileCategory'
 import type { FileCategory } from '@shared/types'
+import type { ComponentPublicInstance } from 'vue'
+import type { SortableEvent, SortableOptions } from 'sortablejs'
 import {
   NButton,
   NCard,
@@ -34,14 +37,30 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const draft = ref<FileCategory[]>([])
-const selectedIndex = ref(0)
+const selectedKey = ref('')
 const urlPatternText = ref('')
 const urlRuleError = ref('')
 const resetConfirming = ref(false)
+type ListRefTarget = HTMLElement | ComponentPublicInstance | null
+const listRef = ref<ListRefTarget>(null)
+const sorting = ref(false)
 let resetConfirmTimer: ReturnType<typeof setTimeout> | undefined
+let sortable: Sortable | null = null
+let lastFloatingRect: DOMRect | null = null
+let floatingRectFrame = 0
 let categoryUid = 0
 const categoryKeys = new WeakMap<FileCategory, string>()
 
+const selectedIndex = computed({
+  get() {
+    const index = draft.value.findIndex((category) => categoryKey(category) === selectedKey.value)
+    return index >= 0 ? index : 0
+  },
+  set(index: number) {
+    const category = draft.value[index] ?? draft.value[0]
+    selectedKey.value = category ? categoryKey(category) : ''
+  },
+})
 const selectedCategory = computed(() => draft.value[selectedIndex.value])
 const modeOptions = computed(() => [
   { label: t('preferences.file-category-url-mode-wildcard'), value: 'wildcard' },
@@ -79,6 +98,7 @@ function categoryMeta(category: FileCategory): string {
 
 function closeModal() {
   stopResetConfirm()
+  destroySortable()
   emit('update:show', false)
 }
 
@@ -91,9 +111,7 @@ function urlRuleErrorMessage(reason: string, line: number): string {
   const key =
     reason === 'too-long'
       ? 'preferences.file-category-invalid-url-rule-too-long'
-      : reason === 'invalid-wildcard'
-        ? 'preferences.file-category-invalid-wildcard'
-        : 'preferences.file-category-invalid-regex'
+      : 'preferences.file-category-invalid-regex'
   return t(key, { line })
 }
 
@@ -206,6 +224,20 @@ function handleSelectCategory(index: number) {
   urlRuleError.value = ''
 }
 
+function handleDragHandlePointerDown(index: number) {
+  if (index === selectedIndex.value) return
+  handleSelectCategory(index)
+}
+
+function moveCategory(oldIndex: number, newIndex: number) {
+  if (oldIndex === newIndex) return
+  const next = [...draft.value]
+  const [category] = next.splice(oldIndex, 1)
+  if (!category) return
+  next.splice(newIndex, 0, category)
+  draft.value = next
+}
+
 async function handleSelectCategoryDir() {
   if (!selectedCategory.value) return
   const selected = await openDialog({ directory: true, multiple: false })
@@ -223,9 +255,115 @@ function handleListItemBeforeLeave(element: Element) {
   element.style.setProperty('--category-list-item-leave-height', `${height}px`)
 }
 
+function trackFloatingRect() {
+  const floating = document.querySelector<HTMLElement>('.category-manager-list-item--floating')
+  if (floating?.isConnected) {
+    lastFloatingRect = floating.getBoundingClientRect()
+  }
+
+  if (sorting.value) {
+    floatingRectFrame = requestAnimationFrame(trackFloatingRect)
+  }
+}
+
+function startFloatingRectTracking() {
+  stopFloatingRectTracking()
+  lastFloatingRect = null
+  floatingRectFrame = requestAnimationFrame(trackFloatingRect)
+}
+
+function stopFloatingRectTracking() {
+  if (!floatingRectFrame) return
+  cancelAnimationFrame(floatingRectFrame)
+  floatingRectFrame = 0
+}
+
+function animateDropSettle(event: SortableEvent | undefined): Promise<void> {
+  const item = event?.item
+  if (!lastFloatingRect || !item?.isConnected) return Promise.resolve()
+
+  const targetRect = item.getBoundingClientRect()
+  const deltaX = lastFloatingRect.left - targetRect.left
+  const deltaY = lastFloatingRect.top - targetRect.top
+  lastFloatingRect = null
+
+  if (Math.abs(deltaX) < 1 && Math.abs(deltaY) < 1) return Promise.resolve()
+
+  item.classList.add('category-manager-list-item--settling')
+  item.style.setProperty('--category-drop-x', `${deltaX}px`)
+  item.style.setProperty('--category-drop-y', `${deltaY}px`)
+
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => {
+      item.classList.add('category-manager-list-item--settled')
+    })
+
+    window.setTimeout(() => {
+      item.classList.remove('category-manager-list-item--settling', 'category-manager-list-item--settled')
+      item.style.removeProperty('--category-drop-x')
+      item.style.removeProperty('--category-drop-y')
+      resolve()
+    }, 260)
+  })
+}
+
+const sortableOptions: SortableOptions = {
+  animation: 240,
+  handle: '.category-manager-drag-handle',
+  draggable: '.category-manager-list-item',
+  filter: 'button:not(.category-manager-drag-handle), a, input, textarea, select, [data-no-drag]',
+  ghostClass: 'category-manager-list-item--ghost',
+  chosenClass: 'category-manager-list-item--chosen',
+  fallbackClass: 'category-manager-list-item--floating',
+  dragClass: 'category-manager-list-item--dragging',
+  direction: 'vertical',
+  swapThreshold: 0.72,
+  invertedSwapThreshold: 0.28,
+  invertSwap: false,
+  forceFallback: true,
+  fallbackOnBody: true,
+  fallbackTolerance: 3,
+  preventOnFilter: false,
+  onStart: () => {
+    sorting.value = true
+    startFloatingRectTracking()
+  },
+  onUpdate: (event) => {
+    if (event.oldIndex === undefined || event.newIndex === undefined) return
+    moveCategory(event.oldIndex, event.newIndex)
+  },
+  onEnd: async (event) => {
+    stopFloatingRectTracking()
+    await nextTick()
+    await animateDropSettle(event)
+    window.setTimeout(() => {
+      sorting.value = false
+    }, 0)
+  },
+}
+
+function destroySortable() {
+  sortable?.destroy()
+  sortable = null
+}
+
+function resolveListElement() {
+  const target = listRef.value
+  if (target instanceof HTMLElement) return target
+  const element = target?.$el
+  return element instanceof HTMLElement ? element : null
+}
+
+function mountSortable() {
+  destroySortable()
+  const element = resolveListElement()
+  if (!element) return
+  sortable = Sortable.create(element, sortableOptions)
+}
+
 watch(
   () => props.show,
-  (show) => {
+  async (show) => {
     if (!show) return
     draft.value = cloneCategories(
       props.categories.length > 0 ? props.categories : buildDefaultCategories(props.baseDir),
@@ -234,10 +372,20 @@ watch(
     stopResetConfirm()
     syncUrlPatternText()
     urlRuleError.value = ''
+    await nextTick()
+    mountSortable()
   },
 )
 
-onUnmounted(stopResetConfirm)
+onMounted(() => {
+  if (props.show) void nextTick(mountSortable)
+})
+
+onUnmounted(() => {
+  stopResetConfirm()
+  stopFloatingRectTracking()
+  destroySortable()
+})
 </script>
 
 <template>
@@ -257,23 +405,43 @@ onUnmounted(stopResetConfirm)
     >
       <div class="category-manager">
         <aside class="category-manager-list">
+          <div class="category-manager-priority-hint">
+            {{ t('preferences.file-category-priority-hint') }}
+          </div>
           <TransitionGroup
+            ref="listRef"
             tag="div"
             name="category-manager-list-item"
             class="category-manager-list-items"
+            :css="!sorting"
             @before-leave="handleListItemBeforeLeave"
           >
-            <button
+            <div
               v-for="(category, index) in draft"
               :key="categoryKey(category)"
-              type="button"
+              role="button"
+              tabindex="0"
               class="category-manager-list-item"
               :class="{ 'category-manager-list-item--active': index === selectedIndex }"
               @click="handleSelectCategory(index)"
+              @keydown.enter.prevent="handleSelectCategory(index)"
+              @keydown.space.prevent="handleSelectCategory(index)"
             >
-              <span class="category-manager-list-title">{{ categoryTitle(category) }}</span>
-              <span class="category-manager-list-meta">{{ categoryMeta(category) }}</span>
-            </button>
+              <span
+                class="category-manager-drag-handle"
+                role="button"
+                tabindex="0"
+                :aria-label="t('preferences.file-category-priority-hint')"
+                @click.stop
+                @pointerdown="handleDragHandlePointerDown(index)"
+              >
+                <span aria-hidden="true">⋮⋮</span>
+              </span>
+              <span class="category-manager-list-copy">
+                <span class="category-manager-list-title">{{ categoryTitle(category) }}</span>
+                <span class="category-manager-list-meta">{{ categoryMeta(category) }}</span>
+              </span>
+            </div>
           </TransitionGroup>
           <div class="category-manager-list-actions">
             <NButton
@@ -311,14 +479,19 @@ onUnmounted(stopResetConfirm)
 
         <section v-if="selectedCategory" class="category-manager-editor">
           <Transition name="content-fade" mode="out-in">
-            <div :key="selectedIndex" class="category-manager-editor-content">
+            <div :key="selectedKey" class="category-manager-editor-content">
               <div class="category-manager-field">
                 <span>{{ t('preferences.file-category-custom-label') }}</span>
                 <NInput :value="categoryTitle(selectedCategory)" size="small" @update:value="handleLabelChange" />
               </div>
 
               <div class="category-manager-field">
-                <span>{{ t('preferences.file-category-file-types') }}</span>
+                <div class="category-manager-field-title">
+                  <span>{{ t('preferences.file-category-file-types') }}</span>
+                  <NText depth="3" class="category-manager-hint">
+                    {{ t('preferences.file-category-file-types-hint') }}
+                  </NText>
+                </div>
                 <NDynamicTags
                   :value="selectedCategory.extensions.map((extension: string) => `.${extension}`)"
                   size="small"
@@ -328,14 +501,21 @@ onUnmounted(stopResetConfirm)
 
               <div class="category-manager-field">
                 <div class="category-manager-field-row">
-                  <span>{{ t('preferences.file-category-url-rules') }}</span>
-                  <NSelect
-                    :value="selectedCategory.urlPatternMode ?? 'wildcard'"
-                    :options="modeOptions"
-                    size="small"
-                    class="category-manager-mode"
-                    @update:value="handleUrlModeChange"
-                  />
+                  <div class="category-manager-field-title">
+                    <span>{{ t('preferences.file-category-url-rules') }}</span>
+                    <NText depth="3" class="category-manager-hint">
+                      {{ t('preferences.file-category-url-rules-hint') }}
+                    </NText>
+                  </div>
+                  <div class="category-manager-field-row-right">
+                    <NSelect
+                      :value="selectedCategory.urlPatternMode ?? 'wildcard'"
+                      :options="modeOptions"
+                      size="small"
+                      class="category-manager-mode"
+                      @update:value="handleUrlModeChange"
+                    />
+                  </div>
                 </div>
                 <div class="category-manager-url-control">
                   <NInput
@@ -425,9 +605,16 @@ onUnmounted(stopResetConfirm)
 .category-manager-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   min-height: 0;
   min-width: 0;
+}
+
+.category-manager-priority-hint {
+  flex: 0 0 auto;
+  color: var(--n-text-color-3);
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .category-manager-list-items {
@@ -440,9 +627,10 @@ onUnmounted(stopResetConfirm)
 }
 
 .category-manager-list-item {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
   width: 100%;
   min-height: 54px;
   margin-bottom: 6px;
@@ -455,8 +643,38 @@ onUnmounted(stopResetConfirm)
   cursor: pointer;
   transition:
     background-color 0.2s cubic-bezier(0.2, 0, 0, 1),
-    border-color 0.2s cubic-bezier(0.2, 0, 0, 1),
-    transform 0.2s cubic-bezier(0.2, 0, 0, 1);
+    border-color 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.category-manager-drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  min-width: 22px;
+  border-radius: 6px;
+  color: var(--n-text-color-3);
+  cursor: grab;
+  touch-action: none;
+  transition:
+    color 0.18s cubic-bezier(0.2, 0, 0, 1),
+    background-color 0.18s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.category-manager-drag-handle:hover {
+  color: var(--color-primary);
+  background: var(--m3-surface-container-highest);
+}
+
+.category-manager-drag-handle:active {
+  cursor: grabbing;
+}
+
+.category-manager-list-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .category-manager-list-item:hover {
@@ -466,6 +684,33 @@ onUnmounted(stopResetConfirm)
 .category-manager-list-item--active {
   border-color: var(--color-primary);
   background: var(--m3-surface-container-high);
+}
+
+.category-manager-list-item--ghost {
+  overflow: hidden;
+  opacity: 0;
+}
+
+.category-manager-list-item--floating {
+  opacity: 1 !important;
+  filter: none !important;
+  pointer-events: none;
+  transition: none !important;
+}
+
+.category-manager-list-item--dragging {
+  opacity: 1 !important;
+}
+
+.category-manager-list-item--settling {
+  z-index: 3;
+  transform: translate3d(var(--category-drop-x), var(--category-drop-y), 0);
+  will-change: transform;
+}
+
+.category-manager-list-item--settling.category-manager-list-item--settled {
+  transform: translate3d(0, 0, 0);
+  transition: transform 300ms ease;
 }
 
 .category-manager-list-item-move,
@@ -571,6 +816,20 @@ onUnmounted(stopResetConfirm)
   font-weight: 500;
 }
 
+.category-manager-hint {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.category-manager-field-title {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
 .category-manager-field-row {
   display: flex;
   align-items: center;
@@ -578,8 +837,16 @@ onUnmounted(stopResetConfirm)
   gap: 12px;
 }
 
+.category-manager-field-row-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
 .category-manager-mode {
   width: 128px;
+  flex: 0 0 auto;
 }
 
 .category-manager-url-control {
