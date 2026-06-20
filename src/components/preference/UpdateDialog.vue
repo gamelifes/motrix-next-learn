@@ -1,10 +1,8 @@
 <script setup lang="ts">
 /** @fileoverview Placeholder update dialog — updater feature removed. */
 import { ref } from 'vue'
-import { useI18n } from 'vue-i18n'
 import { NModal, NButton, NText } from 'naive-ui'
 
-const { t } = useI18n()
 const visible = ref(false)
 
 function open() {
@@ -24,7 +22,7 @@ defineExpose({ open, close })
       <NText tag="p" style="font-size: 14px">
         自动更新功能已禁用。
       </NText>
-      <NButton type="primary" size="small" @click="close" style="margin-top: 12px">
+      <NButton type="primary" size="small" style="margin-top: 12px" @click="close">
         关闭
       </NButton>
     </div>
