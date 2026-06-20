@@ -29,7 +29,7 @@ jobs:
             args: --target aarch64-pc-windows-msvc --bundles nsis
             label: windows-aarch64
           - platform: windows-latest
-            args: --target x86_64-pc-windows-msvc --bundles nsis
+            args: --target x86_64-pc-windows-msvc --config '{"bundle":{"targets":[]}}'
             label: windows-portable
           - platform: ubuntu-22.04
             args: --target x86_64-unknown-linux-gnu
@@ -103,25 +103,12 @@ jobs:
         shell: pwsh
         run: |
           $release = "src-tauri/target/x86_64-pc-windows-msvc/release"
-          # Create a clean staging directory
-          $stage = "$release/portable-stage"
-          New-Item -ItemType Directory -Force -Path $stage | Out-Null
-          # Copy exe and DLLs (skip NSIS output and installer exe)
-          Get-ChildItem -Path $release -File | Where-Object {
-            $_.Name -notmatch '\.nsis\.exe$' -and
-            $_.Extension -in '.exe','.dll','.pdb','.json','.mmdb','.conf'
-          } | Copy-Item -Destination $stage
-          # Copy resources/ and ed2k-bootstrap/ if they exist
-          @("resources","ed2k-bootstrap") | ForEach-Object {
-            $src = Join-Path $release $_
-            if (Test-Path $src) { Copy-Item -Path $src -Destination $stage -Recurse }
-          }
           # Create portable marker file
-          Set-Content -Path "$stage\portable.txt" -Value "This file enables portable mode. Delete it to use standard %APPDATA% storage."
+          Set-Content -Path "$release\portable.txt" -Value "This file enables portable mode. Delete it to use standard %APPDATA% storage."
           # Get version from Cargo.toml
           $version = (Select-String -Path "src-tauri/Cargo.toml" -Pattern 'version = "(.+)"').Matches[0].Groups[1].Value
           $zipName = "MotrixNext-Portable-v${version}.zip"
-          Compress-Archive -Path "$stage\*" -DestinationPath "$release\$zipName"
+          Compress-Archive -Path "$release\*" -DestinationPath "$release\$zipName"
           $zipPath = (Resolve-Path "$release\$zipName").Path
           echo "portableZip=$zipPath" >> $env:GITHUB_OUTPUT
 
