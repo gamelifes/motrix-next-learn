@@ -657,7 +657,9 @@ pub fn run() {
             if let Some(exe_dir) = exe.parent() {
                 if exe_dir.join("portable.txt").exists() {
                     let data_dir = exe_dir.join("data");
-                    let _ = std::fs::create_dir_all(&data_dir);
+                    if let Err(e) = std::fs::create_dir_all(&data_dir) {
+                        log::warn!("Portable mode: failed to create data directory {}: {e}", data_dir.display());
+                    }
                     // Override APPDATA/LOCALAPPDATA so dirs::data_dir()
                     // and Tauri's PathResolver point to the portable location.
                     std::env::set_var("APPDATA", &data_dir);

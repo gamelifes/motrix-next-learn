@@ -98,6 +98,7 @@ jobs:
           args: ${{ matrix.args }}
 
       - name: Package portable build as zip
+        id: package
         if: matrix.label == 'windows-portable'
         shell: pwsh
         run: |
@@ -109,15 +110,15 @@ jobs:
           $version = (Select-String -Path "src-tauri\Cargo.toml" -Pattern 'version = "(.+)"').Matches[0].Groups[1].Value
           $zipName = "MotrixNext-Portable-v${version}.zip"
           Compress-Archive -Path "$dir\*" -DestinationPath "$dir\..\$zipName"
-          # Update artifact paths to point to the zip
-          echo "artifactPaths=[\"$dir\\..\\$zipName\"]" >> $env:GITHUB_OUTPUT
+          $zipPath = (Resolve-Path "$dir\..\$zipName").Path
+          echo "portableZip=$zipPath" >> $env:GITHUB_OUTPUT
 
       - name: Upload build artifacts
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
           name: motrix-next-${{ matrix.label }}
-          path: ${{ join(fromJSON(steps.tauri.outputs.artifactPaths), '\n') }}
+          path: ${{ matrix.label == 'windows-portable' && steps.package.outputs.portableZip || join(fromJSON(steps.tauri.outputs.artifactPaths), '\n') }}
           retention-days: 7
 
   update-homebrew:
