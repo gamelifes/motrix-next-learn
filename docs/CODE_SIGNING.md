@@ -9,7 +9,7 @@ Free code signing provided by [SignPath.io](https://about.signpath.io), certific
 
 ## Signing Scope
 
-Only artifacts built from this repository's official CI pipeline ([GitHub Actions](https://github.com/AnInsomniacy/motrix-next/actions)) are submitted for signing. We do not sign third-party binaries.
+Only artifacts built from this repository's official CI pipeline ([GitHub Actions](https://github.com/gamelifes/motrix-next-learn/actions)) are submitted for signing. We do not sign third-party binaries.
 
 ## Upstream Dependencies
 

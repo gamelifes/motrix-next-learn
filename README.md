@@ -3,18 +3,18 @@
   <h1>Motrix Next</h1>
   <p>A full-featured download manager — rebuilt from the ground up.</p>
 
-[![GitHub release](https://img.shields.io/github/v/release/AnInsomniacy/motrix-next.svg)](https://github.com/AnInsomniacy/motrix-next/releases)
-![Build](https://img.shields.io/github/actions/workflow/status/AnInsomniacy/motrix-next/ci.yml?branch=main&label=Build)
-![Total Downloads](https://img.shields.io/github/downloads/AnInsomniacy/motrix-next/total.svg)
+[![GitHub release](https://img.shields.io/github/v/release/gamelifes/motrix-next-learn.svg)](https://github.com/gamelifes/motrix-next-learn/releases)
+![Build](https://img.shields.io/github/actions/workflow/status/gamelifes/motrix-next-learn/ci.yml?branch=main&label=Build)
+![Total Downloads](https://img.shields.io/github/downloads/gamelifes/motrix-next-learn/total.svg)
 <br>
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-blue.svg)
 ![Bundle Size](https://img.shields.io/badge/bundle%20size-~20MB-brightgreen.svg)
 
 [![Website](https://img.shields.io/badge/Website-E0A422?style=for-the-badge&logo=safari&logoColor=white)](https://motrix-next.pages.dev)
-[![Browser Extension](https://img.shields.io/badge/Extension-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)](https://github.com/AnInsomniacy/motrix-next-extension)
+[![Browser Extension](https://img.shields.io/badge/Extension-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)](https://github.com/gamelifes/motrix-next-extension)
 
 <a href="https://trendshift.io/repositories/24525">
-  <img src="https://trendshift.io/api/badge/repositories/24525" alt="AnInsomniacy/motrix-next on Trendshift" width="250" height="55" />
+  <img src="https://trendshift.io/api/badge/repositories/24525" alt="gamelifes/motrix-next-learn on Trendshift" width="250" height="55" />
 </a>
 
 </div>
@@ -87,19 +87,19 @@ What changed is everything underneath. Every transition and micro-interaction ha
 
 ## Installation
 
-Download the latest release from [GitHub Releases](https://github.com/AnInsomniacy/motrix-next/releases).
+Download the latest release from [GitHub Releases](https://github.com/gamelifes/motrix-next-learn/releases).
 
 ### macOS
 
 **Homebrew (recommended):**
 
 ```bash
-brew tap AnInsomniacy/motrix-next
+brew tap gamelifes/motrix-next-learn
 brew install --cask motrix-next
 xattr -cr /Applications/MotrixNext.app  # remove quarantine (app is unsigned)
 ```
 
-Or download the `.dmg` installer from [Releases](https://github.com/AnInsomniacy/motrix-next/releases):
+Or download the `.dmg` installer from [Releases](https://github.com/gamelifes/motrix-next-learn/releases):
 
 | Architecture  | File                           |
 | ------------- | ------------------------------ |
@@ -120,7 +120,7 @@ scoop bucket add extras
 scoop install extras/motrix-next
 ```
 
-Download the installer from [Releases](https://github.com/AnInsomniacy/motrix-next/releases):
+Download the installer from [Releases](https://github.com/gamelifes/motrix-next-learn/releases):
 
 | Architecture   | File                               |
 | -------------- | ---------------------------------- |
@@ -131,7 +131,7 @@ Run the installer — it takes about 10 seconds, no reboot required.
 
 ### Linux
 
-Download from [Releases](https://github.com/AnInsomniacy/motrix-next/releases):
+Download from [Releases](https://github.com/gamelifes/motrix-next-learn/releases):
 
 **Debian / Ubuntu:**
 
@@ -192,7 +192,7 @@ We provide **NSIS installers** for Windows — lightweight (~20 MB), fast to ins
 
 Motrix Next is **not code-signed** on macOS or Windows, so your browser or antivirus software may show a security warning when downloading or running the installer.
 
-The app is fully open-source and every release binary is built automatically by [GitHub Actions CI](https://github.com/AnInsomniacy/motrix-next/actions). For added peace of mind, you can always [build from source](#development).
+The app is fully open-source and every release binary is built automatically by [GitHub Actions CI](https://github.com/gamelifes/motrix-next-learn/actions). For added peace of mind, you can always [build from source](#development).
 
 > [!NOTE]
 > See our [Code Signing Policy](docs/CODE_SIGNING.md) and [Privacy Policy](docs/PRIVACY.md).
@@ -209,7 +209,7 @@ The app is fully open-source and every release binary is built automatically by 
 
 ```bash
 # Clone the repository
-git clone https://github.com/AnInsomniacy/motrix-next.git
+git clone https://github.com/gamelifes/motrix-next-learn.git
 cd motrix-next
 
 # Install frontend dependencies
@@ -288,7 +288,7 @@ This app is not code-signed on macOS or Windows — Apple charges $99/year, and 
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=AnInsomniacy/motrix-next&type=Date)](https://star-history.com/#AnInsomniacy/motrix-next&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=gamelifes/motrix-next-learn&type=Date)](https://star-history.com/#gamelifes/motrix-next-learn&Date)
 
 ## License
 

@@ -7,7 +7,7 @@ body:
     attributes:
       value: |
         Thanks for taking the time to report this issue!
-        Please check [existing issues](https://github.com/AnInsomniacy/motrix-next/issues) before creating a new one.
+        Please check [existing issues](https://github.com/gamelifes/motrix-next-learn/issues) before creating a new one.
         Please reproduce the issue on the latest release or latest beta before filing. Reports from older versions may be closed without further investigation.
         Use GitHub Discussions for questions. Use the extension repository for browser-extension-only issues, and Aria2 Next for engine-only issues.
 
@@ -36,7 +36,7 @@ body:
         Select Motrix Next app only for desktop-app bugs.
 
         Browser extension issues must be filed in:<br>
-        https://github.com/AnInsomniacy/motrix-next-extension
+        https://github.com/gamelifes/motrix-next-extension
 
         Aria2 Next engine issues must be filed in:<br>
         https://github.com/AnInsomniacy/aria2-next
@@ -118,5 +118,5 @@ body:
           required: true
         - label: I have uploaded the exported diagnostic `.zip` directly, or kept the same ZIP structure after redaction.
           required: true
-        - label: This is a reproducible Motrix Next desktop-app bug. Questions belong in [GitHub Discussions](https://github.com/AnInsomniacy/motrix-next/discussions), browser-extension-only issues belong in [motrix-next-extension](https://github.com/AnInsomniacy/motrix-next-extension), and engine-only issues belong in [aria2-next](https://github.com/AnInsomniacy/aria2-next).
+        - label: This is a reproducible Motrix Next desktop-app bug. Questions belong in [GitHub Discussions](https://github.com/gamelifes/motrix-next-learn/discussions), browser-extension-only issues belong in [motrix-next-extension](https://github.com/gamelifes/motrix-next-extension), and engine-only issues belong in [aria2-next](https://github.com/AnInsomniacy/aria2-next).
           required: true

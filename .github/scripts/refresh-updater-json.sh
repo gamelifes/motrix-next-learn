@@ -8,7 +8,7 @@ fi
 
 TAG="${1%$'\r'}"
 VERSION="${TAG#v}"
-REPO="${GITHUB_REPOSITORY:-AnInsomniacy/motrix-next}"
+REPO="${GITHUB_REPOSITORY:-gamelifes/motrix-next-learn}"
 BASE="https://github.com/$REPO/releases/download/$TAG"
 
 if [[ "$TAG" == *"-beta"* ]] || [[ "$TAG" == *"-alpha"* ]] || [[ "$TAG" == *"-rc"* ]]; then

@@ -206,7 +206,7 @@
           </div>
         </div>
         <a
-          href="https://github.com/AnInsomniacy/motrix-next"
+          href="https://github.com/gamelifes/motrix-next-learn"
           class="nav-gh"
           target="_blank"
           rel="noopener"
@@ -399,7 +399,7 @@
             <span data-i18n="hero.download">Download</span>
           </a>
           <a
-            href="https://github.com/AnInsomniacy/motrix-next"
+            href="https://github.com/gamelifes/motrix-next-learn"
             class="cta cta-github"
             id="hero-github"
             target="_blank"
@@ -880,7 +880,7 @@
 
         <p class="dl-detected reveal" id="dl-detected"></p>
         <a
-          href="https://github.com/AnInsomniacy/motrix-next/releases"
+          href="https://github.com/gamelifes/motrix-next-learn/releases"
           class="cta cta-lg reveal"
           id="dl-primary"
           target="_blank"
@@ -919,7 +919,7 @@
           >
             <img
               id="star-history-chart"
-              src="https://api.star-history.com/chart?repos=AnInsomniacy/motrix-next&type=date&theme=dark&legend=top-left"
+              src="https://api.star-history.com/chart?repos=gamelifes/motrix-next-learn&type=date&theme=dark&legend=top-left"
               alt="Star History Chart"
               loading="lazy"
               onload="this.closest('.star-history-frame').classList.add('loaded')"
@@ -931,7 +931,7 @@
             aria-hidden="true"
             style="display: none"
             loading="lazy"
-            src="https://api.star-history.com/chart?repos=AnInsomniacy/motrix-next&type=date&legend=top-left"
+            src="https://api.star-history.com/chart?repos=gamelifes/motrix-next-learn&type=date&legend=top-left"
           />
         </div>
       </section>
@@ -967,30 +967,30 @@
         the groundwork
       </p>
       <div class="footer-links">
-        <a href="https://github.com/AnInsomniacy/motrix-next" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/gamelifes/motrix-next-learn" target="_blank" rel="noopener">GitHub</a>
         <a
-          href="https://github.com/AnInsomniacy/motrix-next/blob/main/docs/CONTRIBUTING.md"
+          href="https://github.com/gamelifes/motrix-next-learn/blob/main/docs/CONTRIBUTING.md"
           target="_blank"
           rel="noopener"
           data-i18n="footer.contributing"
           >Contributing</a
         >
         <a
-          href="https://github.com/AnInsomniacy/motrix-next/blob/main/docs/CODE_OF_CONDUCT.md"
+          href="https://github.com/gamelifes/motrix-next-learn/blob/main/docs/CODE_OF_CONDUCT.md"
           target="_blank"
           rel="noopener"
           data-i18n="footer.coc"
           >Code of Conduct</a
         >
         <a
-          href="https://github.com/AnInsomniacy/motrix-next/blob/main/docs/PRIVACY.md"
+          href="https://github.com/gamelifes/motrix-next-learn/blob/main/docs/PRIVACY.md"
           target="_blank"
           rel="noopener"
           data-i18n="footer.privacy"
           >Privacy Policy</a
         >
         <a
-          href="https://github.com/AnInsomniacy/motrix-next/blob/main/docs/CODE_SIGNING.md"
+          href="https://github.com/gamelifes/motrix-next-learn/blob/main/docs/CODE_SIGNING.md"
           target="_blank"
           rel="noopener"
           data-i18n="footer.signing"
@@ -1241,7 +1241,7 @@
 
         // State shared between API fetch and click handlers
         let resolvedUrls = {}
-        let releaseUrl = 'https://github.com/AnInsomniacy/motrix-next/releases'
+        let releaseUrl = 'https://github.com/gamelifes/motrix-next-learn/releases'
         let apiFailed = false
 
         /** Format a number as compact string: 1234 → "1.2k", 456 → "456" */
@@ -1274,10 +1274,10 @@
 
           try {
             const [repoRes, releasesRes] = await Promise.all([
-              fetch('https://api.github.com/repos/AnInsomniacy/motrix-next', {
+              fetch('https://api.github.com/repos/gamelifes/motrix-next-learn', {
                 signal: controller.signal,
               }),
-              fetch('https://api.github.com/repos/AnInsomniacy/motrix-next/releases?per_page=100', {
+              fetch('https://api.github.com/repos/gamelifes/motrix-next-learn/releases?per_page=100', {
                 signal: controller.signal,
               }),
             ])
@@ -1316,7 +1316,7 @@
         })()
 
         try {
-          const res = await fetch('https://api.github.com/repos/AnInsomniacy/motrix-next/releases/latest')
+          const res = await fetch('https://api.github.com/repos/gamelifes/motrix-next-learn/releases/latest')
           const data = await res.json()
           const assets = data.assets || []
           const ver = data.tag_name || ''
@@ -1484,7 +1484,7 @@
           const sh = document.getElementById('star-history-chart')
           const shPreload = document.getElementById('star-history-preload')
           if (sh && shPreload) {
-            const base = 'https://api.star-history.com/chart?repos=AnInsomniacy/motrix-next&type=date&legend=top-left'
+            const base = 'https://api.star-history.com/chart?repos=gamelifes/motrix-next-learn&type=date&legend=top-left'
             const darkUrl = base + '&theme=dark'
             const lightUrl = base
             const wantDark = effective === 'dark'

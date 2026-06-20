@@ -444,10 +444,10 @@ export function useAppEvents(deps: AppEventsDeps): AppEventsReturn {
         taskStore.pauseAllTask().catch((e) => logger.error('TrayMenu', e))
         break
       case 'release-notes':
-        openUrl('https://github.com/AnInsomniacy/motrix-next/releases').catch((e) => logger.error('TrayMenu', e))
+        openUrl('https://github.com/gamelifes/motrix-next-learn/releases').catch((e) => logger.error('TrayMenu', e))
         break
       case 'report-issue':
-        openUrl('https://github.com/AnInsomniacy/motrix-next/issues').catch((e) => logger.error('TrayMenu', e))
+        openUrl('https://github.com/gamelifes/motrix-next-learn/issues').catch((e) => logger.error('TrayMenu', e))
         break
     }
   }

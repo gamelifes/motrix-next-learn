@@ -15,7 +15,7 @@ Before you start contributing, make sure you understand [GitHub flow](https://gu
 ### Getting Started
 
 ```bash
-git clone https://github.com/AnInsomniacy/motrix-next.git
+git clone https://github.com/gamelifes/motrix-next-learn.git
 cd motrix-next
 pnpm install
 pnpm tauri dev    # Start dev server (Tauri + Vite)

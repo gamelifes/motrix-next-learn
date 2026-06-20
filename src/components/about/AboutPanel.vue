@@ -86,19 +86,19 @@ const links = [
     key: 'github',
     label: 'GitHub',
     icon: LogoGithub,
-    url: 'https://github.com/AnInsomniacy/motrix-next',
+    url: 'https://github.com/gamelifes/motrix-next-learn',
   },
   {
     key: 'release',
     i18n: 'about.release',
     icon: RocketOutline,
-    url: 'https://github.com/AnInsomniacy/motrix-next/releases',
+    url: 'https://github.com/gamelifes/motrix-next-learn/releases',
   },
   {
     key: 'license',
     i18n: 'about.license',
     icon: DocumentTextOutline,
-    url: 'https://github.com/AnInsomniacy/motrix-next/blob/main/LICENSE',
+    url: 'https://github.com/gamelifes/motrix-next-learn/blob/main/LICENSE',
   },
   {
     key: 'support',

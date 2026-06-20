@@ -79,7 +79,7 @@ describe('keyboard-accessible navigation', () => {
 
     expect(wrapper.find('.logo-mini a').exists()).toBe(false)
     expect(wrapper.find('.logo-mini').text()).toContain('NEXT')
-    expect(wrapper.html()).not.toContain('github.com/AnInsomniacy/motrix-next')
+    expect(wrapper.html()).not.toContain('github.com/gamelifes/motrix-next-learn')
   })
 
   it('renders TaskSubnav routes as buttons and marks the active route', async () => {

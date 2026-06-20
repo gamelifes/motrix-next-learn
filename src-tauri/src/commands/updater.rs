@@ -11,7 +11,7 @@ use url::Url;
 
 /// Base URL for update JSON files on the fixed `updater` GitHub Release tag.
 const UPDATER_BASE_URL: &str =
-    "https://github.com/AnInsomniacy/motrix-next/releases/download/updater";
+    "https://github.com/gamelifes/motrix-next-learn/releases/download/updater";
 
 /// Serializable update metadata returned to the frontend.
 #[derive(Debug, Clone, Serialize)]

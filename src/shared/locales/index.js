@@ -1,7 +1,7 @@
 /**
  * Welcome to translate to more versions in other languages.
  * Please read the translation guide before starting work.
- * https://github.com/AnInsomniacy/motrix-next/blob/master/CONTRIBUTING.md#-translation-guide
+ * https://github.com/gamelifes/motrix-next-learn/blob/master/CONTRIBUTING.md#-translation-guide
  *
  * Please keep the locale key in alphabetical order.
  */

@@ -332,8 +332,8 @@ The release workflow (`.github/workflows/release.yml`) is triggered by `on: rele
 Both `latest.json` and `beta.json` are uploaded to a **permanent `updater` Release tag**:
 
 ```
-https://github.com/AnInsomniacy/motrix-next/releases/download/updater/latest.json
-https://github.com/AnInsomniacy/motrix-next/releases/download/updater/beta.json
+https://github.com/gamelifes/motrix-next-learn/releases/download/updater/latest.json
+https://github.com/gamelifes/motrix-next-learn/releases/download/updater/beta.json
 ```
 
 The CI creates this Release automatically if it doesn't exist, and uses `--clobber` to overwrite on each release.
