@@ -103,6 +103,11 @@ jobs:
         run: |
           $release = "src-tauri/target/x86_64-pc-windows-msvc/release"
           Set-Content -Path "$release\portable.txt" -Value "This file enables portable mode. Delete it to use standard %APPDATA% storage."
+          # Remove debug symbols and build artifacts to reduce size
+          Get-ChildItem -Path $release -Filter "*.pdb" -File | Remove-Item -Force
+          Get-ChildItem -Path $release -Filter "*.d" -File | Remove-Item -Force
+          Remove-Item -Path "$release/build" -Recurse -Force -ErrorAction SilentlyContinue
+          Remove-Item -Path "$release/examples" -Recurse -Force -ErrorAction SilentlyContinue
 
       - name: Upload build artifacts
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
