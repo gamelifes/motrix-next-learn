@@ -97,27 +97,19 @@ jobs:
           includeUpdaterJson: false
           args: ${{ matrix.args }}
 
-      - name: Package portable build as zip
-        id: package
+      - name: Add portable marker
         if: matrix.label == 'windows-portable'
         shell: pwsh
         run: |
           $release = "src-tauri/target/x86_64-pc-windows-msvc/release"
-          # Create portable marker file
           Set-Content -Path "$release\portable.txt" -Value "This file enables portable mode. Delete it to use standard %APPDATA% storage."
-          # Get version from Cargo.toml
-          $version = (Select-String -Path "src-tauri/Cargo.toml" -Pattern 'version = "(.+)"').Matches[0].Groups[1].Value
-          $zipName = "MotrixNext-Portable-v${version}.zip"
-          Compress-Archive -Path "$release\*" -DestinationPath "$release\$zipName"
-          $zipPath = (Resolve-Path "$release\$zipName").Path
-          echo "portableZip=$zipPath" >> $env:GITHUB_OUTPUT
 
       - name: Upload build artifacts
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
           name: motrix-next-${{ matrix.label }}
-          path: ${{ matrix.label == 'windows-portable' && steps.package.outputs.portableZip || join(fromJSON(steps.tauri.outputs.artifactPaths), '\n') }}
+          path: ${{ matrix.label == 'windows-portable' && 'src-tauri/target/x86_64-pc-windows-msvc/release' || join(fromJSON(steps.tauri.outputs.artifactPaths), '\n') }}
           retention-days: 7
 
   update-homebrew:
