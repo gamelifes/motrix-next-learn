@@ -1,6 +1,8 @@
 name: Release
 
 on:
+  push:
+    branches: [main]
   release:
     types: [published]
   workflow_dispatch:
@@ -91,6 +93,14 @@ jobs:
           releaseId: ${{ github.event_name == 'release' && github.event.release.id || '' }}
           includeUpdaterJson: false
           args: ${{ matrix.args }}
+
+      - name: Upload build artifacts
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: motrix-next-${{ matrix.label }}
+          path: ${{ join(fromJSON(steps.tauri.outputs.artifactPaths), '\n') }}
+          retention-days: 7
 
   merge-updater-json:
     needs: build
