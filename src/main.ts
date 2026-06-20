@@ -20,10 +20,9 @@ import { convertTrackerDataToLine, convertTrackerDataToComma, reduceTrackerStrin
 import { logger } from '@shared/logger'
 import { getErrorMessage } from '@shared/utils/errorMessage'
 import { resolveUserVisibleDownloadDir, shouldPersistResolvedDownloadDir } from '@shared/utils/userVisibleDirectory'
-import { getUpdateProxy } from '@/composables/useUpdateFlow'
 import { resolveAppProxyUrl } from '@shared/utils/appProxyPolicy'
 import { checkSyncDue } from '@shared/utils/syncSchedule'
-import type { AppConfig, TauriUpdate } from '@shared/types'
+import type { AppConfig } from '@shared/types'
 import App from './App.vue'
 import 'virtual:uno.css'
 import './styles/tokens.css'
@@ -79,31 +78,6 @@ if (import.meta.env.PROD) {
     } catch (e) {
       logger.error('waitForEngine', `invoke failed: ${e}`)
       return false
-    }
-  }
-
-  async function autoCheckForUpdate() {
-    const config = preferenceStore.config
-    if (config.autoCheckUpdate === false) return
-
-    const intervalHours = Number(config.autoCheckUpdateInterval ?? 0)
-    if (Number.isFinite(intervalHours) && intervalHours > 0) {
-      const lastCheck = Number(config.lastCheckUpdateTime) || 0
-      const intervalMs = intervalHours * 3_600_000
-      if (Date.now() - lastCheck < intervalMs) return
-    }
-
-    try {
-      const { invoke } = await import('@tauri-apps/api/core')
-      const channel = config.updateChannel || 'stable'
-      const proxyServer = getUpdateProxy(config.proxy)
-      const update = await invoke<TauriUpdate | null>('check_for_update', { channel, proxy: proxyServer })
-      if (update) {
-        appStore.pendingUpdate = update
-      }
-      preferenceStore.updateAndSave({ lastCheckUpdateTime: Date.now() })
-    } catch (e) {
-      logger.warn('Updater', 'auto check failed: ' + (e as Error).message)
     }
   }
 
@@ -412,7 +386,6 @@ if (import.meta.env.PROD) {
     }
 
     // ── Phase 4: deferred non-critical tasks ───────────────────────────────
-    autoCheckForUpdate()
     syncNetworkSourcesIfDue(true)
 
     // Initialize download history database, then schedule lightweight cleanup.

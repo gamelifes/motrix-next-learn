@@ -34,7 +34,6 @@
     },
     "clipboard-manager:allow-read-text",
     "autostart:default",
-    "updater:default",
     "deep-link:default",
     "deep-link:allow-register",
     "deep-link:allow-unregister",

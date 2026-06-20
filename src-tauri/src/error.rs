@@ -21,9 +21,6 @@ pub enum AppError {
     /// Requested resource not found.
     #[error("Not found: {0}")]
     NotFound(String),
-    /// Auto-updater check or install failure.
-    #[error("Updater error: {0}")]
-    Updater(String),
     /// UPnP port mapping error (discovery, map, unmap).
     #[error("UPnP error: {0}")]
     Upnp(String),
@@ -93,12 +90,6 @@ mod tests {
     }
 
     #[test]
-    fn display_updater_error() {
-        let e = AppError::Updater("network timeout".into());
-        assert_eq!(e.to_string(), "Updater error: network timeout");
-    }
-
-    #[test]
     fn display_upnp_error() {
         let e = AppError::Upnp("gateway unreachable".into());
         assert_eq!(e.to_string(), "UPnP error: gateway unreachable");
@@ -150,7 +141,6 @@ mod tests {
             ("Engine", AppError::Engine("e".into())),
             ("Io", AppError::Io("i".into())),
             ("NotFound", AppError::NotFound("n".into())),
-            ("Updater", AppError::Updater("u".into())),
             ("Upnp", AppError::Upnp("p".into())),
             ("Protocol", AppError::Protocol("r".into())),
             ("Aria2", AppError::Aria2("a".into())),

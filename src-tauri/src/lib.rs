@@ -19,7 +19,6 @@ mod upnp;
 pub use commands::protocol::try_run_elevated;
 
 use crate::commands::power::ShutdownCancelState;
-use crate::commands::updater::{DownloadedUpdate, UpdateCancelState};
 use engine::EngineState;
 use services::port_guard::DEFAULT_RPC_PORT;
 use tauri::{Emitter, Manager};
@@ -740,7 +739,6 @@ pub fn run() {
         .plugin(tauri_plugin_locale::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_clipboard_manager::init())
-        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             Some(vec!["--autostart"]),
@@ -805,8 +803,6 @@ pub fn run() {
     builder
         .manage(EngineState::new())
         .manage(UpnpState::new())
-        .manage(std::sync::Arc::new(UpdateCancelState::new()))
-        .manage(std::sync::Arc::new(DownloadedUpdate::new()))
         .manage(std::sync::Arc::new(ShutdownCancelState::new()))
         .invoke_handler(tauri::generate_handler![
             commands::get_system_config,
@@ -825,10 +821,6 @@ pub fn run() {
             commands::update_dock_badge,
             commands::send_task_start_notification,
             commands::send_app_system_notification,
-            commands::check_for_update,
-            commands::download_update,
-            commands::apply_update,
-            commands::cancel_update,
             commands::start_upnp_mapping,
             commands::stop_upnp_mapping,
             commands::get_upnp_status,

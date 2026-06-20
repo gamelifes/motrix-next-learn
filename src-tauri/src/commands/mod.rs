@@ -15,7 +15,6 @@ pub mod proxy;
 pub mod runtime_config;
 pub mod tracker;
 pub mod ui;
-pub mod updater;
 pub mod upnp;
 
 pub use aria2::*;
@@ -34,5 +33,4 @@ pub use proxy::*;
 pub use runtime_config::*;
 pub use tracker::*;
 pub use ui::*;
-pub use updater::*;
 pub use upnp::*;
