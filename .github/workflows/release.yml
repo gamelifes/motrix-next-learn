@@ -102,20 +102,27 @@ jobs:
         if: matrix.label == 'windows-portable'
         shell: pwsh
         run: |
-          # Find the exe in the build output
-          $exe = Get-ChildItem -Path "src-tauri/target/x86_64-pc-windows-msvc/release" -Filter "*.exe" -File | Where-Object { $_.Name -notmatch '\.nsis\.exe$' } | Select-Object -First 1
-          if (-not $exe) {
-            Write-Error "No exe found in build output"
-            exit 1
+          $release = "src-tauri/target/x86_64-pc-windows-msvc/release"
+          # Create a clean staging directory
+          $stage = "$release/portable-stage"
+          New-Item -ItemType Directory -Force -Path $stage | Out-Null
+          # Copy exe and DLLs (skip NSIS output and installer exe)
+          Get-ChildItem -Path $release -File | Where-Object {
+            $_.Name -notmatch '\.nsis\.exe$' -and
+            $_.Extension -in '.exe','.dll','.pdb','.json','.mmdb','.conf'
+          } | Copy-Item -Destination $stage
+          # Copy resources/ and ed2k-bootstrap/ if they exist
+          @("resources","ed2k-bootstrap") | ForEach-Object {
+            $src = Join-Path $release $_
+            if (Test-Path $src) { Copy-Item -Path $src -Destination $stage -Recurse }
           }
-          $dir = $exe.DirectoryName
           # Create portable marker file
-          Set-Content -Path "$dir\portable.txt" -Value "This file enables portable mode. Delete it to use standard %APPDATA% storage."
+          Set-Content -Path "$stage\portable.txt" -Value "This file enables portable mode. Delete it to use standard %APPDATA% storage."
           # Get version from Cargo.toml
           $version = (Select-String -Path "src-tauri/Cargo.toml" -Pattern 'version = "(.+)"').Matches[0].Groups[1].Value
           $zipName = "MotrixNext-Portable-v${version}.zip"
-          Compress-Archive -Path "$dir\*" -DestinationPath "$dir\..\$zipName"
-          $zipPath = (Resolve-Path "$dir\..\$zipName").Path
+          Compress-Archive -Path "$stage\*" -DestinationPath "$release\$zipName"
+          $zipPath = (Resolve-Path "$release\$zipName").Path
           echo "portableZip=$zipPath" >> $env:GITHUB_OUTPUT
 
       - name: Upload build artifacts
