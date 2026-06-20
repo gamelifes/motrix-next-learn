@@ -642,6 +642,32 @@ pub fn run() {
     // Tauri's thread pool, the async runtime, or any plugin initialisation.
     gpu_guard::pre_flight();
 
+    // ── Portable mode detection (Windows only) ─────────────────────
+    //
+    // When `portable.txt` exists next to the executable, all data
+    // (config, database, logs) is stored in a `data/` subdirectory
+    // alongside the exe instead of %APPDATA%.
+    //
+    // SAFETY: `set_var` is unsafe since Rust 1.83. Safe here because
+    // it runs at the very start of `main()`, before Tauri's thread
+    // pool, async runtime, or any plugin initialisation.
+    #[cfg(target_os = "windows")]
+    {
+        if let Ok(exe) = std::env::current_exe() {
+            if let Some(exe_dir) = exe.parent() {
+                if exe_dir.join("portable.txt").exists() {
+                    let data_dir = exe_dir.join("data");
+                    let _ = std::fs::create_dir_all(&data_dir);
+                    // Override APPDATA/LOCALAPPDATA so dirs::data_dir()
+                    // and Tauri's PathResolver point to the portable location.
+                    std::env::set_var("APPDATA", &data_dir);
+                    std::env::set_var("LOCALAPPDATA", &data_dir);
+                    log::info!("Portable mode: data directory = {}", data_dir.display());
+                }
+            }
+        }
+    }
+
     // ── Panic hook: route panics through log crate for file persistence ──
     // Must be set BEFORE Tauri Builder so even plugin init panics are caught.
     // Without this, panics only reach stderr and are lost on process exit.
