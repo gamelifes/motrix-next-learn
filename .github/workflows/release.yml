@@ -88,8 +88,6 @@ jobs:
         id: tauri
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: ${{ github.event.release.tag_name || '' }}
           releaseId: ${{ github.event_name == 'release' && github.event.release.id || '' }}
@@ -103,20 +101,6 @@ jobs:
           name: motrix-next-${{ matrix.label }}
           path: ${{ join(fromJSON(steps.tauri.outputs.artifactPaths), '\n') }}
           retention-days: 7
-
-  merge-updater-json:
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.event_name == 'release'
-
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Generate and upload channel-specific updater JSON
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          ./.github/scripts/refresh-updater-json.sh "${{ github.event.release.tag_name }}"
 
   update-homebrew:
     needs: build
