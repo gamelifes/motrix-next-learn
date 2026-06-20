@@ -19,12 +19,8 @@ defineExpose({ open, close })
 <template>
   <NModal v-model:show="visible" :mask-closable="true" :close-on-esc="true" transform-origin="center">
     <div class="update-placeholder">
-      <NText tag="p" style="font-size: 14px">
-        自动更新功能已禁用。
-      </NText>
-      <NButton type="primary" size="small" style="margin-top: 12px" @click="close">
-        关闭
-      </NButton>
+      <NText tag="p" style="font-size: 14px"> 自动更新功能已禁用。 </NText>
+      <NButton type="primary" size="small" style="margin-top: 12px" @click="close"> 关闭 </NButton>
     </div>
   </NModal>
 </template>
