@@ -341,7 +341,7 @@ export async function submitManualUris(
           userAgent: form.userAgent,
           requestHeaders: form.requestHeaders,
         })
-        const playlistContent = String.fromCharCode(...responseBytes)
+        const playlistContent = new TextDecoder().decode(Uint8Array.from(responseBytes))
 
         // Parse the m3u8 playlist to extract .ts segment URLs
         const tsUris = parseM3U8Playlist(playlistContent, uri)
