@@ -499,7 +499,7 @@ export interface TauriUpdate {
 
 // ── Batch Add Task ──────────────────────────────────────────────────
 
-export type BatchItemKind = 'uri' | 'torrent'
+export type BatchItemKind = 'uri' | 'torrent' | 'm3u8'
 export type BatchItemStatus = 'pending' | 'submitted' | 'failed'
 
 /** A single item in the add-task batch queue. */

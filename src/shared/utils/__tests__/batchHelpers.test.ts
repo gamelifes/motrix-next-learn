@@ -589,3 +589,60 @@ describe('resolveExternalFilenameHint', () => {
     expect(resolveExternalFilenameHint('magnet:?xt=urn:btih:abc', 'download.torrent')).toBe('download.torrent')
   })
 })
+
+describe('detectExternalInputKind', () => {
+  // ── 1. Scheme-first: magnet / thunder ──────────────────────
+
+  it('classifies plain magnet URIs as uri', () => {
+    expect(detectExternalInputKind('magnet:?xt=urn:btih:abc123')).toBe('uri')
+  })
+
+  it('classifies magnet URIs with tracker.torrent.eu.org as uri (regression)', () => {
+    const magnet =
+      'magnet:?xt=urn:btih:a09e89b13c5347a2e3414aaa6556c950bf9a6277' +
+      '&dn=test&tr=udp%3A%2F%2Ftracker.torrent.eu.org%3A451%2Fannounce'
+    expect(detectExternalInputKind(magnet)).toBe('uri')
+  })
+
+  it('classifies thunder:// links as uri', () => {
+    expect(detectExternalInputKind('thunder://QUFodHRwOi8vZXhhbXBsZS5jb20vZmlsZS56aXBaWg==')).toBe('uri')
+  })
+
+  it('classifies ED2K file links as uri', () => {
+    expect(
+      detectExternalInputKind('ed2k://|file|Ubuntu%2026.04.iso|123456789|0123456789abcdef0123456789abcdef|/'),
+    ).toBe('uri')
+  })
+
+  // ── 2. Remote URLs: pathname-only extension match ──────────
+
+  it('classifies remote .torrent URLs as torrent', () => {
+    expect(detectExternalInputKind('https://example.com/files/download.torrent')).toBe('torrent')
+    expect(detectExternalInputKind('https://example.com/file.torrent?token=abc&v=2')).toBe('torrent')
+  })
+
+  it('classifies remote .m3u8 URLs as m3u8', () => {
+    expect(detectExternalInputKind('https://example.com/stream.m3u8')).toBe('m3u8')
+    expect(detectExternalInputKind('https://example.com/stream.m3u8?token=abc')).toBe('m3u8')
+  })
+
+  it('classifies plain HTTP URLs as uri', () => {
+    expect(detectExternalInputKind('https://example.com/file.zip')).toBe('uri')
+  })
+
+  it('classifies FTP URLs with .torrent as uri', () => {
+    expect(detectExternalInputKind('ftp://mirror.example.com/pub/file.torrent')).toBe('uri')
+  })
+
+  // ── 3. Local file paths ───────────────────────────────────
+
+  it('classifies local .torrent paths as torrent', () => {
+    expect(detectExternalInputKind('/Users/me/Downloads/ubuntu.torrent')).toBe('torrent')
+  })
+
+  // ── 4. Fallback ────────────────────────────────────────────
+
+  it('classifies unknown URIs as uri', () => {
+    expect(detectExternalInputKind('ed2k://|file|example|123|abc|/')).toBe('uri')
+  })
+})

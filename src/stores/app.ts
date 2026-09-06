@@ -446,6 +446,11 @@ export const useAppStore = defineStore('app', () => {
       void autoSubmitExtensionFile(downloadUrl, context)
       return { autoSubmitted: 1, ignored: 0 }
     }
+    if (autoSubmit && kind === 'm3u8') {
+      // For m3u8, we'll handle it like a regular URL for now, but it will be processed specially in submitManualUris
+      void autoSubmitExtensionUrl(downloadUrl, context, resolvedHint)
+      return { autoSubmitted: 1, ignored: 0 }
+    }
     if (autoSubmit && kind === 'uri') {
       void autoSubmitExtensionUrl(downloadUrl, context, resolvedHint)
       return { autoSubmitted: 1, ignored: 0 }

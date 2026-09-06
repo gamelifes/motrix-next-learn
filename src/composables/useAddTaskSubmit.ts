@@ -227,11 +227,13 @@ export async function submitManualUris(
 ): Promise<ManualUriSubmitResult> {
   if (!form.uris.trim()) return { submittedTaskNames: [], magnetGids: [], magnetFailures: [] }
   const allUris = normalizeUriLines(form.uris)
+  const preferenceStore = usePreferenceStore()
   logger.info(
     'submitManualUris',
     formatLogFields({
-      regular: allUris.filter((u) => !isMagnetUri(u)).length,
+      regular: allUris.filter((u) => !isMagnetUri(u) && !u.toLowerCase().endsWith('.m3u8')).length,
       magnet: allUris.filter(isMagnetUri).length,
+      m3u8: allUris.filter((uri) => uri.toLowerCase().endsWith('.m3u8')).length,
       hasUserAgent: Boolean(form.userAgent),
       hasReferer: Boolean(form.referer),
       hasCookie: Boolean(form.cookie),
@@ -240,7 +242,8 @@ export async function submitManualUris(
   )
 
   const magnetUris = allUris.filter(isMagnetUri)
-  const regularUris = allUris.filter((uri) => !isMagnetUri(uri))
+  const m3u8Uris = allUris.filter((uri) => uri.toLowerCase().endsWith('.m3u8'))
+  const regularUris = allUris.filter((uri) => !isMagnetUri(uri) && !uri.toLowerCase().endsWith('.m3u8'))
   const fileCategoryWithContexts = fileCategory
     ? { ...fileCategory, contexts: form.uriRequestContexts ?? {} }
     : undefined
@@ -325,6 +328,51 @@ export async function submitManualUris(
     }
   }
 
+  // Submit m3u8 URIs (special handling for HLS streams)
+  if (m3u8Uris.length > 0) {
+    for (const uri of m3u8Uris) {
+      try {
+        // For m3u8 URLs, we'll download the playlist and submit all .ts segments as a single task
+        const responseBytes: number[] = await invoke<number[]>('fetch_remote_bytes', {
+          url: uri,
+          proxy: getDownloadProxy(preferenceStore.config.proxy),
+          referer: form.referer,
+          cookie: form.cookie,
+          user_agent: form.userAgent,
+          request_headers: form.requestHeaders,
+        })
+        const playlistContent = String.fromCharCode(...responseBytes)
+
+        // Parse the m3u8 playlist to extract .ts segment URLs
+        const tsUris = parseM3U8Playlist(playlistContent, uri)
+
+        if (tsUris.length === 0) {
+          throw new Error('No .ts segments found in m3u8 playlist')
+        }
+
+        // Prepare output filename - use the m3u8 URL's basename or user-provided name
+        const outHint = form.out || extractDecodedFilename(uri) || 'video'
+        const baseName = outHint.replace(/\.[^/.]+$/, '') // Remove extension if present
+        const finalOutName = `${baseName}.ts`
+
+        // Submit all .ts segments as a single task to aria2 for automatic merging
+        await taskStore.addUri({
+          uris: tsUris,
+          outs: [finalOutName],
+          options: { ...options, continue: 'true' }, // Enable continuation for better resumability
+          fileCategory: fileCategoryWithContexts,
+        })
+
+        submittedTaskNames.push(finalOutName)
+      } catch (e) {
+        logger.error('submitManualUris.m3u8', e)
+        // Add to failures if we want to track them separately, or just let it throw
+        // For now, we'll let it throw to be handled by the caller
+        throw e
+      }
+    }
+  }
+
   // Submit magnet URIs (normal mode — global pause-metadata controls pausing)
   const result: ManualUriSubmitResult = {
     submittedTaskNames,
@@ -357,6 +405,42 @@ function buildSubmitErrorLabels(t: (key: string) => string): Parameters<typeof g
     fallback: t('task.error-unknown'),
     labels: { Aria2: t('task.error-aria2-next') },
   }
+}
+
+/**
+ * Parse an m3u8 playlist to extract .ts segment URLs.
+ * Handles both absolute and relative URLs in the playlist.
+ */
+function parseM3U8Playlist(playlistContent: string, baseUri: string): string[] {
+  const lines = playlistContent.split('\n')
+  const tsUris: string[] = []
+
+  for (const line of lines) {
+    const trimmed = line.trim()
+    // Skip empty lines and comments
+    if (trimmed === '' || trimmed.startsWith('#')) {
+      continue
+    }
+
+    // This is a media segment URL
+    try {
+      // Try to parse as an absolute URL
+      new URL(trimmed)
+      tsUris.push(trimmed)
+    } catch {
+      // If it's not an absolute URL, treat it as relative to the base URI
+      try {
+        const baseUrl = new URL(baseUri)
+        const absoluteUrl = new URL(trimmed, baseUrl)
+        tsUris.push(absoluteUrl.toString())
+      } catch {
+        // If we still can't parse it, skip it (could be invalid)
+        logger.warn('parseM3U8Playlist', `Skipping invalid URL in playlist: ${trimmed}`)
+      }
+    }
+  }
+
+  return tsUris
 }
 
 export function useAddTaskSubmit({ form, onClose }: UseAddTaskSubmitOptions) {

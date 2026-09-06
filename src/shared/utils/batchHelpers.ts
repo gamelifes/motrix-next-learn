@@ -54,6 +54,7 @@ export function detectExternalInputKind(source: string): BatchItemKind {
     try {
       const pathname = new URL(source).pathname.toLowerCase()
       if (pathname.endsWith('.torrent')) return 'torrent'
+      if (pathname.endsWith('.m3u8')) return 'm3u8'
     } catch {
       return 'uri'
     }
