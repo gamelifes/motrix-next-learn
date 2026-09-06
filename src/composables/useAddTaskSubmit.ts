@@ -338,8 +338,8 @@ export async function submitManualUris(
           proxy: getDownloadProxy(preferenceStore.config.proxy),
           referer: form.referer,
           cookie: form.cookie,
-          user_agent: form.userAgent,
-          request_headers: form.requestHeaders,
+          userAgent: form.userAgent,
+          requestHeaders: form.requestHeaders,
         })
         const playlistContent = String.fromCharCode(...responseBytes)
 
