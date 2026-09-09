@@ -61,7 +61,7 @@ fn collect_and_validate_segments(temp_dir: &Path) -> Result<Vec<PathBuf>, AppErr
     }
     let mut segments: Vec<PathBuf> = std::fs::read_dir(temp_dir)
         .map_err(|e| AppError::Io(format!("read_dir({}): {e}", temp_dir.display())))?
-        .filter_map(|entry| entry.ok())
+        .filter_map(Result::ok)
         .map(|entry| entry.path())
         .filter(|p| p.is_file())
         .filter(|p| {
