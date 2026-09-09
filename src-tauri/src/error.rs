@@ -33,6 +33,12 @@ pub enum AppError {
     /// Database read/write error (rusqlite).
     #[error("Database error: {0}")]
     Database(String),
+    /// FFmpeg executable missing, not executable, or failed at runtime.
+    #[error("FFmpeg error: {0}")]
+    Ffmpeg(String),
+    /// M3U8 playlist / merge workflow failure.
+    #[error("M3u8 error: {0}")]
+    M3u8(String),
 }
 
 impl From<std::io::Error> for AppError {
@@ -145,6 +151,8 @@ mod tests {
             ("Protocol", AppError::Protocol("r".into())),
             ("Aria2", AppError::Aria2("a".into())),
             ("Database", AppError::Database("d".into())),
+            ("Ffmpeg", AppError::Ffmpeg("f".into())),
+            ("M3u8", AppError::M3u8("m".into())),
         ];
         for (tag, err) in cases {
             let json = serde_json::to_string(&err).expect("serialize");
@@ -167,6 +175,18 @@ mod tests {
     fn display_database_error() {
         let e = AppError::Database("table not found".into());
         assert_eq!(e.to_string(), "Database error: table not found");
+    }
+
+    #[test]
+    fn display_ffmpeg_error() {
+        let e = AppError::Ffmpeg("not executable".into());
+        assert_eq!(e.to_string(), "FFmpeg error: not executable");
+    }
+
+    #[test]
+    fn display_m3u8_error() {
+        let e = AppError::M3u8("merge failed".into());
+        assert_eq!(e.to_string(), "M3u8 error: merge failed");
     }
 
     #[test]

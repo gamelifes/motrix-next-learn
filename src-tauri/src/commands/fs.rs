@@ -4,6 +4,7 @@ use serde_json::Value;
 use std::path::Path;
 use tauri::AppHandle;
 use tauri::Manager;
+use tokio::fs;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum ManagedLogFileKind {
@@ -325,6 +326,15 @@ pub async fn export_diagnostic_logs(app: AppHandle, save_path: String) -> Result
 
     log::info!("Exported diagnostic logs to {}", zip_path.display());
     Ok(crate::engine::path_to_safe_string(&zip_path))
+}
+/// Writes a byte buffer to the specified path.
+/// This bypasses Tauri's frontend FS scope restrictions.
+#[tauri::command]
+pub async fn write_buffer(path: String, data: Vec<u8>) -> Result<(), AppError> {
+    fs::write(&path, data)
+        .await
+        .map_err(|e| AppError::Io(format!("Failed to write file: {e}")))?;
+    Ok(())
 }
 
 #[cfg(test)]

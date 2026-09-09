@@ -52,6 +52,8 @@ import {
   FolderOpenOutline,
   TrashOutline,
   CopyOutline,
+  CheckmarkCircleOutline,
+  CloseCircleOutline,
 } from '@vicons/ionicons5'
 import { logger } from '@shared/logger'
 import PreferenceActionBar from './PreferenceActionBar.vue'
@@ -110,6 +112,8 @@ const aria2ConfPath = ref('')
 const sessionPath = ref('')
 const logPath = ref('')
 const defaultTempPath = ref('')
+const ffmpegTesting = ref(false)
+const ffmpegTestResult = ref<{ ok: boolean; message: string } | null>(null)
 
 const { form, isDirty, handleSave, handleReset, resetSnapshot } = usePreferenceForm({
   buildForm,
@@ -312,6 +316,38 @@ async function handleSelectTempDir() {
 
 function handleClearTempDir() {
   form.value.tempFilesDir = ''
+}
+
+async function handleSelectFfmpegPath() {
+  const selected = await openDialog({
+    directory: false,
+    multiple: false,
+    filters: [{ name: 'ffmpeg', extensions: ['exe', ''] }],
+  })
+  if (typeof selected === 'string') {
+    form.value.ffmpegPath = selected
+    ffmpegTestResult.value = null
+  }
+}
+
+async function handleTestFfmpeg() {
+  if (!form.value.ffmpegPath.trim()) {
+    ffmpegTestResult.value = { ok: false, message: t('preferences.ffmpeg-required') }
+    return
+  }
+  ffmpegTesting.value = true
+  ffmpegTestResult.value = null
+  try {
+    const result = await invoke<{ versionLine: string }>('check_ffmpeg', { path: form.value.ffmpegPath })
+    ffmpegTestResult.value = {
+      ok: true,
+      message: t('preferences.ffmpeg-test-success', { version: result.versionLine }),
+    }
+  } catch (e) {
+    ffmpegTestResult.value = { ok: false, message: t('preferences.ffmpeg-test-failed', { message: String(e) }) }
+  } finally {
+    ffmpegTesting.value = false
+  }
 }
 
 // ─── Advanced Actions (delegated to composable) ─────────────────────
@@ -542,6 +578,37 @@ watch(protocolHandlers.lastError, (error) => {
         <NButton class="ghost-btn--warning" ghost @click="handleSessionReset">
           {{ t('preferences.clear-all-tasks') }}
         </NButton>
+      </NFormItem>
+
+      <NDivider title-placement="left">FFmpeg</NDivider>
+      <NFormItem :label="t('preferences.ffmpeg-path')">
+        <template #label>
+          <PreferenceHintLabel :label="t('preferences.ffmpeg-path')" :hint="t('preferences.ffmpeg-path-hint')" />
+        </template>
+        <NInputGroup>
+          <NInput
+            v-model:value="form.ffmpegPath"
+            :placeholder="t('preferences.ffmpeg-path-placeholder')"
+            class="pref-control-full"
+          />
+          <NButton class="pref-icon-button" @click="handleSelectFfmpegPath">
+            <template #icon>
+              <NIcon :size="14"><FolderOpenOutline /></NIcon>
+            </template>
+          </NButton>
+          <NButton :loading="ffmpegTesting" class="pref-icon-button" @click="handleTestFfmpeg">
+            {{ t('preferences.ffmpeg-test') }}
+          </NButton>
+        </NInputGroup>
+      </NFormItem>
+      <NFormItem v-if="ffmpegTestResult" label=" ">
+        <div class="ffmpeg-test-result" :class="{ 'ffmpeg-test-result--error': !ffmpegTestResult.ok }">
+          <NIcon :size="14">
+            <CheckmarkCircleOutline v-if="ffmpegTestResult.ok" />
+            <CloseCircleOutline v-else />
+          </NIcon>
+          <span>{{ ffmpegTestResult.message }}</span>
+        </div>
       </NFormItem>
 
       <NDivider title-placement="left">{{ t('preferences.log-section') }}</NDivider>
@@ -792,6 +859,16 @@ watch(protocolHandlers.lastError, (error) => {
   justify-content: flex-start;
   gap: 12px;
   width: 100%;
+}
+.ffmpeg-test-result {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--m3-status-success);
+}
+.ffmpeg-test-result--error {
+  color: var(--m3-error);
 }
 
 /* ── UA preset row — button group + standalone reset ─────────────── */

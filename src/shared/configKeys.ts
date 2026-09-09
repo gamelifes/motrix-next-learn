@@ -37,6 +37,7 @@ const userKeys = [
   'engine-bin-path',
   'extension-api-port',
   'extension-api-secret',
+  'ffmpeg-path',
   'favorite-directories',
   'file-allocation',
   'file-category-enabled',

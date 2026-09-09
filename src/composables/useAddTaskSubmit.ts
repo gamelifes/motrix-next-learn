@@ -15,7 +15,7 @@ import { useAppStore } from '@/stores/app'
 import { useTaskStore } from '@/stores/task'
 import { usePreferenceStore } from '@/stores/preference'
 import { useAppMessage } from '@/composables/useAppMessage'
-import { handleTaskStart } from '@/composables/useTaskNotifyHandlers'
+import { handleM3u8Failure, handleM3u8MergeComplete, handleTaskStart } from '@/composables/useTaskNotifyHandlers'
 import { isEngineReady } from '@/api/aria2'
 import {
   normalizeUriLines,
@@ -34,6 +34,7 @@ import type {
   ExternalDownloadContext,
   FileCategory,
   ProxyConfig,
+  SegmentStatus,
 } from '@shared/types'
 import { isMagnetUri } from '@/composables/useMagnetFlow'
 import {
@@ -48,6 +49,8 @@ import { buildTaskProxyOptions, getDownloadProxy, type TaskProxyMode } from '@sh
 import { resolveUserAgentFromContext } from '@shared/utils/userAgentPolicy'
 
 export { getDownloadProxy } from '@shared/utils/proxyPolicy'
+import { useM3u8GroupStore } from '@/stores/task/m3u8Group'
+import { parseM3U8Playlist, prepareM3u8TempDir } from '@/shared/utils/m3u8Parser'
 
 export interface AddTaskForm {
   uris: string
@@ -90,6 +93,42 @@ export interface ManualUriSubmitResult {
   submittedTaskNames: string[]
   magnetGids: string[]
   magnetFailures: MagnetSubmitFailure[]
+  /** m3u8 playlists whose segments were downloaded and merged into a file. */
+  m3u8Merged?: M3u8MergeResult[]
+}
+
+/** A completed m3u8 playlist: the merged output name and its absolute path. */
+export interface M3u8MergeResult {
+  taskName: string
+  outputPath: string
+}
+
+/** Maps m3u8 failure reason codes to i18n keys (localized at the call site). */
+const M3U8_FAILURE_REASON_KEYS: Record<string, string> = {
+  'max-retries': 'task.m3u8-max-retries',
+  'merge-failed': 'task.m3u8-merge-failed',
+}
+
+/**
+ * Error thrown when an m3u8 playlist permanently fails — segments exhausted
+ * their retries or the ffmpeg merge failed. The caller reports it as a single
+ * group-level failure notification instead of a generic submission error.
+ */
+export class M3u8SubmitFailure extends Error {
+  readonly taskName: string
+  readonly reasonCode: string
+
+  constructor(taskName: string, reasonCode: string) {
+    super(`M3U8 download failed: ${taskName} (${reasonCode})`)
+    this.name = 'M3u8SubmitFailure'
+    this.taskName = taskName
+    this.reasonCode = reasonCode
+  }
+
+  /** Returns the localized failure reason text for this error. */
+  reasonText(t: (key: string) => string): string {
+    return t(M3U8_FAILURE_REASON_KEYS[this.reasonCode] ?? 'task.m3u8-max-retries')
+  }
 }
 
 /**
@@ -248,6 +287,7 @@ export async function submitManualUris(
     ? { ...fileCategory, contexts: form.uriRequestContexts ?? {} }
     : undefined
   const submittedTaskNames: string[] = []
+  const m3u8Merged: M3u8MergeResult[] = []
 
   // Submit regular URIs using the existing path
   if (regularUris.length > 0) {
@@ -332,7 +372,7 @@ export async function submitManualUris(
   if (m3u8Uris.length > 0) {
     for (const uri of m3u8Uris) {
       try {
-        // For m3u8 URLs, we'll download the playlist and submit all .ts segments as a single task
+        // For m3u8 URLs, we'll download the playlist and submit all .ts segments via aria2, then merge via ffmpeg
         const responseBytes: number[] = await invoke<number[]>('fetch_remote_bytes', {
           url: uri,
           proxy: getDownloadProxy(preferenceStore.config.proxy),
@@ -350,24 +390,108 @@ export async function submitManualUris(
           throw new Error('No .ts segments found in m3u8 playlist')
         }
 
-        // Prepare output filename - use the m3u8 URL's basename or user-provided name
+        // Prepare temporary directory and segment file mapping
         const outHint = form.out || extractDecodedFilename(uri) || 'video'
         const baseName = outHint.replace(/\.[^/.]+$/, '') // Remove extension if present
-        const finalOutName = `${baseName}.ts`
+        const tempDirResult = await prepareM3u8TempDir(form.dir, baseName, tsUris)
+        const { tempDir, segmentFiles } = tempDirResult
 
-        // Submit all .ts segments as a single task to aria2 for automatic merging
-        await taskStore.addUri({
-          uris: tsUris,
-          outs: [finalOutName],
-          options: { ...options, continue: 'true' }, // Enable continuation for better resumability
-          fileCategory: fileCategoryWithContexts,
+        // Create a new m3u8 group
+        const m3u8GroupStore = useM3u8GroupStore()
+        const mergedFilePath = `${form.dir}/${baseName}.mp4`
+        const groupId = m3u8GroupStore.createGroup({
+          videoName: baseName,
+          finalPath: mergedFilePath,
+          tempDir,
+          ffmpegPath: preferenceStore.config.ffmpegPath,
+          segmentUrls: tsUris,
         })
 
-        submittedTaskNames.push(finalOutName)
+        // Download each .ts segment via aria2 (one addUri call per segment)
+        const segmentGids: string[] = []
+        for (let i = 0; i < tsUris.length; i++) {
+          const segUri = tsUris[i]
+          const outFilename = segmentFiles[i] // e.g., "0000.ts"
+          const gids = await taskStore.addUri({
+            uris: [segUri],
+            outs: [outFilename],
+            options: {
+              ...buildEngineOptions(form),
+              dir: tempDir,
+              'auto-file-renaming': 'false', // Keep filename as provided
+            },
+            fileCategory: {
+              enabled: preferenceStore.config.fileCategoryEnabled,
+              categories: preferenceStore.config.fileCategories,
+            },
+          })
+          const gid = gids[0] ?? ''
+          segmentGids.push(gid)
+          // Register segment with the group store
+          m3u8GroupStore.registerSegment(groupId, i, gid, outFilename)
+        }
+
+        // Wait for all segments to complete (or fail)
+        await waitForSegmentsCompletion(segmentGids, taskStore, m3u8GroupStore, groupId)
+
+        // Check if any segment failed
+        if (m3u8GroupStore.hasAnyFailed(groupId)) {
+          const group = m3u8GroupStore.getGroup(groupId)!
+          // Check if any failed segments have retries remaining
+          const failedSegmentsWithRetries = group.segments.filter(
+            (seg) => seg.status === 'failed' && seg.retryCount < 5,
+          )
+
+          if (failedSegmentsWithRetries.length > 0) {
+            // Some segments failed but have retries available
+            // Set group status to partial to indicate retry is possible
+            m3u8GroupStore.setGroupStatus(groupId, 'partial')
+            // Return special result to indicate retry is needed
+            // The frontend should show retry UI for failed segments
+            throw new Error(
+              `RETRY_NEEDED:${JSON.stringify({
+                groupId,
+                failedSegments: failedSegmentsWithRetries.map((seg) => ({
+                  index: seg.index,
+                  url: seg.url,
+                  retryCount: seg.retryCount,
+                  maxRetries: 5,
+                })),
+              })}`,
+            )
+          } else {
+            // All failed segments have exhausted retries
+            m3u8GroupStore.setGroupStatus(groupId, 'failed')
+            throw new M3u8SubmitFailure(baseName, 'max-retries')
+          }
+        }
+
+        // All segments completed successfully, proceed to merge
+        m3u8GroupStore.setGroupStatus(groupId, 'merging')
+        const mergedFileName = `${baseName}.mp4` // Output as MP4
+
+        try {
+          // Invoke ffmpeg merge command
+          await invoke('merge_m3u8_segments', {
+            tempDir,
+            finalPath: mergedFilePath,
+            ffmpegPath: preferenceStore.config.ffmpegPath,
+          })
+        } catch (error) {
+          logger.error('submitManualUris.m3u8.merge', error)
+          throw new M3u8SubmitFailure(baseName, 'merge-failed')
+        }
+
+        // Clean up group store
+        m3u8GroupStore.removeGroup(groupId)
+
+        // Report the merged output as a single group-level completion. The
+        // caller fires one toast + native notification per playlist — the
+        // per-segment aria2 tasks are suppressed in both the frontend
+        // notifier and the Rust task monitor.
+        m3u8Merged.push({ taskName: mergedFileName, outputPath: mergedFilePath })
       } catch (e) {
         logger.error('submitManualUris.m3u8', e)
-        // Add to failures if we want to track them separately, or just let it throw
-        // For now, we'll let it throw to be handled by the caller
         throw e
       }
     }
@@ -378,6 +502,7 @@ export async function submitManualUris(
     submittedTaskNames,
     magnetGids: [],
     magnetFailures: [],
+    m3u8Merged,
   }
   for (const uri of magnetUris) {
     try {
@@ -405,42 +530,6 @@ function buildSubmitErrorLabels(t: (key: string) => string): Parameters<typeof g
     fallback: t('task.error-unknown'),
     labels: { Aria2: t('task.error-aria2-next') },
   }
-}
-
-/**
- * Parse an m3u8 playlist to extract .ts segment URLs.
- * Handles both absolute and relative URLs in the playlist.
- */
-function parseM3U8Playlist(playlistContent: string, baseUri: string): string[] {
-  const lines = playlistContent.split('\n')
-  const tsUris: string[] = []
-
-  for (const line of lines) {
-    const trimmed = line.trim()
-    // Skip empty lines and comments
-    if (trimmed === '' || trimmed.startsWith('#')) {
-      continue
-    }
-
-    // This is a media segment URL
-    try {
-      // Try to parse as an absolute URL
-      new URL(trimmed)
-      tsUris.push(trimmed)
-    } catch {
-      // If it's not an absolute URL, treat it as relative to the base URI
-      try {
-        const baseUrl = new URL(baseUri)
-        const absoluteUrl = new URL(trimmed, baseUrl)
-        tsUris.push(absoluteUrl.toString())
-      } catch {
-        // If we still can't parse it, skip it (could be invalid)
-        logger.warn('parseM3U8Playlist', `Skipping invalid URL in playlist: ${trimmed}`)
-      }
-    }
-  }
-
-  return tsUris
 }
 
 export function useAddTaskSubmit({ form, onClose }: UseAddTaskSubmitOptions) {
@@ -478,6 +567,17 @@ export function useAddTaskSubmit({ form, onClose }: UseAddTaskSubmitOptions) {
         // pendingMagnetGids is set directly inside addMagnetUri (task store)
       }
 
+      // Fire one completion notification per merged m3u8 playlist. Per-segment
+      // notifications are suppressed in the frontend notifier and the Rust
+      // task monitor; the merged output file is reported only here.
+      for (const merged of manualResult.m3u8Merged ?? []) {
+        handleM3u8MergeComplete(merged.taskName, merged.outputPath, {
+          messageSuccess: message.success,
+          messageError: message.error,
+          t,
+        })
+      }
+
       const failedCount = batch.filter((i) => i.status === 'failed').length + manualResult.magnetFailures.length
       logger.info(
         'AddTask.submit',
@@ -512,15 +612,156 @@ export function useAddTaskSubmit({ form, onClose }: UseAddTaskSubmitOptions) {
         }
       }
     } catch (e: unknown) {
-      const category = classifySubmitError(e)
-      const errMsg = getErrorMessage(e, buildSubmitErrorLabels(t))
-      logger.error('AddTask.submit', e)
-      if (category === 'engine-not-ready') {
-        message.error(t('app.engine-not-ready'), { closable: true })
-      } else if (category === 'duplicate') {
-        message.warning(errMsg, { closable: true })
+      // Permanent m3u8 failure (segments exhausted retries or ffmpeg merge
+      // failed) — report as a single group-level failure notification.
+      if (e instanceof M3u8SubmitFailure) {
+        handleM3u8Failure(e.taskName, e.reasonText(t), {
+          messageSuccess: message.success,
+          messageError: message.error,
+          t,
+        })
+        return
+      }
+      // Check for special RETRY_NEEDED error from m3u8 segment handling
+      if (e instanceof Error && e.message.startsWith('RETRY_NEEDED:')) {
+        try {
+          const retryData = JSON.parse(e.message.substring('RETRY_NEEDED:'.length))
+          const { groupId, failedSegments } = retryData
+
+          // Show info to user about retrying failed segments
+          message.info(t('task.m3u8-retry-message', { count: failedSegments.length }), {
+            closable: true,
+            duration: 3000,
+          })
+
+          // Wait 3 seconds before retrying (F=3秒)
+          await new Promise((resolve) => setTimeout(resolve, 3000))
+
+          // Retry the failed segments
+          const m3u8GroupStore = useM3u8GroupStore()
+          const taskStore = useTaskStore()
+          const preferenceStore = usePreferenceStore()
+
+          // Get the group to access segment info
+          const group = m3u8GroupStore.getGroup(groupId)
+          if (!group) {
+            throw new Error('M3u8 group not found for retry')
+          }
+
+          // Reset group status to downloading for retry
+          m3u8GroupStore.setGroupStatus(groupId, 'downloading')
+
+          // Submit retry tasks for failed segments. `retrySegment()` bumps the
+          // per-segment retry counter and reports whether the attempt is still
+          // allowed — without this the RETRY_NEEDED loop would re-submit a
+          // permanently failed segment forever.
+          const retrySegmentGids: string[] = []
+          for (const segInfo of failedSegments) {
+            const segIndex = segInfo.index
+            const seg = group.segments[segIndex]
+            if (!seg) continue
+
+            const retry = m3u8GroupStore.retrySegment(groupId, segIndex)
+            if (!retry || !retry.canRetry) continue
+
+            const outFilename = retry.filePath.split('/').pop() || `segment_${String(segIndex).padStart(4, '0')}.ts`
+
+            const retryGids = await taskStore.addUri({
+              uris: [retry.url],
+              outs: [outFilename],
+              options: {
+                ...buildEngineOptions(form.value),
+                dir: group.tempDir,
+                'auto-file-renaming': 'false',
+              },
+              fileCategory: {
+                enabled: preferenceStore.config.fileCategoryEnabled,
+                categories: preferenceStore.config.fileCategories,
+              },
+            })
+            const gid = retryGids[0] ?? ''
+
+            retrySegmentGids.push(gid)
+            // Register the new GID for this segment
+            m3u8GroupStore.registerSegment(groupId, segIndex, gid, outFilename)
+          }
+
+          // Wait for retry segments to complete
+          await waitForSegmentsCompletion(retrySegmentGids, taskStore, m3u8GroupStore, groupId)
+
+          // Check if any segment failed after retry
+          if (m3u8GroupStore.hasAnyFailed(groupId)) {
+            const retryGroup = m3u8GroupStore.getGroup(groupId)!
+            // Check if any failed segments still have retries remaining
+            const stillFailedSegmentsWithRetries = retryGroup.segments.filter(
+              (seg) => seg.status === 'failed' && seg.retryCount < 5,
+            )
+
+            if (stillFailedSegmentsWithRetries.length > 0) {
+              // Still have retries available, set to partial for UI to handle
+              m3u8GroupStore.setGroupStatus(groupId, 'partial')
+              throw new Error(
+                `RETRY_NEEDED:${JSON.stringify({
+                  groupId,
+                  failedSegments: stillFailedSegmentsWithRetries.map((seg) => ({
+                    index: seg.index,
+                    url: seg.url,
+                    retryCount: seg.retryCount,
+                    maxRetries: 5,
+                  })),
+                })}`,
+              )
+            } else {
+              // No more retries available
+              m3u8GroupStore.setGroupStatus(groupId, 'failed')
+              throw new M3u8SubmitFailure(retryGroup.videoName, 'max-retries')
+            }
+          }
+
+          // All segments completed successfully after retry, proceed to merge
+          m3u8GroupStore.setGroupStatus(groupId, 'merging')
+          const retryGroup = m3u8GroupStore.getGroup(groupId)!
+          const mergedFileName = `${retryGroup.videoName}.mp4` // Output as MP4
+          const mergedFilePath = retryGroup.finalPath
+
+          try {
+            // Invoke ffmpeg merge command
+            await invoke('merge_m3u8_segments', {
+              tempDir: retryGroup.tempDir,
+              finalPath: mergedFilePath,
+              ffmpegPath: preferenceStore.config.ffmpegPath,
+            })
+          } catch (mergeError) {
+            logger.error('AddTask.submit.m3u8retry.merge', mergeError)
+            throw new M3u8SubmitFailure(retryGroup.videoName, 'merge-failed')
+          }
+
+          // Clean up group store
+          m3u8GroupStore.removeGroup(groupId)
+
+          // Group-level completion notification for the merged playlist
+          handleM3u8MergeComplete(mergedFileName, mergedFilePath, {
+            messageSuccess: message.success,
+            messageError: message.error,
+            t,
+          })
+        } catch (retryError) {
+          // If retry fails, fall through to normal error handling
+          logger.error('AddTask.submit.m3u8retry', retryError)
+          throw retryError
+        }
       } else {
-        message.error(errMsg, { closable: true })
+        // Normal error handling
+        const category = classifySubmitError(e)
+        const errMsg = getErrorMessage(e, buildSubmitErrorLabels(t))
+        logger.error('AddTask.submit', e)
+        if (category === 'engine-not-ready') {
+          message.error(t('app.engine-not-ready'), { closable: true })
+        } else if (category === 'duplicate') {
+          message.warning(errMsg, { closable: true })
+        } else {
+          message.error(errMsg, { closable: true })
+        }
       }
     } finally {
       submitting.value = false
@@ -528,4 +769,75 @@ export function useAddTaskSubmit({ form, onClose }: UseAddTaskSubmitOptions) {
   }
 
   return { submitting, handleSubmit }
+}
+
+/**
+ * Waits for all segments in an m3u8 group to reach a terminal state (completed or failed).
+ * Polls the task store for status updates at the specified interval.
+ *
+ * @param segmentGids Array of aria2 GIDs for the segment download tasks
+ * @param taskStore The task store instance
+ * @param m3u8GroupStore The m3u8 group store instance
+ * @param groupId The ID of the m3u8 group
+ * @param pollIntervalMs Interval between status checks in milliseconds (default: 1000)
+ * @returns Promise that resolves when all segments are completed or failed
+ */
+async function waitForSegmentsCompletion(
+  segmentGids: string[],
+  taskStore: ReturnType<typeof useTaskStore>,
+  m3u8GroupStore: ReturnType<typeof useM3u8GroupStore>,
+  groupId: string,
+  pollIntervalMs: number = 1000,
+): Promise<void> {
+  while (true) {
+    // Check if all segments have reached terminal state
+    const allTerminal = await Promise.all(
+      segmentGids.map(async (gid) => {
+        try {
+          const task = await taskStore.fetchTaskStatus(gid)
+          // Update segment status in the store based on aria2 task status
+          if (task) {
+            let status: SegmentStatus['status'] = 'pending'
+            switch (task.status) {
+              case 'active':
+              case 'waiting':
+              case 'paused':
+                status = 'downloading'
+                break
+              case 'complete':
+                status = 'completed'
+                break
+              case 'error':
+
+              case 'removed':
+                status = 'failed'
+                break
+            }
+            m3u8GroupStore.updateSegmentStatus(
+              groupId,
+              gid,
+              status,
+              Number(task.completedLength),
+              Number(task.totalLength),
+              task.status === 'error' ? Number(task.errorCode || 0) : undefined,
+            )
+          }
+          // Return true if task is in terminal state
+          return ['complete', 'error', 'removed'].includes(task?.status || '')
+        } catch (error) {
+          // If we can't fetch the task, consider it failed to avoid hanging
+          logger.error('waitForSegmentsCompletion', error)
+          return true
+        }
+      }),
+    )
+
+    if (allTerminal.every(Boolean)) {
+      // All segments have reached terminal state
+      break
+    }
+
+    // Wait before next check
+    await new Promise((resolve) => setTimeout(resolve, pollIntervalMs))
+  }
 }

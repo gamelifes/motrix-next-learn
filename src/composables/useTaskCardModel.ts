@@ -2,6 +2,7 @@
 import { computed, type ComputedRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { TASK_STATUS } from '@shared/constants'
+import { useM3u8GroupStore } from '@/stores/task/m3u8Group'
 import {
   bytesToSize,
   calcProgress,
@@ -45,6 +46,7 @@ interface TaskCardModel {
 
 export function useTaskCardModel(task: ComputedRef<Aria2Task>): TaskCardModel {
   const { t } = useI18n()
+  const m3u8GroupStore = useM3u8GroupStore()
 
   const taskFullName = computed(() =>
     getTaskDisplayName(task.value, { defaultName: t('task.get-task-name') || 'Unknown' }),
@@ -57,8 +59,51 @@ export function useTaskCardModel(task: ComputedRef<Aria2Task>): TaskCardModel {
     return ''
   })
   const isMetadataFetching = computed(() => isBtMetadataTask(task.value))
+
+  /** True if this aria2 task is one segment of an m3u8 group. */
+  const m3u8GroupRef = computed(() => {
+    const gid = task.value.gid
+    if (!gid) return null
+    for (const group of Object.values(m3u8GroupStore.groups)) {
+      if (group.segmentGids.includes(gid)) return group
+    }
+    return null
+  })
+  const isM3u8Segment = computed(() => !!m3u8GroupRef.value)
+
   const taskStatus = computed(() => (isSharing.value ? TASK_STATUS.SHARING : task.value.status))
   const statusBadge = computed<TaskCardStatusBadge | null>(() => {
+    if (isM3u8Segment.value) {
+      const group = m3u8GroupRef.value
+      if (group) {
+        if (group.status === 'merging') {
+          return { key: 'm3u8-merging', label: t('task.m3u8-status-merging') || 'Merging', tone: 'waiting' }
+        }
+        if (group.status === 'failed' || group.status === 'partial') {
+          return {
+            key: `m3u8-${group.status}`,
+            label: t(`task.m3u8-status-${group.status}`) || group.status,
+            tone: 'error',
+          }
+        }
+      }
+      const seg = m3u8GroupRef.value?.segments.find((s) => s.aria2Gid === task.value.gid)
+      if (seg && seg.status === 'failed') {
+        return { key: 'm3u8-segment-failed', label: t('task.m3u8-status-failed') || 'Failed', tone: 'error' }
+      }
+      if (task.value.status === TASK_STATUS.COMPLETE) {
+        return {
+          key: 'm3u8-segment-complete',
+          label: t('task.m3u8-segment-complete') || 'Segment done',
+          tone: 'success',
+        }
+      }
+      return {
+        key: 'm3u8-segment-active',
+        label: t('task.m3u8-segment-downloading') || 'Segment',
+        tone: 'waiting',
+      }
+    }
     if (isSharing.value) return { key: 'sharing', label: sharingLabel.value, tone: 'success' }
     if (isMetadataFetching.value)
       return {

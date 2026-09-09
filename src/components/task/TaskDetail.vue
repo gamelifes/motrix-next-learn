@@ -35,6 +35,7 @@ import {
   ServerOutline,
   SettingsOutline,
   SearchOutline,
+  FilmOutline,
 } from '@vicons/ionicons5'
 import { useTaskDetailOptions } from '@/composables/useTaskDetailOptions'
 import {
@@ -47,6 +48,7 @@ import {
 import { usePreferenceStore } from '@/stores/preference'
 import { useTaskStore } from '@/stores/task'
 import { useHistoryStore } from '@/stores/history'
+import { useM3u8GroupStore } from '@/stores/task/m3u8Group'
 import { useAppMessage } from '@/composables/useAppMessage'
 import { useSystemProxyDetect } from '@/composables/useSystemProxyDetect'
 import { getAddedAt } from '@/composables/useTaskOrder'
@@ -58,6 +60,7 @@ import TaskDetailFiles from './detail/TaskDetailFiles.vue'
 import TaskDetailPeers from './detail/TaskDetailPeers.vue'
 import TaskDetailSources from './detail/TaskDetailSources.vue'
 import TaskDetailTrackers from './detail/TaskDetailTrackers.vue'
+import TaskDetailSegments from './detail/TaskDetailSegments.vue'
 
 const props = defineProps<{
   show: boolean
@@ -70,6 +73,7 @@ const { t, locale } = useI18n()
 const preferenceStore = usePreferenceStore()
 const taskStore = useTaskStore()
 const historyStore = useHistoryStore()
+const m3u8GroupStore = useM3u8GroupStore()
 const message = useAppMessage()
 const taskRef = computed(() => props.task)
 const taskPrimaryUrl = computed(() => props.task?.files?.[0]?.uris?.[0]?.uri ?? '')
@@ -163,6 +167,7 @@ interface TabDef {
   btOnly?: boolean
   protocolOnly?: boolean
   uriOnly?: boolean
+  m3u8Only?: boolean
 }
 const allTabs: TabDef[] = [
   { key: 'general', labelKey: 'task.task-tab-general', icon: InformationCircleOutline },
@@ -170,6 +175,7 @@ const allTabs: TabDef[] = [
   { key: 'files', labelKey: 'task.task-tab-files', icon: DocumentOutline },
   { key: 'options', labelKey: 'task.task-tab-options', icon: SettingsOutline },
   { key: 'sources', labelKey: 'task.task-tab-sources', icon: ServerOutline, uriOnly: true },
+  { key: 'segments', labelKey: 'task.task-tab-segments', icon: FilmOutline, m3u8Only: true },
   { key: 'status', labelKey: 'task.task-tab-status', icon: PulseOutline, protocolOnly: true },
   { key: 'peers', labelKey: 'task.task-tab-peers', icon: PeopleOutline, btOnly: true },
   { key: 'trackers', labelKey: 'task.task-tab-trackers', icon: ServerOutline, btOnly: true },
@@ -178,7 +184,10 @@ const allTabs: TabDef[] = [
 const visibleTabs = computed(() =>
   allTabs.filter(
     (tab) =>
-      (!tab.btOnly || isBT.value) && (!tab.protocolOnly || isBT.value || isED2K.value) && (!tab.uriOnly || isURI.value),
+      (!tab.btOnly || isBT.value) &&
+      (!tab.protocolOnly || isBT.value || isED2K.value) &&
+      (!tab.uriOnly || isURI.value) &&
+      (!tab.m3u8Only || isM3u8.value),
   ),
 )
 
@@ -190,10 +199,56 @@ function switchTab(key: string) {
   activeTab.value = key
 }
 
+const retryingSegment = ref<number | null>(null)
+
+async function handleSegmentRetry(segmentIndex: number) {
+  if (!m3u8GroupId.value || retryingSegment.value !== null) return
+  retryingSegment.value = segmentIndex
+  try {
+    const result = m3u8GroupStore.retrySegment(m3u8GroupId.value, segmentIndex)
+    if (!result || (!result.canRetry && result.retryCount > 5)) {
+      message.warning(t('task.m3u8-max-retries') || 'Max retries reached')
+      return
+    }
+    const seg = m3u8GroupStore.getGroup(m3u8GroupId.value)?.segments[segmentIndex]
+    if (!seg) return
+    const outFilename = seg.filePath?.split('/').pop() || `segment_${String(segmentIndex).padStart(4, '0')}.ts`
+    const dir = m3u8GroupStore.getGroup(m3u8GroupId.value)?.tempDir || ''
+    const retryGids = await taskStore.addUri({
+      uris: [seg.url],
+      outs: [outFilename],
+      options: {
+        dir,
+        'auto-file-renaming': 'false',
+      },
+    })
+    const gid = retryGids[0] ?? ''
+    m3u8GroupStore.registerSegment(m3u8GroupId.value, segmentIndex, gid, outFilename)
+    message.success(t('task.m3u8-retry-started') || 'Retry started')
+  } catch (e) {
+    logger.error('TaskDetail.retrySegment', e)
+  } finally {
+    retryingSegment.value = null
+  }
+}
+
 const isBT = computed(() => (props.task ? checkTaskIsBT(props.task) : false))
 const isED2K = computed(() => !!props.task?.ed2k)
 const detailKind = computed(() => buildTaskDetailKind(props.task))
 const isURI = computed(() => detailKind.value === 'uri')
+const m3u8GroupId = computed(() => {
+  if (!props.task) return ''
+  for (const group of Object.values(m3u8GroupStore.groups)) {
+    if (group.videoName === getTaskDisplayName(props.task)) return group.groupId
+  }
+  return ''
+})
+const isM3u8 = computed(() => {
+  if (!props.task) return false
+  if (m3u8GroupId.value) return true
+  const primaryUrl = taskPrimaryUrl.value
+  return primaryUrl.toLowerCase().endsWith('.m3u8')
+})
 const uriSummary = computed(() => buildUriDetailSummary(props.task))
 const btHealth = computed(() => buildBtHealthSummary(props.task))
 const ed2kSummary = computed(() => buildEd2kDetailSummary(props.task))
@@ -419,6 +474,11 @@ function handleClose() {
 
           <div v-else-if="activeTab === 'activity'" key="activity" class="tab-content">
             <TaskDetailActivity :task="task" :transfer-summary="transferSummary" />
+          </div>
+
+          <div v-else-if="activeTab === 'segments' && isM3u8" key="m3u8-segments" class="tab-content">
+            <TaskDetailSegments v-if="m3u8GroupId" :group-id="m3u8GroupId" @retry="handleSegmentRetry" />
+            <div v-else class="no-group-hint">{{ t('task.m3u8-no-group') }}</div>
           </div>
 
           <div v-else-if="activeTab === 'status' && isBT" key="bt-status" class="tab-content">

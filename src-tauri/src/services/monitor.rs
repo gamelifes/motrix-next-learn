@@ -181,6 +181,23 @@ fn is_metadata_task(task: &Aria2Task) -> bool {
         && task.following.is_none()
 }
 
+/// Returns true when the task is a single `.ts` segment of an m3u8 playlist.
+///
+/// Segment tasks are submitted by the frontend with their `dir` option set to
+/// the playlist's temporary directory (`.motrix-m3u8-{name}-{hash}`). They are
+/// tracked by the frontend m3u8 group store, so per-segment notifications,
+/// history records, and monitor events are suppressed — the merged MP4 is
+/// reported once as a group-level notification by the frontend after ffmpeg
+/// produces the final file.
+fn is_m3u8_segment_task(task: &Aria2Task) -> bool {
+    const M3U8_TEMP_DIR_PREFIX: &str = ".motrix-m3u8-";
+    task.dir.contains(M3U8_TEMP_DIR_PREFIX)
+        || task
+            .files
+            .iter()
+            .any(|f| f.path.contains(M3U8_TEMP_DIR_PREFIX))
+}
+
 /// Builds the JSON `meta` field for a history record.
 ///
 /// Produces a JSON object matching the frontend's `buildHistoryMeta()` format:
@@ -361,6 +378,10 @@ impl TaskNotifier {
 
         for task in tasks {
             if is_metadata_task(task) {
+                continue;
+            }
+
+            if is_m3u8_segment_task(task) {
                 continue;
             }
 
@@ -1027,6 +1048,64 @@ mod tests {
 
         assert_eq!(events.len(), 1);
         assert_eq!(events[0].0, events::TASK_COMPLETE);
+    }
+
+    // ── m3u8 segment suppression ─────────────────────────────────────
+
+    #[test]
+    fn m3u8_segment_completion_is_suppressed() {
+        let mut notifier = TaskNotifier::new();
+        notifier.scan(&[]);
+
+        let mut seg = make_task("seg-gid", "complete");
+        seg.dir = "/downloads/.motrix-m3u8-movie-abcd1234".to_string();
+
+        let events = notifier.scan(&[seg]);
+
+        assert!(
+            events.is_empty(),
+            "m3u8 segment completion must not emit events or history records"
+        );
+    }
+
+    #[test]
+    fn m3u8_segment_error_is_suppressed() {
+        let mut notifier = TaskNotifier::new();
+        notifier.scan(&[]);
+
+        let mut seg = make_error_task("seg-gid", "3");
+        seg.dir = "/downloads/.motrix-m3u8-movie-abcd1234".to_string();
+
+        let events = notifier.scan(&[seg]);
+
+        assert!(events.is_empty(), "m3u8 segment error must not emit events");
+    }
+
+    #[test]
+    fn m3u8_segment_detected_by_file_path_when_dir_is_absent() {
+        let mut notifier = TaskNotifier::new();
+        notifier.scan(&[]);
+
+        let mut seg = make_task("seg-gid", "complete");
+        seg.dir = "/downloads".to_string();
+        seg.files[0].path = "/downloads/.motrix-m3u8-movie-abcd1234/segment000.ts".to_string();
+
+        let events = notifier.scan(&[seg]);
+
+        assert!(events.is_empty(), "file path marker must suppress the segment");
+    }
+
+    #[test]
+    fn regular_completed_task_still_emits_alongside_segments() {
+        let mut notifier = TaskNotifier::new();
+        notifier.scan(&[]);
+
+        let mut seg = make_task("seg-gid", "complete");
+        seg.dir = "/downloads/.motrix-m3u8-movie-abcd1234".to_string();
+
+        let events = notifier.scan(&[seg, make_task("real-gid", "complete")]);
+        assert_eq!(events.len(), 1);
+        assert_eq!(events[0].1.gid, "real-gid");
     }
 
     // ── shared-upload detection ────────────────────────────────────────

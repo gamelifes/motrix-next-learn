@@ -29,6 +29,7 @@ import { DEFAULT_TASK_SORT } from '@/composables/useTaskSort'
 import { useHistoryStore } from '@/stores/history'
 import { useHttpAuthStore } from '@/stores/httpAuth'
 import { usePreferenceStore } from '@/stores/preference'
+import { useM3u8GroupStore } from '@/stores/task/m3u8Group'
 
 import { restartTask as restartTaskImpl } from './restart'
 import { createTaskOperations } from './operations'
@@ -389,6 +390,7 @@ export const useTaskStore = defineStore('task', () => {
       historyStore.recordTaskBirth(gid, now).catch((e) => logger.debug('taskBirth.write', e))
     }
     await fetchList()
+    return gids
   }
 
   async function applySavedHttpAuth(
@@ -590,5 +592,6 @@ export const useTaskStore = defineStore('task', () => {
     consumeTorrentSource,
     hasActiveTasks: () => taskOps.hasActiveTasks(),
     hasPausedTasks: () => taskOps.hasPausedTasks(),
+    m3u8Group: useM3u8GroupStore(),
   }
 })

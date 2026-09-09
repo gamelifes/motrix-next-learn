@@ -2,6 +2,7 @@
 import { parseInt } from 'lodash-es'
 import { join } from '@tauri-apps/api/path'
 import type { Aria2Task, Aria2File } from '@shared/types'
+import { M3U8_TEMP_DIR_PREFIX } from '@shared/constants'
 import { resolveTaskFilePath } from '@/composables/useArchivedPaths'
 
 /** Calculates download progress as a percentage. */
@@ -106,6 +107,20 @@ export const isBtMetadataTask = (task: Aria2Task): boolean => {
   if (!task.bittorrent) return false
   if (task.bittorrent.info) return false
   return !task.following
+}
+
+/**
+ * Returns true when the task is a single `.ts` segment of an m3u8 playlist.
+ *
+ * Segment tasks are submitted by the frontend with their `dir` set to the
+ * playlist's temporary directory (`.motrix-m3u8-{name}-{hash}`), so both the
+ * dir and the file path carry the marker. These tasks are tracked by the m3u8
+ * group store and must be suppressed from per-segment notifications and
+ * history records — the merged MP4 is reported as a single group-level event.
+ */
+export const isM3u8SegmentTask = (task: Partial<Aria2Task>): boolean => {
+  if (task.dir && task.dir.includes(M3U8_TEMP_DIR_PREFIX)) return true
+  return !!(task.files && task.files.some((file) => file.path.includes(M3U8_TEMP_DIR_PREFIX)))
 }
 
 export type TaskSharingKind = 'bt' | 'ed2k'

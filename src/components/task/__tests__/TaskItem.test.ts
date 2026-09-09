@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { createPinia, setActivePinia } from 'pinia'
 import type { Aria2Task } from '@shared/types'
 
 const invokeMock = vi.fn()
@@ -87,6 +88,7 @@ describe('TaskItem', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.useFakeTimers()
+    setActivePinia(createPinia())
     invokeMock.mockResolvedValue(true)
   })
 

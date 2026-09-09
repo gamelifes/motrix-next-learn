@@ -3,6 +3,14 @@ import { DEFAULT_TASK_MANUAL_ORDER, DEFAULT_TASK_SORT } from '@/composables/useT
 export const EMPTY_STRING = ''
 export const IS_PORTABLE = false
 
+/**
+ * Prefix for the temporary directory that holds the downloaded `.ts` segments
+ * of an m3u8 playlist while it is being merged. Segment aria2 tasks set their
+ * `dir` option to this directory, so the marker uniquely identifies a task as
+ * an m3u8 segment (used to suppress per-segment notifications and history).
+ */
+export const M3U8_TEMP_DIR_PREFIX = '.motrix-m3u8-'
+
 export const APP_THEME = {
   AUTO: 'auto',
   LIGHT: 'light',
@@ -401,6 +409,9 @@ export const DEFAULT_APP_CONFIG = {
   enableUpnp: true, // old Motrix=true; required for BitTorrent behind NAT
   rpcListenPort: ENGINE_RPC_PORT,
   extensionApiPort: EXTENSION_API_PORT,
+  // Empty string means "not configured" — m3u8 submissions require a valid
+  // ffmpeg path to merge downloaded .ts segments into a single MP4.
+  ffmpegPath: '',
   allowRemoteAccess: false,
   autoChangeConflictingPorts: true,
   portConflictRecovery: {

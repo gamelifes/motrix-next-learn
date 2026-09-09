@@ -18,7 +18,7 @@
 import type { VNodeChild } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
 import type { Aria2Task } from '@shared/types'
-import { getTaskDisplayName } from '@shared/utils'
+import { getTaskDisplayName, isM3u8SegmentTask } from '@shared/utils'
 import type { TaskSharingKind } from '@shared/utils/task'
 import { logger } from '@shared/logger'
 import { isMetadataTask } from '@/composables/useTaskLifecycle'
@@ -44,6 +44,10 @@ export interface NotifyDeps {
  */
 export function handleTaskComplete(task: Aria2Task, deps: NotifyDeps): void {
   if (isMetadataTask(task)) return
+  if (isM3u8SegmentTask(task)) {
+    logger.debug('TaskNotify.complete', `gid=${task.gid} suppressed (m3u8 segment)`)
+    return
+  }
 
   const taskName = getTaskDisplayName(task)
   const body = deps.t('task.download-complete-message', { taskName })
@@ -66,6 +70,10 @@ export function handleTaskComplete(task: Aria2Task, deps: NotifyDeps): void {
  * for "Open File" and "Show in Folder".
  */
 export function handleSharingComplete(task: Aria2Task, kind: TaskSharingKind, deps: NotifyDeps): void {
+  if (isM3u8SegmentTask(task)) {
+    logger.debug('TaskNotify.sharingComplete', `gid=${task.gid} suppressed (m3u8 segment)`)
+    return
+  }
   const taskName = getTaskDisplayName(task)
   const bodyKey = kind === 'bt' ? 'task.bt-download-complete-message' : 'task.ed2k-download-complete-message'
   const body = deps.t(bodyKey, { taskName })
@@ -85,10 +93,64 @@ export function handleSharingComplete(task: Aria2Task, kind: TaskSharingKind, de
  * Always sends in-app toast. Native OS notification is sent by Rust monitor.
  */
 export function handleTaskError(task: Aria2Task, reason: string, deps: NotifyDeps): void {
+  if (isM3u8SegmentTask(task)) {
+    logger.debug('TaskNotify.error', `gid=${task.gid} suppressed (m3u8 segment)`)
+    return
+  }
   const taskName = getTaskDisplayName(task, { defaultName: 'Unknown' })
   const body = deps.t('task.download-fail-message', { taskName, reason })
   deps.messageError(body)
   logger.warn('TaskNotify.error', `gid=${task.gid} error="${body}"`)
+}
+
+// ── m3u8 group-level notifications ─────────────────────────────────
+
+/**
+ * Dependencies for m3u8 group-level notifications (merge complete + failure).
+ *
+ * Unlike per-segment events (suppressed by {@link isM3u8SegmentTask} in the
+ * lifecycle handlers above), these fire once per playlist. The in-app toast is
+ * shown immediately and the native OS notification is sent through the
+ * `send_app_system_notification` command (localized by the frontend).
+ */
+export interface M3u8NotifyDeps {
+  messageSuccess: (content: string) => void
+  messageError: (content: string) => void
+  t: (key: string, params?: Record<string, unknown>) => string
+}
+
+/**
+ * Notify that an m3u8 playlist has been fully downloaded and merged into a
+ * single output file. Shows a success toast and a native OS notification that
+ * includes the final output path.
+ */
+export function handleM3u8MergeComplete(taskName: string, outputPath: string, deps: M3u8NotifyDeps): void {
+  const body = deps.t('task.m3u8-merge-complete-message', { taskName, path: outputPath })
+  deps.messageSuccess(body)
+  Promise.resolve(
+    invoke('send_app_system_notification', {
+      title: deps.t('task.m3u8-merge-complete-title'),
+      body,
+    }),
+  ).catch((error) => logger.debug('TaskNotify.m3u8Merge', `native notification failed: ${error}`))
+  logger.info('TaskNotify.m3u8Merge', `path="${outputPath}"`)
+}
+
+/**
+ * Notify that an m3u8 download failed permanently (segments exhausted their
+ * retries, or the ffmpeg merge failed). Shows an error toast and a native OS
+ * notification.
+ */
+export function handleM3u8Failure(taskName: string, reason: string, deps: M3u8NotifyDeps): void {
+  const body = deps.t('task.m3u8-failed-message', { taskName, reason })
+  deps.messageError(body)
+  Promise.resolve(
+    invoke('send_app_system_notification', {
+      title: deps.t('task.m3u8-failed-title'),
+      body,
+    }),
+  ).catch((error) => logger.debug('TaskNotify.m3u8Error', `native notification failed: ${error}`))
+  logger.warn('TaskNotify.m3u8Error', `taskName="${taskName}" reason="${reason}"`)
 }
 
 // ── Download-start notification ─────────────────────────────────────

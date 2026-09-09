@@ -1,7 +1,7 @@
 /**
  * @fileoverview Tests for useAdvancedPreference pure functions.
  *
- * HONESTY NOTE: These test REAL pure functions — no mocks of the module
+ * HONESTY NOTE: These test REAL pure functions �?no mocks of the module
  * under test. Only crypto.getRandomValues is validated via output properties.
  */
 import { describe, it, expect } from 'vitest'
@@ -61,7 +61,7 @@ describe('buildAdvancedForm', () => {
     expect(form.proxy.mode).toBe('direct')
     expect(form.proxy.server).toBe('')
     // Default scope must include ALL scopes so proxy works on first enable
-    // (legacy Motrix behavior — scope defaults to PROXY_SCOPE_OPTIONS)
+    // (legacy Motrix behavior �?scope defaults to PROXY_SCOPE_OPTIONS)
     expect(form.proxy.scope).toEqual(expect.arrayContaining([PROXY_SCOPES.DOWNLOAD]))
     expect(form.proxy.scope).toHaveLength(PROXY_SCOPE_OPTIONS.length)
     expect(form.rpcListenPort).toBe(ENGINE_RPC_PORT)
@@ -137,6 +137,7 @@ describe('buildAdvancedSystemConfig', () => {
     aria2LogLevel: 'info',
     tempFilesDir: '',
     hardwareRendering: false,
+    ffmpegPath: '',
     extensionApiPort: 29110,
     extensionApiSecret: 'test-api-secret',
     allowRemoteAccess: false,
@@ -227,6 +228,7 @@ describe('transformAdvancedForStore', () => {
       aria2LogLevel: 'info',
       tempFilesDir: '',
       hardwareRendering: false,
+      ffmpegPath: '',
       extensionApiPort: 29110,
       extensionApiSecret: 'test-api-secret',
       allowRemoteAccess: false,
@@ -264,6 +266,7 @@ describe('transformAdvancedForStore', () => {
       aria2LogLevel: 'info',
       tempFilesDir: '',
       hardwareRendering: false,
+      ffmpegPath: '',
       extensionApiPort: 29110,
       extensionApiSecret: 'test-api-secret',
       allowRemoteAccess: false,
@@ -301,8 +304,8 @@ describe('transformAdvancedForStore', () => {
     expect(result.allowRemoteAccess).toBe(true)
   })
 
-  it('round-trip: buildAdvancedForm → transformAdvancedForStore produces no phantom diff', () => {
-    // This is the exact scenario that caused the bug: config → form → store → diffConfig
+  it('round-trip: buildAdvancedForm �?transformAdvancedForStore produces no phantom diff', () => {
+    // This is the exact scenario that caused the bug: config �?form �?store �?diffConfig
     // should report ZERO changes when the user didn't touch anything.
     const config = {
       listenPort: 29120,
@@ -409,6 +412,7 @@ describe('validateAdvancedForm', () => {
     aria2LogLevel: 'info',
     tempFilesDir: '',
     hardwareRendering: false,
+    ffmpegPath: '',
     extensionApiPort: 29110,
     extensionApiSecret: 'test-api-secret',
     allowRemoteAccess: false,
@@ -549,9 +553,9 @@ describe('proxy configuration invariants', () => {
 
   it('manual proxy with default scope produces non-empty all-proxy', () => {
     // End-to-end: the exact user flow from issue #81.
-    // 1. Fresh install → buildAdvancedForm({}) → form with default scope
+    // 1. Fresh install �?buildAdvancedForm({}) �?form with default scope
     // 2. User selects manual mode and enters server
-    // 3. buildAdvancedSystemConfig → standard aria2 all-proxy
+    // 3. buildAdvancedSystemConfig �?standard aria2 all-proxy
     const { form } = buildAdvancedForm({} as AppConfig)
     form.proxy.mode = 'manual'
     form.proxy.server = 'http://127.0.0.1:7890'
@@ -579,6 +583,7 @@ describe('proxy configuration invariants', () => {
       aria2LogLevel: 'info',
       tempFilesDir: '',
       hardwareRendering: false,
+      ffmpegPath: '',
       extensionApiPort: 29110,
       extensionApiSecret: 'test-api-secret',
       allowRemoteAccess: false,
@@ -621,6 +626,7 @@ describe('proxy configuration invariants', () => {
       aria2LogLevel: 'info',
       tempFilesDir: '',
       hardwareRendering: false,
+      ffmpegPath: '',
       extensionApiPort: 29110,
       extensionApiSecret: 'test-api-secret',
       allowRemoteAccess: false,
@@ -662,6 +668,7 @@ describe('proxy configuration invariants', () => {
       aria2LogLevel: 'info',
       tempFilesDir: '',
       hardwareRendering: false,
+      ffmpegPath: '',
       extensionApiPort: 29110,
       extensionApiSecret: 'test-api-secret',
       allowRemoteAccess: false,
@@ -687,9 +694,9 @@ describe('proxy configuration invariants', () => {
   })
 })
 
-// ── hardwareRendering — Linux GPU toggle ────────────────────────────
+// ── hardwareRendering �?Linux GPU toggle ────────────────────────────
 
-describe('buildAdvancedForm — hardwareRendering', () => {
+describe('buildAdvancedForm �?hardwareRendering', () => {
   it('defaults hardwareRendering to false (software rendering)', () => {
     const { form } = buildAdvancedForm({} as AppConfig)
     expect(form.hardwareRendering).toBe(false)
@@ -708,7 +715,7 @@ describe('buildAdvancedForm — hardwareRendering', () => {
   })
 })
 
-describe('transformAdvancedForStore — hardwareRendering', () => {
+describe('transformAdvancedForStore �?hardwareRendering', () => {
   it('preserves hardwareRendering in store output', () => {
     const form: AdvancedForm = {
       proxy: { mode: 'direct', server: '', bypass: '', scope: [] },
@@ -722,6 +729,7 @@ describe('transformAdvancedForStore — hardwareRendering', () => {
       aria2LogLevel: 'info',
       tempFilesDir: '',
       hardwareRendering: true,
+      ffmpegPath: '',
       extensionApiPort: 29110,
       extensionApiSecret: 'test-api-secret',
       allowRemoteAccess: false,
@@ -745,7 +753,7 @@ describe('transformAdvancedForStore — hardwareRendering', () => {
   })
 })
 
-describe('DEFAULT_APP_CONFIG — hardwareRendering', () => {
+describe('DEFAULT_APP_CONFIG �?hardwareRendering', () => {
   it('defaults to false (software rendering)', () => {
     expect(DEFAULT_APP_CONFIG.hardwareRendering).toBe(false)
   })

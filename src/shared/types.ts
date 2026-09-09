@@ -356,6 +356,10 @@ export interface AppConfig {
   /** Port for the embedded HTTP API that browser extensions use to submit
    *  downloads. Defaults to 29110. */
   extensionApiPort: number
+  /** Absolute path to a user-installed ffmpeg executable used for HLS
+   *  (.m3u8 → MP4) segment merging. Empty string means "not configured" —
+   *  m3u8 submissions are blocked until the user provides a path. */
+  ffmpegPath: string
   /** Shared secret for the extension HTTP API. The browser extension must
    *  send this as a `Bearer` token in the `Authorization` header.
    *  Empty string means the user intentionally cleared it. */
@@ -443,6 +447,48 @@ export interface ExternalDownloadInput extends ExternalDownloadContext {
   finalUrl?: string
   filename?: string
   source?: string
+}
+
+/** Status of a single .ts segment in an m3u8 download. */
+export interface SegmentStatus {
+  /** Index of the segment in the playlist (0-based). */
+  index: number
+  /** Original URL of the segment. */
+  url: string
+  /** Aria2 GID for this segment's download task. */
+  aria2Gid: string
+  /** Local path to the segment file (inside tempDir). */
+  filePath: string
+  /** Current status: pending, downloading, completed, failed. */
+  status: 'pending' | 'downloading' | 'completed' | 'failed'
+  /** Number of bytes downloaded so far (may be 0 if not started). */
+  bytesDownloaded: number
+  /** Total bytes expected (0 = unknown until headers received). */
+  totalBytes: number
+  /** Optional aria2 error code if status === 'failed'. */
+  errorCode?: number
+  /** Number of retry attempts made for this segment. */
+  retryCount: number
+}
+
+/** Groups together the aria2 tasks for all segments of a single m3u8 playlist. */
+export interface M3u8Group {
+  /** Unique ID for this group (shown to the user as the task ID). */
+  groupId: string
+  /** User-provided or auto-generated base name for the final output. */
+  videoName: string
+  /** Absolute path where the final merged MP4 will be written. */
+  finalPath: string
+  /** Absolute path to the temporary directory holding segment .ts files. */
+  tempDir: string
+  /** Aria2 GIDs of all segment download tasks (same length as segment URLs). */
+  segmentGids: string[]
+  /** Configured ffmpeg absolute path (from AppConfig). */
+  ffmpegPath: string
+  /** Overall group status. */
+  status: 'downloading' | 'merging' | 'completed' | 'failed' | 'partial'
+  /** Per-segment status details (used for UI foldout). */
+  segments: SegmentStatus[]
 }
 
 /** Saved HTTP Basic authentication credential scoped to a normalized URL origin. */

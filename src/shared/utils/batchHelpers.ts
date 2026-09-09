@@ -15,6 +15,61 @@ function genId(): string {
   return `batch-${++nextId}`
 }
 
+// ── Windows filename safety ───────────────────────────────────────
+
+/**
+ * Windows reserved device names that cannot be used as filenames even with an
+ * extension (e.g. `CON.ts`, `PRN.mp4` cause `ERROR_ACCESS_DENIED` or silent
+ * data loss on Windows). Case-insensitive. See Microsoft docs:
+ * https://learn.microsoft.com/en-us/windows/win32/fileio/naming-a-file
+ */
+const WIN_RESERVED_NAMES: ReadonlySet<string> = new Set([
+  'CON',
+  'PRN',
+  'AUX',
+  'NUL',
+  'COM1',
+  'COM2',
+  'COM3',
+  'COM4',
+  'COM5',
+  'COM6',
+  'COM7',
+  'COM8',
+  'COM9',
+  'LPT1',
+  'LPT2',
+  'LPT3',
+  'LPT4',
+  'LPT5',
+  'LPT6',
+  'LPT7',
+  'LPT8',
+  'LPT9',
+])
+
+/**
+ * Returns a Windows-safe filename by rejecting reserved device names and
+ * trailing dot/space sequences. The basename (without extension) is matched
+ * case-insensitively against {@link WIN_RESERVED_NAMES}.
+ *
+ * Returns '' for reserved names — caller must fall back to an alternate name.
+ * Returns the original name unchanged when safe.
+ */
+export function sanitizeWinFilename(name: string): string {
+  if (!name) return ''
+  // Strip path separators — caller is expected to pass a basename.
+  const basename = name.replace(/^.*[/\\]/, '')
+  if (!basename) return ''
+  // Strip extension for reserved-name check.
+  const dotIdx = basename.lastIndexOf('.')
+  const stem = dotIdx > 0 ? basename.substring(0, dotIdx) : basename
+  if (WIN_RESERVED_NAMES.has(stem.toUpperCase())) return ''
+  // Reject trailing dots/spaces (Windows refuses to write them).
+  if (/[. ]+$/.test(basename)) return ''
+  return basename
+}
+
 /**
  * Classify a source string as a download kind for the batch add-task model.
  *

@@ -38,7 +38,14 @@ vi.mock('../useNotificationToast', () => ({
   },
 }))
 
-import { handleTaskComplete, handleSharingComplete, handleTaskError, handleTaskStart } from '../useTaskNotifyHandlers'
+import {
+  handleTaskComplete,
+  handleSharingComplete,
+  handleTaskError,
+  handleTaskStart,
+  handleM3u8MergeComplete,
+  handleM3u8Failure,
+} from '../useTaskNotifyHandlers'
 
 // ── Test data factory ────────────────────────────────────────────────
 
@@ -77,7 +84,7 @@ function makeTask(overrides: Partial<Aria2Task> = {}): Aria2Task {
   } as Aria2Task
 }
 
-import type { NotifyDeps, StartNotifyDeps } from '../useTaskNotifyHandlers'
+import type { NotifyDeps, StartNotifyDeps, M3u8NotifyDeps } from '../useTaskNotifyHandlers'
 
 function makeDeps(overrides: Partial<NotifyDeps> = {}): NotifyDeps {
   return {
@@ -130,6 +137,16 @@ describe('handleTaskComplete', () => {
     handleTaskComplete(task, deps)
 
     expect(deps.messageSuccess).not.toHaveBeenCalled()
+  })
+
+  it('suppresses in-app toast for m3u8 segment tasks', () => {
+    const deps = makeDeps()
+    const task = makeTask({ dir: '/downloads/.motrix-m3u8-movie-abcd1234' })
+
+    handleTaskComplete(task, deps)
+
+    expect(deps.messageSuccess).not.toHaveBeenCalled()
+    expect(mockInvoke).not.toHaveBeenCalled()
   })
 
   it('uses bittorrent info name as display name when available', () => {
@@ -241,6 +258,21 @@ describe('handleTaskError', () => {
     expect(deps.messageError).toHaveBeenCalledWith('test-file.zip: Network problem')
     expect(mockInvoke).not.toHaveBeenCalled()
   })
+
+  it('suppresses in-app error toast for m3u8 segment tasks', () => {
+    const deps = makeDeps()
+    const task = makeTask({
+      status: 'error',
+      errorCode: '3',
+      errorMessage: 'boom',
+      dir: '/downloads/.motrix-m3u8-movie-abcd1234',
+    })
+
+    handleTaskError(task, 'boom', deps)
+
+    expect(deps.messageError).not.toHaveBeenCalled()
+    expect(mockInvoke).not.toHaveBeenCalled()
+  })
 })
 
 // ── handleTaskStart ─────────────────────────────────────────────
@@ -312,5 +344,78 @@ describe('handleTaskStart', () => {
 
     expect(deps.messageInfo).not.toHaveBeenCalled()
     expect(mockInvoke).not.toHaveBeenCalled()
+  })
+})
+
+// ── handleM3u8MergeComplete / handleM3u8Failure ─────────────────────────
+
+function makeM3u8Deps(overrides: Partial<M3u8NotifyDeps> = {}): M3u8NotifyDeps {
+  return {
+    messageSuccess: vi.fn(),
+    messageError: vi.fn(),
+    t: vi.fn((key: string, params?: Record<string, unknown>) => {
+      if (key === 'task.m3u8-merge-complete-message' && params?.taskName && params?.path) {
+        return `Merged: ${params.taskName} -> ${params.path}`
+      }
+      if (key === 'task.m3u8-merge-complete-title') return 'M3U8 Merge Complete'
+      if (key === 'task.m3u8-failed-message' && params?.taskName && params?.reason) {
+        return `${params.taskName}: ${params.reason}`
+      }
+      if (key === 'task.m3u8-failed-title') return 'M3U8 Download Failed'
+      return key
+    }) as unknown as M3u8NotifyDeps['t'],
+    ...overrides,
+  }
+}
+
+describe('handleM3u8MergeComplete', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('shows success toast with the merged output path', () => {
+    const deps = makeM3u8Deps()
+
+    handleM3u8MergeComplete('movie.mp4', '/downloads/movie.mp4', deps)
+
+    expect(deps.messageSuccess).toHaveBeenCalledOnce()
+    expect(deps.messageSuccess).toHaveBeenCalledWith('Merged: movie.mp4 -> /downloads/movie.mp4')
+  })
+
+  it('delegates the OS notification for the merged file to Rust', () => {
+    const deps = makeM3u8Deps()
+
+    handleM3u8MergeComplete('movie.mp4', '/downloads/movie.mp4', deps)
+
+    expect(mockInvoke).toHaveBeenCalledWith('send_app_system_notification', {
+      title: 'M3U8 Merge Complete',
+      body: 'Merged: movie.mp4 -> /downloads/movie.mp4',
+    })
+  })
+})
+
+describe('handleM3u8Failure', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('shows error toast with task name and reason', () => {
+    const deps = makeM3u8Deps()
+
+    handleM3u8Failure('movie.mp4', 'Max retries reached', deps)
+
+    expect(deps.messageError).toHaveBeenCalledOnce()
+    expect(deps.messageError).toHaveBeenCalledWith('movie.mp4: Max retries reached')
+  })
+
+  it('delegates the OS failure notification to Rust', () => {
+    const deps = makeM3u8Deps()
+
+    handleM3u8Failure('movie.mp4', 'FFmpeg merge failed', deps)
+
+    expect(mockInvoke).toHaveBeenCalledWith('send_app_system_notification', {
+      title: 'M3U8 Download Failed',
+      body: 'movie.mp4: FFmpeg merge failed',
+    })
   })
 })

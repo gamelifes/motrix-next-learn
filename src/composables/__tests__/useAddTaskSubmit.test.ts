@@ -90,6 +90,7 @@ import {
   submitBatchItems,
   submitManualUris,
   useAddTaskSubmit,
+  M3u8SubmitFailure,
   type AddTaskForm,
 } from '../useAddTaskSubmit'
 import type { BatchItem, Aria2EngineOptions } from '@shared/types'
@@ -724,6 +725,7 @@ describe('submitManualUris', () => {
       submittedTaskNames: [],
       magnetGids: ['magnet-gid-1'],
       magnetFailures: [{ uri: 'magnet:?xt=urn:btih:bad', error: 'invalid magnet' }],
+      m3u8Merged: [],
     })
   })
 })
@@ -805,5 +807,34 @@ describe('useAddTaskSubmit', () => {
     await handleSubmit()
 
     expect(mockMessage.info).toHaveBeenCalledWith('task.download-start-message:ИТОГИ ЛДУ 2026.xlsx')
+  })
+})
+
+// ── M3u8SubmitFailure ────────────────────────────────────────────────
+
+describe('M3u8SubmitFailure', () => {
+  const t = vi.fn((key: string) => {
+    const known: Record<string, string> = {
+      'task.m3u8-max-retries': 'Max retries reached',
+      'task.m3u8-merge-failed': 'FFmpeg merge failed',
+    }
+    return known[key] ?? key
+  })
+
+  it('carries the task name and reason code', () => {
+    const err = new M3u8SubmitFailure('movie.mp4', 'max-retries')
+
+    expect(err).toBeInstanceOf(Error)
+    expect(err.taskName).toBe('movie.mp4')
+    expect(err.reasonCode).toBe('max-retries')
+  })
+
+  it('localizes known reason codes', () => {
+    expect(new M3u8SubmitFailure('movie.mp4', 'max-retries').reasonText(t as never)).toBe('Max retries reached')
+    expect(new M3u8SubmitFailure('movie.mp4', 'merge-failed').reasonText(t as never)).toBe('FFmpeg merge failed')
+  })
+
+  it('falls back to the max-retries message for unknown reason codes', () => {
+    expect(new M3u8SubmitFailure('movie.mp4', 'bogus').reasonText(t as never)).toBe('Max retries reached')
   })
 })
