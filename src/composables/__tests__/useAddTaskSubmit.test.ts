@@ -91,9 +91,12 @@ import {
   submitManualUris,
   useAddTaskSubmit,
   M3u8SubmitFailure,
+  resolveM3u8RuntimeConfig,
+  runWithConcurrency,
   type AddTaskForm,
 } from '../useAddTaskSubmit'
-import type { BatchItem, Aria2EngineOptions } from '@shared/types'
+import type { BatchItem, Aria2EngineOptions, AppConfig } from '@shared/types'
+import { DEFAULT_APP_CONFIG as D } from '@shared/constants'
 
 // ── buildEngineOptions ──────────────────────────────────────────────
 
@@ -807,6 +810,97 @@ describe('useAddTaskSubmit', () => {
     await handleSubmit()
 
     expect(mockMessage.info).toHaveBeenCalledWith('task.download-start-message:ИТОГИ ЛДУ 2026.xlsx')
+  })
+})
+
+// ── resolveM3u8RuntimeConfig ─────────────────────────────────────────
+
+describe('resolveM3u8RuntimeConfig', () => {
+  it('falls back to DEFAULT_APP_CONFIG when keys are missing', () => {
+    const cfg = { ffmpegPath: '/ffmpeg' } as AppConfig
+    expect(resolveM3u8RuntimeConfig(cfg)).toEqual({
+      maxRetries: D.m3u8MaxRetries,
+      retryDelaySec: D.m3u8RetryDelaySec,
+      segmentTimeoutSec: D.m3u8SegmentTimeoutSec,
+      concurrency: D.m3u8Concurrency,
+      autoCleanup: D.m3u8AutoCleanup,
+    })
+  })
+
+  it('reads user-provided values', () => {
+    const cfg = {
+      m3u8MaxRetries: 2,
+      m3u8RetryDelaySec: 7,
+      m3u8SegmentTimeoutSec: 600,
+      m3u8Concurrency: 3,
+      m3u8AutoCleanup: false,
+    } as AppConfig
+    expect(resolveM3u8RuntimeConfig(cfg)).toEqual({
+      maxRetries: 2,
+      retryDelaySec: 7,
+      segmentTimeoutSec: 600,
+      concurrency: 3,
+      autoCleanup: false,
+    })
+  })
+
+  it('treats explicit zeros as disabled (no fallback)', () => {
+    const cfg = {
+      m3u8MaxRetries: 0,
+      m3u8SegmentTimeoutSec: 0,
+      m3u8RetryDelaySec: 0,
+    } as AppConfig
+    const runtime = resolveM3u8RuntimeConfig(cfg)
+    expect(runtime.maxRetries).toBe(0)
+    expect(runtime.segmentTimeoutSec).toBe(0)
+    expect(runtime.retryDelaySec).toBe(0)
+  })
+})
+
+// ── runWithConcurrency ───────────────────────────────────────────────
+
+describe('runWithConcurrency', () => {
+  it('completes all items regardless of concurrency', async () => {
+    const calls: number[] = []
+    await runWithConcurrency(2, [0, 1, 2, 3, 4], async (item) => {
+      calls.push(item)
+    })
+    expect(calls.sort()).toEqual([0, 1, 2, 3, 4])
+  })
+
+  it('never runs more than the limit in parallel', async () => {
+    let active = 0
+    let peak = 0
+    await runWithConcurrency(3, [0, 1, 2, 3, 4, 5, 6, 7], async () => {
+      active++
+      peak = Math.max(peak, active)
+      await new Promise((r) => setTimeout(r, 5))
+      active--
+    })
+    expect(peak).toBeLessThanOrEqual(3)
+    expect(peak).toBe(3)
+  })
+
+  it('clamps a non-positive limit to 1', async () => {
+    const calls: number[] = []
+    await runWithConcurrency(0, [0, 1, 2], async (item) => {
+      calls.push(item)
+    })
+    expect(calls).toEqual([0, 1, 2])
+  })
+
+  it('handles empty input without running anything', async () => {
+    const fn = vi.fn()
+    await runWithConcurrency(4, [], fn)
+    expect(fn).not.toHaveBeenCalled()
+  })
+
+  it('propagates worker errors', async () => {
+    await expect(
+      runWithConcurrency(2, [0, 1, 2], async () => {
+        throw new Error('boom')
+      }),
+    ).rejects.toThrow('boom')
   })
 })
 

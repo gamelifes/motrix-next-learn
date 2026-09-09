@@ -30,6 +30,15 @@ pub struct MergeM3u8SegmentsParams {
     pub final_path: String,
     /// Absolute path to the user-configured ffmpeg executable.
     pub ffmpeg_path: String,
+    /// Whether to remove the temp directory after a successful merge. The
+    /// frontend forwards the user's `m3u8.autoCleanup` preference; `false`
+    /// keeps the `.ts` sources for manual inspection.
+    #[serde(default = "default_true")]
+    pub cleanup: bool,
+}
+
+fn default_true() -> bool {
+    true
 }
 
 #[derive(Debug, serde::Serialize)]
@@ -204,7 +213,11 @@ pub async fn merge_m3u8_segments(
         return Err(err);
     }
 
-    remove_temp_dir(&temp_dir);
+    // Cleanup is gated by the user preference; merge failures always
+    // preserve temp_dir so the user can retry manually.
+    if params.cleanup {
+        remove_temp_dir(&temp_dir);
+    }
     Ok(MergeM3u8SegmentsResult {
         final_path: crate::engine::path_to_safe_string(&final_path),
         segment_count: segments.len(),
@@ -288,5 +301,30 @@ mod tests {
         let content = std::fs::read_to_string(&filelist).unwrap();
         let escaped = weird.to_string_lossy().replace('\'', "'\\''");
         assert!(content.contains(&format!("file '{escaped}'")));
+    }
+
+    #[test]
+    fn cleanup_defaults_to_true_when_absent() {
+        // An old frontend (or a stale payload) that omits `cleanup` must
+        // still behave as before — i.e. clean up the temp dir by default.
+        let params: MergeM3u8SegmentsParams = serde_json::from_value(serde_json::json!({
+            "tempDir": "C:/tmp/.motrix-m3u8-test",
+            "finalPath": "C:/tmp/out.mp4",
+            "ffmpegPath": "C:/ffmpeg/bin/ffmpeg.exe",
+        }))
+        .unwrap();
+        assert!(params.cleanup);
+    }
+
+    #[test]
+    fn cleanup_respects_explicit_false() {
+        let params: MergeM3u8SegmentsParams = serde_json::from_value(serde_json::json!({
+            "tempDir": "C:/tmp/.motrix-m3u8-test",
+            "finalPath": "C:/tmp/out.mp4",
+            "ffmpegPath": "C:/ffmpeg/bin/ffmpeg.exe",
+            "cleanup": false,
+        }))
+        .unwrap();
+        assert!(!params.cleanup);
     }
 }

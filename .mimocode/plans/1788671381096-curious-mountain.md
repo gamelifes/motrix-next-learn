@@ -3,7 +3,7 @@
 ## Overview
 为 Motrix Next 添加 m3u8/HLS 视频流下载支持，用户粘贴 m3u8 链接后自动解析分片、通过 aria2 下载、最后用 ffmpeg 合并为 MP4。
 
-## Progress: ~75%
+## Progress: ~95%
 
 ---
 
@@ -127,24 +127,49 @@
 - `vitest run` 全量通过: **100 文件 / 2378 测试 / 0 失败** (CI=true)
 - `prettier --check "src/**/*.{ts,vue,css,json}"` 通过 (locale `.js` 不在 format 范围内，属既有约定)
 - `vite build` 通过 (25s, 退出码 0)
-- 注: `task.test.ts` 的 addMagnetUri 完整性测试在并行全量下偶发 10s 超时 (单跑 ~3.6s 通过)，属既有 flake，与 m3u8 改动无关
+- `task.test.ts` 的 addMagnetUri 完整性测试在并行全量下偶发 10s 超时 (单跑 ~3.6s 通过)，属既有 flake，与 m3u8 改动无关
 - **阻塞**: `cargo check` 无法在本机运行 (cargo 不在 PATH)；Rust 侧改动需在含 Rust 工具链的环境验证
+
+### P2 验证 (2026-09-09)
+- `vue-tsc --noEmit` 通过 (0 错误)
+- `vitest run` 全量通过: **102 文件 / 2412 测试 / 0 失败** (新增 2 测试文件 + 34 用例)
+- `prettier --check "src/**/*.{ts,vue,css,json}"` 通过
+- `vite build` 通过 (12s, 退出码 0；chunk >500kB 警告为既有现象)
+- **locale 格式事故与修复**: Python 脚本以文本模式写入把 27 个 `preferences.js` 整体重写为 CRLF，导致整文件 diff (14033+/13345-)；已批量转换回 LF，diff 恢复为每文件精确 +11 行；脚本 `add-m3u8-locale-keys.py` 加 `newline="\n"` 防止复发
+- **阻塞**: `cargo check` 仍无法运行；`m3u8.rs` 的 `cleanup` 字段与 2 个新单测需在 Rust 环境验证
 
 ---
 
-## ❌ 待完成
+## ✅ 已完成 (2026-09-09, P2 收尾)
 
-### P2: 可配置选项
-- 分片并发数 (当前硬编码)
-- 分片下载超时时间
-- 分片重试次数 (当前硬编码为 5)
-- 自动清理临时分片文件
+### P2: 可配置分片选项 + 超时看门狗
+**配置链路 (5 个新键)**:
+- `types.ts` — `AppConfig` 新增 `m3u8MaxRetries`(默认 5) / `m3u8RetryDelaySec`(默认 3) / `m3u8SegmentTimeoutSec`(默认 300) / `m3u8Concurrency`(默认 6) / `m3u8AutoCleanup`(默认 true)
+- `configKeys.ts` — 5 键加入 `userKeys` (`'max-tries'` 之后)
+- `constants.ts` — `DEFAULT_APP_CONFIG` 写入默认值
+- `configHydration.ts` — normalizeBoundedInteger (0-100 / 0-3600 / 0-86400 / 1-128) + boolean 守卫；新顶层键由 hydration 物化，无需迁移
+
+**核心逻辑 (`useAddTaskSubmit.ts`)**:
+- 新导出纯函数 `resolveM3u8RuntimeConfig(config)` (undefined→DEFAULT 回退) 与 `runWithConcurrency(limit, items, fn)` (worker 池式限流)
+- 分片提交改为 `runWithConcurrency(m3u8Runtime.concurrency, tsUris, ...)`，`segmentGids[i] = gid`
+- `waitForSegmentsCompletion` 新增 `timeoutMs` 看门狗参数：超时后对未终态分片 `removeTask` + 标记 failed (0 值禁用)
+- 重试: `retryDelaySec * 1000` 延迟、`maxRetries` 传参、`retrySegment(groupId, segIndex, maxRetries)`
+- merge 调用新增 `cleanup: m3u8Runtime.autoCleanup`
+
+**Store / UI / Rust**:
+- `m3u8Group.ts` — `retrySegment(groupId, segmentIndex, maxRetries)`，`canRetry = retryCount <= maxRetries`
+- `TaskDetail.vue` — `handleSegmentRetry` 传 maxRetries
+- `Advanced.vue` — ffmpeg 设置后新增 M3U8 分区 (4×NInputNumber + NSwitch)
+- `m3u8.rs` — `MergeM3u8SegmentsParams.cleanup` (`#[serde(default = "default_true")]`)，仅成功合并后门控删除临时目录；新增 2 个单测
+- i18n: `scripts/add-m3u8-locale-keys.py` 批量写入 27 个 locale (11 键)；脚本以 LF 写入防止整文件 diff 污染
 
 ### P2: 前端测试
-- `m3u8Parser.ts` 单元测试
-- `submitManualUris` m3u8 流程测试
-- `m3u8Group` store actions 测试
-- 边缘情况: 无效 URL, 不可访问分片, 加密 HLS
+- `m3u8Parser.test.ts` (16 用例): 相对/绝对/查询串 URL 解析、注释/EXTINF/EXT-X-KEY 过滤、无效 base 跳过、out-name 安全 (reserved/尾点/空格)、temp-dir 生成/去重/映射
+- `m3u8Group.test.ts` (10 用例): createGroup/registerSegment/updateSegmentStatus、状态判定 (terminal/completed/failed)、retrySegment 计数与 maxRetries=0 边界、removeGroup
+- `useAddTaskSubmit.test.ts` 新增 9 用例: resolveM3u8RuntimeConfig (回退/自定义/零值) + runWithConcurrency (限流峰值/limit 钳位/空输入/错误传播)
+- `useAdvancedPreference.test.ts` 全部 8 个 `AdvancedForm` 夹具补齐 5 个新字段
+
+## ❌ 待完成
 
 ### P3: 直播流 vs 点播流
 - 当前未区分，需要检测 `#EXT-X-STREAM-INF` 并拒绝直播流

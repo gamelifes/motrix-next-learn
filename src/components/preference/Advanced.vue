@@ -611,6 +611,53 @@ watch(protocolHandlers.lastError, (error) => {
         </div>
       </NFormItem>
 
+      <NDivider title-placement="left">{{ t('preferences.m3u8-section-title') }}</NDivider>
+      <NFormItem>
+        <template #label>
+          <PreferenceHintLabel
+            :label="t('preferences.m3u8-max-retries')"
+            :hint="t('preferences.m3u8-max-retries-hint')"
+          />
+        </template>
+        <NInputNumber v-model:value="form.m3u8MaxRetries" :min="0" :max="100" class="pref-number" />
+      </NFormItem>
+      <NFormItem>
+        <template #label>
+          <PreferenceHintLabel
+            :label="t('preferences.m3u8-retry-delay')"
+            :hint="t('preferences.m3u8-retry-delay-hint')"
+          />
+        </template>
+        <NInputNumber v-model:value="form.m3u8RetryDelaySec" :min="0" :max="3600" class="pref-number" />
+      </NFormItem>
+      <NFormItem>
+        <template #label>
+          <PreferenceHintLabel
+            :label="t('preferences.m3u8-segment-timeout')"
+            :hint="t('preferences.m3u8-segment-timeout-hint')"
+          />
+        </template>
+        <NInputNumber v-model:value="form.m3u8SegmentTimeoutSec" :min="0" :max="86400" class="pref-number" />
+      </NFormItem>
+      <NFormItem>
+        <template #label>
+          <PreferenceHintLabel
+            :label="t('preferences.m3u8-concurrency')"
+            :hint="t('preferences.m3u8-concurrency-hint')"
+          />
+        </template>
+        <NInputNumber v-model:value="form.m3u8Concurrency" :min="1" :max="128" class="pref-number" />
+      </NFormItem>
+      <NFormItem>
+        <template #label>
+          <PreferenceHintLabel
+            :label="t('preferences.m3u8-auto-cleanup')"
+            :hint="t('preferences.m3u8-auto-cleanup-hint')"
+          />
+        </template>
+        <NSwitch v-model:value="form.m3u8AutoCleanup" />
+      </NFormItem>
+
       <NDivider title-placement="left">{{ t('preferences.log-section') }}</NDivider>
       <NFormItem :label="t('preferences.log-path')">
         <NInputGroup>

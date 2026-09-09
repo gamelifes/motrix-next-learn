@@ -360,6 +360,16 @@ export interface AppConfig {
    *  (.m3u8 → MP4) segment merging. Empty string means "not configured" —
    *  m3u8 submissions are blocked until the user provides a path. */
   ffmpegPath: string
+  /** Max automatic re-queues per failed m3u8 segment (0 disables retries). */
+  m3u8MaxRetries: number
+  /** Seconds to wait before re-queuing failed m3u8 segments. */
+  m3u8RetryDelaySec: number
+  /** Per-segment download timeout in seconds (0 disables the watchdog). */
+  m3u8SegmentTimeoutSec: number
+  /** Parallel segment submissions per m3u8 playlist (avoids IPC flooding). */
+  m3u8Concurrency: number
+  /** Remove the temporary .ts segment directory after a successful merge. */
+  m3u8AutoCleanup: boolean
   /** Shared secret for the extension HTTP API. The browser extension must
    *  send this as a `Bearer` token in the `Authorization` header.
    *  Empty string means the user intentionally cleared it. */

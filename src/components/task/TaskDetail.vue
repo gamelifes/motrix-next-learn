@@ -205,8 +205,9 @@ async function handleSegmentRetry(segmentIndex: number) {
   if (!m3u8GroupId.value || retryingSegment.value !== null) return
   retryingSegment.value = segmentIndex
   try {
-    const result = m3u8GroupStore.retrySegment(m3u8GroupId.value, segmentIndex)
-    if (!result || (!result.canRetry && result.retryCount > 5)) {
+    const maxRetries = preferenceStore.config.m3u8MaxRetries ?? 5
+    const result = m3u8GroupStore.retrySegment(m3u8GroupId.value, segmentIndex, maxRetries)
+    if (!result || (!result.canRetry && result.retryCount > maxRetries)) {
       message.warning(t('task.m3u8-max-retries') || 'Max retries reached')
       return
     }

@@ -29,6 +29,7 @@ import { invoke } from '@tauri-apps/api/core'
 import { formatLogFields, logger } from '@shared/logger'
 import type {
   Aria2EngineOptions,
+  AppConfig,
   BatchItem,
   BrowserRequestHeader,
   ExternalDownloadContext,
@@ -47,6 +48,7 @@ import { summarizeHeaderForwarding } from '@shared/utils/externalInputDiagnostic
 import { getErrorMessage } from '@shared/utils/errorMessage'
 import { buildTaskProxyOptions, getDownloadProxy, type TaskProxyMode } from '@shared/utils/proxyPolicy'
 import { resolveUserAgentFromContext } from '@shared/utils/userAgentPolicy'
+import { DEFAULT_APP_CONFIG as D } from '@shared/constants'
 
 export { getDownloadProxy } from '@shared/utils/proxyPolicy'
 import { useM3u8GroupStore } from '@/stores/task/m3u8Group'
@@ -204,6 +206,58 @@ export function classifySubmitError(err: unknown): 'engine-not-ready' | 'duplica
   if (msg.includes('not initialized') || !isEngineReady()) return 'engine-not-ready'
   if (/duplicate|already/i.test(msg)) return 'duplicate'
   return 'generic'
+}
+
+/** Runtime tuning values for m3u8 segment download, resolved with defaults. */
+export interface M3u8RuntimeConfig {
+  /** Max automatic re-queues per failed segment (0 = no retries). */
+  maxRetries: number
+  /** Seconds to wait before re-queuing failed segments. */
+  retryDelaySec: number
+  /** Per-segment download timeout in seconds (0 = disabled). */
+  segmentTimeoutSec: number
+  /** Parallel segment submissions for one playlist. */
+  concurrency: number
+  /** Remove the temporary segment dir after a successful merge. */
+  autoCleanup: boolean
+}
+
+/**
+ * Resolves the m3u8 runtime tuning values from the app config, falling back
+ * to DEFAULT_APP_CONFIG so callers never see undefined even for old saved
+ * configs. Pure function — fully testable.
+ */
+export function resolveM3u8RuntimeConfig(config: AppConfig): M3u8RuntimeConfig {
+  return {
+    maxRetries: config.m3u8MaxRetries ?? D.m3u8MaxRetries,
+    retryDelaySec: config.m3u8RetryDelaySec ?? D.m3u8RetryDelaySec,
+    segmentTimeoutSec: config.m3u8SegmentTimeoutSec ?? D.m3u8SegmentTimeoutSec,
+    concurrency: config.m3u8Concurrency ?? D.m3u8Concurrency,
+    autoCleanup: config.m3u8AutoCleanup ?? D.m3u8AutoCleanup,
+  }
+}
+
+/**
+ * Runs `fn` over `items` with at most `limit` concurrent invocations.
+ * Pure — no globals, fully testable. Used to cap segment submissions in
+ * parallel so large playlists do not flood the IPC bridge.
+ */
+export async function runWithConcurrency<T>(
+  limit: number,
+  items: readonly T[],
+  fn: (item: T, index: number) => Promise<void>,
+): Promise<void> {
+  const safeLimit = Math.max(1, Math.floor(limit))
+  let cursor = 0
+  const workerCount = Math.min(safeLimit, items.length)
+  const workers = Array.from({ length: workerCount }, async () => {
+    while (true) {
+      const index = cursor++
+      if (index >= items.length) return
+      await fn(items[index], index)
+    }
+  })
+  await Promise.all(workers)
 }
 
 /**
@@ -370,6 +424,9 @@ export async function submitManualUris(
 
   // Submit m3u8 URIs (special handling for HLS streams)
   if (m3u8Uris.length > 0) {
+    // Resolve once per submission batch — the store config is hydrated and
+    // stable for the duration of this request.
+    const m3u8Runtime = resolveM3u8RuntimeConfig(preferenceStore.config)
     for (const uri of m3u8Uris) {
       try {
         // For m3u8 URLs, we'll download the playlist and submit all .ts segments via aria2, then merge via ffmpeg
@@ -407,10 +464,11 @@ export async function submitManualUris(
           segmentUrls: tsUris,
         })
 
-        // Download each .ts segment via aria2 (one addUri call per segment)
+        // Submit each .ts segment via aria2 (one addUri call per segment).
+        // Submission is rate-limited to m3u8Runtime.concurrency in parallel so
+        // very large playlists do not flood the IPC bridge in one burst.
         const segmentGids: string[] = []
-        for (let i = 0; i < tsUris.length; i++) {
-          const segUri = tsUris[i]
+        await runWithConcurrency(m3u8Runtime.concurrency, tsUris, async (segUri, i) => {
           const outFilename = segmentFiles[i] // e.g., "0000.ts"
           const gids = await taskStore.addUri({
             uris: [segUri],
@@ -426,20 +484,28 @@ export async function submitManualUris(
             },
           })
           const gid = gids[0] ?? ''
-          segmentGids.push(gid)
+          segmentGids[i] = gid
           // Register segment with the group store
           m3u8GroupStore.registerSegment(groupId, i, gid, outFilename)
-        }
+        })
 
-        // Wait for all segments to complete (or fail)
-        await waitForSegmentsCompletion(segmentGids, taskStore, m3u8GroupStore, groupId)
+        // Wait for all segments to complete (or fail), bounded by the
+        // configured per-segment timeout watchdog.
+        await waitForSegmentsCompletion(
+          segmentGids,
+          taskStore,
+          m3u8GroupStore,
+          groupId,
+          undefined,
+          m3u8Runtime.segmentTimeoutSec > 0 ? m3u8Runtime.segmentTimeoutSec * 1000 : 0,
+        )
 
         // Check if any segment failed
         if (m3u8GroupStore.hasAnyFailed(groupId)) {
           const group = m3u8GroupStore.getGroup(groupId)!
           // Check if any failed segments have retries remaining
           const failedSegmentsWithRetries = group.segments.filter(
-            (seg) => seg.status === 'failed' && seg.retryCount < 5,
+            (seg) => seg.status === 'failed' && seg.retryCount < m3u8Runtime.maxRetries,
           )
 
           if (failedSegmentsWithRetries.length > 0) {
@@ -455,7 +521,7 @@ export async function submitManualUris(
                   index: seg.index,
                   url: seg.url,
                   retryCount: seg.retryCount,
-                  maxRetries: 5,
+                  maxRetries: m3u8Runtime.maxRetries,
                 })),
               })}`,
             )
@@ -476,6 +542,7 @@ export async function submitManualUris(
             tempDir,
             finalPath: mergedFilePath,
             ffmpegPath: preferenceStore.config.ffmpegPath,
+            cleanup: m3u8Runtime.autoCleanup,
           })
         } catch (error) {
           logger.error('submitManualUris.m3u8.merge', error)
@@ -634,13 +701,14 @@ export function useAddTaskSubmit({ form, onClose }: UseAddTaskSubmitOptions) {
             duration: 3000,
           })
 
-          // Wait 3 seconds before retrying (F=3秒)
-          await new Promise((resolve) => setTimeout(resolve, 3000))
-
           // Retry the failed segments
           const m3u8GroupStore = useM3u8GroupStore()
           const taskStore = useTaskStore()
           const preferenceStore = usePreferenceStore()
+          const m3u8Runtime = resolveM3u8RuntimeConfig(preferenceStore.config)
+
+          // Wait the configured retry delay before re-queuing
+          await new Promise((resolve) => setTimeout(resolve, m3u8Runtime.retryDelaySec * 1000))
 
           // Get the group to access segment info
           const group = m3u8GroupStore.getGroup(groupId)
@@ -661,7 +729,7 @@ export function useAddTaskSubmit({ form, onClose }: UseAddTaskSubmitOptions) {
             const seg = group.segments[segIndex]
             if (!seg) continue
 
-            const retry = m3u8GroupStore.retrySegment(groupId, segIndex)
+            const retry = m3u8GroupStore.retrySegment(groupId, segIndex, m3u8Runtime.maxRetries)
             if (!retry || !retry.canRetry) continue
 
             const outFilename = retry.filePath.split('/').pop() || `segment_${String(segIndex).padStart(4, '0')}.ts`
@@ -687,14 +755,21 @@ export function useAddTaskSubmit({ form, onClose }: UseAddTaskSubmitOptions) {
           }
 
           // Wait for retry segments to complete
-          await waitForSegmentsCompletion(retrySegmentGids, taskStore, m3u8GroupStore, groupId)
+          await waitForSegmentsCompletion(
+            retrySegmentGids,
+            taskStore,
+            m3u8GroupStore,
+            groupId,
+            undefined,
+            m3u8Runtime.segmentTimeoutSec > 0 ? m3u8Runtime.segmentTimeoutSec * 1000 : 0,
+          )
 
           // Check if any segment failed after retry
           if (m3u8GroupStore.hasAnyFailed(groupId)) {
             const retryGroup = m3u8GroupStore.getGroup(groupId)!
             // Check if any failed segments still have retries remaining
             const stillFailedSegmentsWithRetries = retryGroup.segments.filter(
-              (seg) => seg.status === 'failed' && seg.retryCount < 5,
+              (seg) => seg.status === 'failed' && seg.retryCount < m3u8Runtime.maxRetries,
             )
 
             if (stillFailedSegmentsWithRetries.length > 0) {
@@ -707,7 +782,7 @@ export function useAddTaskSubmit({ form, onClose }: UseAddTaskSubmitOptions) {
                     index: seg.index,
                     url: seg.url,
                     retryCount: seg.retryCount,
-                    maxRetries: 5,
+                    maxRetries: m3u8Runtime.maxRetries,
                   })),
                 })}`,
               )
@@ -730,6 +805,7 @@ export function useAddTaskSubmit({ form, onClose }: UseAddTaskSubmitOptions) {
               tempDir: retryGroup.tempDir,
               finalPath: mergedFilePath,
               ffmpegPath: preferenceStore.config.ffmpegPath,
+              cleanup: m3u8Runtime.autoCleanup,
             })
           } catch (mergeError) {
             logger.error('AddTask.submit.m3u8retry.merge', mergeError)
@@ -788,7 +864,9 @@ async function waitForSegmentsCompletion(
   m3u8GroupStore: ReturnType<typeof useM3u8GroupStore>,
   groupId: string,
   pollIntervalMs: number = 1000,
+  timeoutMs: number = 0,
 ): Promise<void> {
+  const deadline = timeoutMs > 0 ? Date.now() + timeoutMs : 0
   while (true) {
     // Check if all segments have reached terminal state
     const allTerminal = await Promise.all(
@@ -834,6 +912,27 @@ async function waitForSegmentsCompletion(
 
     if (allTerminal.every(Boolean)) {
       // All segments have reached terminal state
+      break
+    }
+
+    // Enforce the per-segment timeout watchdog. When a playlist stalls (e.g.
+    // a segment URL goes silent), mark the still-running tasks failed so the
+    // caller's retry path can re-queue them, and remove the stalled aria2
+    // tasks to avoid orphaned downloads. timeoutMs <= 0 disables the watchdog.
+    if (deadline > 0 && Date.now() >= deadline) {
+      logger.warn('waitForSegmentsCompletion', `timeout exceeded groupId=${groupId}`)
+      for (const gid of segmentGids) {
+        const task = await taskStore.fetchTaskStatus(gid)
+        if (task && !['complete', 'error', 'removed'].includes(task.status)) {
+          const localTask = taskStore.taskList.find((item) => item.gid === gid)
+          if (localTask) {
+            await taskStore.removeTask(localTask).catch((error) => {
+              logger.error('waitForSegmentsCompletion.removeTask', error)
+            })
+          }
+          m3u8GroupStore.updateSegmentStatus(groupId, gid, 'failed', 0, 0)
+        }
+      }
       break
     }
 

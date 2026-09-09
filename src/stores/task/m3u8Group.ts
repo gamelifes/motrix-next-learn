@@ -121,10 +121,14 @@ export const useM3u8GroupStore = defineStore('m3u8Group', {
      * This will trigger a new aria2.addUri call for that segment only.
      * The frontend should call this action to get a fresh aria2 GID,
      * then invoke aria2.addUri again.
+     *
+     * @param maxRetries Maximum retry attempts allowed per segment
+     *                   (from the m3u8.maxRetries preference).
      */
     retrySegment(
       groupId: string,
       segmentIndex: number,
+      maxRetries: number,
     ): { url: string; aria2Gid: string; filePath: string; canRetry: boolean; retryCount: number } | null {
       const group = this.groups[groupId]
       if (!group) return null
@@ -132,8 +136,8 @@ export const useM3u8GroupStore = defineStore('m3u8Group', {
       if (!seg) return null
       // Increment retry count
       seg.retryCount += 1
-      // Check if we've exceeded max retries (5)
-      const canRetry = seg.retryCount <= 5
+      // Check if we've exceeded max retries
+      const canRetry = seg.retryCount <= maxRetries
       // Reset segment to pending so the frontend knows to re-submit.
       // Actual status update will happen when frontend calls registerSegment after addUri
       seg.status = 'pending'
@@ -141,8 +145,8 @@ export const useM3u8GroupStore = defineStore('m3u8Group', {
       seg.totalBytes = 0
       seg.errorCode = undefined
       // Note: we do NOT change aria2Gid here; the frontend will generate a new one.
-      // The frontend should call this, then wait F=3秒 delay, then call aria2.addUri,
-      // then call registerSegment with the new GID.
+      // The frontend should call this, then wait F retry-delay seconds, then call
+      // aria2.addUri, then call registerSegment with the new GID.
       return {
         url: seg.url,
         aria2Gid: seg.aria2Gid, // current GID (may be empty or old)

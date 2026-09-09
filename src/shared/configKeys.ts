@@ -56,6 +56,11 @@ const userKeys = [
   'allow-remote-access',
   'lightweight-mode',
   'max-tries',
+  'm3u8-auto-cleanup',
+  'm3u8-concurrency',
+  'm3u8-max-retries',
+  'm3u8-retry-delay',
+  'm3u8-segment-timeout',
 
   'minimize-to-tray-on-close',
   'new-task-show-downloading',

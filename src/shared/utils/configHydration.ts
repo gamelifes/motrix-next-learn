@@ -256,6 +256,43 @@ function normalizeScalarValues(config: Record<string, unknown>, repairs: string[
     'ed2kBootstrapSyncIntervalHours',
     repairs,
   )
+
+  config.m3u8MaxRetries = normalizeBoundedInteger(
+    config.m3u8MaxRetries,
+    DEFAULT_APP_CONFIG.m3u8MaxRetries,
+    0,
+    100,
+    'm3u8MaxRetries',
+    repairs,
+  )
+  config.m3u8RetryDelaySec = normalizeBoundedInteger(
+    config.m3u8RetryDelaySec,
+    DEFAULT_APP_CONFIG.m3u8RetryDelaySec,
+    0,
+    3600,
+    'm3u8RetryDelaySec',
+    repairs,
+  )
+  config.m3u8SegmentTimeoutSec = normalizeBoundedInteger(
+    config.m3u8SegmentTimeoutSec,
+    DEFAULT_APP_CONFIG.m3u8SegmentTimeoutSec,
+    0,
+    86400,
+    'm3u8SegmentTimeoutSec',
+    repairs,
+  )
+  config.m3u8Concurrency = normalizeBoundedInteger(
+    config.m3u8Concurrency,
+    DEFAULT_APP_CONFIG.m3u8Concurrency,
+    1,
+    128,
+    'm3u8Concurrency',
+    repairs,
+  )
+  if (typeof config.m3u8AutoCleanup !== 'boolean') {
+    config.m3u8AutoCleanup = DEFAULT_APP_CONFIG.m3u8AutoCleanup
+    repairs.push('m3u8AutoCleanup')
+  }
 }
 
 function dedupe(values: string[]): string[] {

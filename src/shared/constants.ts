@@ -412,6 +412,12 @@ export const DEFAULT_APP_CONFIG = {
   // Empty string means "not configured" — m3u8 submissions require a valid
   // ffmpeg path to merge downloaded .ts segments into a single MP4.
   ffmpegPath: '',
+  // ── M3U8 / HLS download tuning ──────────────────────────────────
+  m3u8MaxRetries: 5,
+  m3u8RetryDelaySec: 3,
+  m3u8SegmentTimeoutSec: 300,
+  m3u8Concurrency: 6,
+  m3u8AutoCleanup: true,
   allowRemoteAccess: false,
   autoChangeConflictingPorts: true,
   portConflictRecovery: {

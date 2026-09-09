@@ -48,6 +48,11 @@ export interface AdvancedForm {
   tempFilesDir: string
   hardwareRendering: boolean
   ffmpegPath: string
+  m3u8MaxRetries: number
+  m3u8RetryDelaySec: number
+  m3u8SegmentTimeoutSec: number
+  m3u8Concurrency: number
+  m3u8AutoCleanup: boolean
   // Clipboard detection (migrated from legacy Basic tab)
   clipboardEnable: boolean
   clipboardHttp: boolean
@@ -109,6 +114,11 @@ export function buildAdvancedForm(config: AppConfig): {
       tempFilesDir: config.tempFilesDir ?? D.tempFilesDir,
       hardwareRendering: config.hardwareRendering ?? D.hardwareRendering,
       ffmpegPath: config.ffmpegPath ?? D.ffmpegPath,
+      m3u8MaxRetries: config.m3u8MaxRetries ?? D.m3u8MaxRetries,
+      m3u8RetryDelaySec: config.m3u8RetryDelaySec ?? D.m3u8RetryDelaySec,
+      m3u8SegmentTimeoutSec: config.m3u8SegmentTimeoutSec ?? D.m3u8SegmentTimeoutSec,
+      m3u8Concurrency: config.m3u8Concurrency ?? D.m3u8Concurrency,
+      m3u8AutoCleanup: config.m3u8AutoCleanup ?? D.m3u8AutoCleanup,
       // Clipboard detection
       clipboardEnable: config.clipboard?.enable ?? D.clipboard.enable,
       clipboardHttp: config.clipboard?.http ?? D.clipboard.http,
