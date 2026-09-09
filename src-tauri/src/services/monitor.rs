@@ -1092,7 +1092,10 @@ mod tests {
 
         let events = notifier.scan(&[seg]);
 
-        assert!(events.is_empty(), "file path marker must suppress the segment");
+        assert!(
+            events.is_empty(),
+            "file path marker must suppress the segment"
+        );
     }
 
     #[test]

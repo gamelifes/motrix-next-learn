@@ -38,17 +38,22 @@ pub async fn check_ffmpeg(path: String) -> Result<FfmpegProbeResult, AppError> {
     // Run synchronously inside spawn_blocking — ffmpeg -version completes
     // in <100ms on every platform we ship.
     let path_clone = path.clone();
-    let output = tokio::task::spawn_blocking(move || Command::new(&path_clone).arg("-version").output())
-        .await
-        .map_err(|e| AppError::Ffmpeg(format!("failed to spawn probe task: {e}")))?
-        .map_err(|e| AppError::Ffmpeg(format!("failed to execute {path}: {e}")))?;
+    let output =
+        tokio::task::spawn_blocking(move || Command::new(&path_clone).arg("-version").output())
+            .await
+            .map_err(|e| AppError::Ffmpeg(format!("failed to spawn probe task: {e}")))?
+            .map_err(|e| AppError::Ffmpeg(format!("failed to execute {path}: {e}")))?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
         return Err(AppError::Ffmpeg(format!(
             "ffmpeg -version exited with status {}: {}",
             output.status,
-            if stderr.is_empty() { "<no stderr>" } else { &stderr }
+            if stderr.is_empty() {
+                "<no stderr>"
+            } else {
+                &stderr
+            }
         )));
     }
 
@@ -99,9 +104,14 @@ mod tests {
         let dir = tempfile::tempdir().expect("tempdir");
         let fake = dir.path().join("fake-ffmpeg.sh");
         let mut f = std::fs::File::create(&fake).expect("create fake ffmpeg");
-        writeln!(f, "#!/bin/sh\necho 'ffmpeg version 6.1.1 Copyright (c) 2000-2024'").unwrap();
+        writeln!(
+            f,
+            "#!/bin/sh\necho 'ffmpeg version 6.1.1 Copyright (c) 2000-2024'"
+        )
+        .unwrap();
         drop(f);
-        std::fs::set_permissions(&fake, std::os::unix::fs::PermissionsExt::from_mode(0o755)).unwrap();
+        std::fs::set_permissions(&fake, std::os::unix::fs::PermissionsExt::from_mode(0o755))
+            .unwrap();
 
         let result = tokio::runtime::Runtime::new()
             .unwrap()
@@ -118,7 +128,8 @@ mod tests {
         let mut f = std::fs::File::create(&fake).expect("create");
         writeln!(f, "#!/bin/sh\necho 'totally unrelated tool 1.0'").unwrap();
         drop(f);
-        std::fs::set_permissions(&fake, std::os::unix::fs::PermissionsExt::from_mode(0o755)).unwrap();
+        std::fs::set_permissions(&fake, std::os::unix::fs::PermissionsExt::from_mode(0o755))
+            .unwrap();
 
         let result = tokio::runtime::Runtime::new()
             .unwrap()

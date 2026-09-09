@@ -52,9 +52,7 @@ pub struct MergeM3u8SegmentsResult {
 
 /// Validates preconditions without launching ffmpeg. Split out so unit
 /// tests can exercise the parser/validator without spawning processes.
-fn collect_and_validate_segments(
-    temp_dir: &Path,
-) -> Result<Vec<PathBuf>, AppError> {
+fn collect_and_validate_segments(temp_dir: &Path) -> Result<Vec<PathBuf>, AppError> {
     if !temp_dir.is_dir() {
         return Err(AppError::M3u8(format!(
             "temp_dir is not a directory: {}",
@@ -122,11 +120,7 @@ fn run_ffmpeg_concat(
     let output = Command::new(ffmpeg_path)
         .args([
             "-y", // overwrite output without prompting
-            "-f",
-            "concat",
-            "-safe",
-            "0",
-            "-i",
+            "-f", "concat", "-safe", "0", "-i",
         ])
         .arg(filelist)
         .args(["-c", "copy"]) // remux only, no re-encode
@@ -139,7 +133,11 @@ fn run_ffmpeg_concat(
         let code = output.status.code().unwrap_or(-1);
         return Err(AppError::Ffmpeg(format!(
             "ffmpeg exited with code {code}: {}",
-            if stderr.is_empty() { "<no stderr>" } else { &stderr }
+            if stderr.is_empty() {
+                "<no stderr>"
+            } else {
+                &stderr
+            }
         )));
     }
     log::info!(
@@ -157,7 +155,10 @@ fn run_ffmpeg_concat(
 /// UI affordance.
 fn remove_temp_dir(temp_dir: &Path) {
     match std::fs::remove_dir_all(temp_dir) {
-        Ok(()) => log::info!("merge_m3u8_segments: removed temp_dir {}", temp_dir.display()),
+        Ok(()) => log::info!(
+            "merge_m3u8_segments: removed temp_dir {}",
+            temp_dir.display()
+        ),
         Err(e) => log::warn!(
             "merge_m3u8_segments: failed to remove temp_dir {}: {e}",
             temp_dir.display()
