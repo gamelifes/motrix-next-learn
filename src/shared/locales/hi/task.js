@@ -334,5 +334,7 @@ export default {
   'm3u8-failed-message': '{taskName} failed: {reason}',
   'm3u8-retry-message': '{count} segment(s) failed - retrying in 3 seconds',
   'm3u8-merge-failed': 'FFmpeg merge failed',
+'m3u8-live-stream': 'लाइव स्ट्रीम समर्थित नहीं हैं',
+'m3u8-master-playlist': 'मास्टर प्लेलिस्ट समर्थित नहीं हैं। सीधा मीडिया प्लेलिस्ट URL उपयोग करें।',
   'task-tab-segments': 'Segments',
 }

@@ -333,5 +333,7 @@ export default {
   'm3u8-failed-message': '{taskName} failed: {reason}',
   'm3u8-retry-message': '{count} segment(s) failed - retrying in 3 seconds',
   'm3u8-merge-failed': 'FFmpeg merge failed',
+'m3u8-live-stream': 'Không hỗ trợ phát trực tiếp',
+'m3u8-master-playlist': 'Danh sách phát chính không được hỗ trợ. Vui lòng dùng URL danh sách phát phương tiện trực tiếp.',
   'task-tab-segments': 'Segments',
 }

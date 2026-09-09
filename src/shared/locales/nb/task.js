@@ -333,5 +333,7 @@ export default {
   'm3u8-failed-message': '{taskName} failed: {reason}',
   'm3u8-retry-message': '{count} segment(s) failed - retrying in 3 seconds',
   'm3u8-merge-failed': 'FFmpeg merge failed',
+'m3u8-live-stream': 'Direktestrømming støttes ikke',
+'m3u8-master-playlist': 'Master-spillelister støttes ikke. Bruk en direkte mediespilleliste-URL.',
   'task-tab-segments': 'Segments',
 }

@@ -333,5 +333,7 @@ export default {
   'm3u8-failed-message': '{taskName} failed: {reason}',
   'm3u8-retry-message': '{count} segment(s) failed - retrying in 3 seconds',
   'm3u8-merge-failed': 'FFmpeg merge failed',
+'m3u8-live-stream': 'Прямі трансляції не підтримуються',
+'m3u8-master-playlist': 'Основні списки відтворення не підтримуються. Використовуйте прямий URL-адрес медіа-списку відтворення.',
   'task-tab-segments': 'Segments',
 }

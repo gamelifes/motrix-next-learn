@@ -3,7 +3,7 @@
 ## Overview
 为 Motrix Next 添加 m3u8/HLS 视频流下载支持，用户粘贴 m3u8 链接后自动解析分片、通过 aria2 下载、最后用 ffmpeg 合并为 MP4。
 
-## Progress: ~95%
+## Progress: 100%
 
 ---
 
@@ -138,6 +138,13 @@
 - **locale 格式事故与修复**: Python 脚本以文本模式写入把 27 个 `preferences.js` 整体重写为 CRLF，导致整文件 diff (14033+/13345-)；已批量转换回 LF，diff 恢复为每文件精确 +11 行；脚本 `add-m3u8-locale-keys.py` 加 `newline="\n"` 防止复发
 - **阻塞**: `cargo check` 仍无法运行；`m3u8.rs` 的 `cleanup` 字段与 2 个新单测需在 Rust 环境验证
 
+### P3 验证 (2026-09-09)
+- `vue-tsc --noEmit` 通过 (0 错误)
+- `vitest run` 全量通过: **102 文件 / 2423 测试 / 0 失败** (新增 11 用例)
+- `prettier --check "src/**/*.{ts,vue,css,json}"` 通过
+- `vite build` 通过 (11.9s, 退出码 0)
+- markdown 计划文档已 100%（P0/P1/P2/P3 全部完成），唯一遗留为 Rust 侧在两台含工具链环境跑 `cargo test`
+
 ---
 
 ## ✅ 已完成 (2026-09-09, P2 收尾)
@@ -169,12 +176,21 @@
 - `useAddTaskSubmit.test.ts` 新增 9 用例: resolveM3u8RuntimeConfig (回退/自定义/零值) + runWithConcurrency (限流峰值/limit 钳位/空输入/错误传播)
 - `useAdvancedPreference.test.ts` 全部 8 个 `AdvancedForm` 夹具补齐 5 个新字段
 
-## ❌ 待完成
+## ✅ 已完成 (2026-09-09, P3 收尾)
 
-### P3: 直播流 vs 点播流
-- 当前未区分，需要检测 `#EXT-X-STREAM-INF` 并拒绝直播流
-
----
+### P3: 直播流 vs 点播流识别
+- `m3u8Parser.ts` 新增 `inspectM3u8Playlist(content)` 分类器 + `M3u8PlaylistKind` / `M3u8PlaylistInfo` 类型:
+  - `vod` — 含 `#EXT-X-ENDLIST` 或 `PLAYLIST-TYPE:VOD`（有限时长，可下载）
+  - `live` — 无 `#EXT-X-ENDLIST` 的滑动窗口直播流（永不完结 → 拒绝）
+  - `event` — `PLAYLIST-TYPE:EVENT` 事件直播（实时追加、不可从头回放 → 拒绝）
+  - `master` — 含 `#EXT-X-STREAM-INF` 的多码率主播放列表（收集 `variantUrls` → 拒绝）
+  - `unknown` — 非 HLS 内容（沿用既有 "无分片" 错误）
+- `useAddTaskSubmit.ts` 提交流程在 parse 之前先分类：`master` → `M3u8SubmitFailure('master-playlist')`，`live`/`event` → `M3u8SubmitFailure('live-stream')`，fail-fast，不提交任何分片、不创建组、不写临时目录
+- `M3U8_FAILURE_REASON_KEYS` 新增 `task.m3u8-master-playlist` / `task.m3u8-live-stream`
+- i18n: `scripts/add-m3u8-live-locale-keys.py` 批量写入 27 个 `task.js`（+2 键，LF 写入防 CRLF 污染，已验证每文件精确 +2 行）
+- 测试:
+  - `m3u8Parser.test.ts` 新增 7 用例（VOD/live/event/master/unknown/case-insensitive）
+  - `useAddTaskSubmit.test.ts` 新增 4 用例（master/live/event 拒绝且 `addUri` 零调用 + VOD 全流程下载并合并，`auto-file-renaming:'false'` 断言）
 
 ## Technical Details
 

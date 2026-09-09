@@ -52,7 +52,7 @@ import { DEFAULT_APP_CONFIG as D } from '@shared/constants'
 
 export { getDownloadProxy } from '@shared/utils/proxyPolicy'
 import { useM3u8GroupStore } from '@/stores/task/m3u8Group'
-import { parseM3U8Playlist, prepareM3u8TempDir } from '@/shared/utils/m3u8Parser'
+import { parseM3U8Playlist, inspectM3u8Playlist, prepareM3u8TempDir } from '@/shared/utils/m3u8Parser'
 
 export interface AddTaskForm {
   uris: string
@@ -109,6 +109,8 @@ export interface M3u8MergeResult {
 const M3U8_FAILURE_REASON_KEYS: Record<string, string> = {
   'max-retries': 'task.m3u8-max-retries',
   'merge-failed': 'task.m3u8-merge-failed',
+  'master-playlist': 'task.m3u8-master-playlist',
+  'live-stream': 'task.m3u8-live-stream',
 }
 
 /**
@@ -440,6 +442,21 @@ export async function submitManualUris(
         })
         const playlistContent = new TextDecoder().decode(Uint8Array.from(responseBytes))
 
+        // Classify the playlist before downloading anything so unsupported
+        // HLS variants (multi-variant master playlists, live/event streams)
+        // fail fast with a descriptive group-level error instead of polluting
+        // the task list with manifest downloads that can never merge.
+        const outHint = form.out || extractDecodedFilename(uri) || 'video'
+        const baseName = outHint.replace(/\.[^/.]+$/, '') // Remove extension if present
+        const playlistInfo = inspectM3u8Playlist(playlistContent)
+
+        if (playlistInfo.kind === 'master') {
+          throw new M3u8SubmitFailure(baseName, 'master-playlist')
+        }
+        if (playlistInfo.kind === 'live' || playlistInfo.kind === 'event') {
+          throw new M3u8SubmitFailure(baseName, 'live-stream')
+        }
+
         // Parse the m3u8 playlist to extract .ts segment URLs
         const tsUris = parseM3U8Playlist(playlistContent, uri)
 
@@ -448,8 +465,6 @@ export async function submitManualUris(
         }
 
         // Prepare temporary directory and segment file mapping
-        const outHint = form.out || extractDecodedFilename(uri) || 'video'
-        const baseName = outHint.replace(/\.[^/.]+$/, '') // Remove extension if present
         const tempDirResult = await prepareM3u8TempDir(form.dir, baseName, tsUris)
         const { tempDir, segmentFiles } = tempDirResult
 

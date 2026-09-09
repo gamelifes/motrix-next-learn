@@ -2,6 +2,107 @@
 import { M3U8_TEMP_DIR_PREFIX } from '@shared/constants'
 
 /**
+ * The structural kind of an HLS playlist, used to reject unsupported stream
+ * types before any segments are downloaded.
+ *
+ * - `vod`: a media playlist with `#EXT-X-ENDLIST` (or declared VOD); finite.
+ * - `live`: a media playlist without `#EXT-X-ENDLIST`; the manifest is a
+ *   sliding window that is never complete.
+ * - `event`: `#EXT-X-PLAYLIST-TYPE:EVENT`; an event live stream that appends
+ *   segments but cannot be replayed from the start.
+ * - `master`: contains `#EXT-X-STREAM-INF`; a multi-variant master playlist
+ *   whose entries point at other playlists, not at media segments.
+ * - `unknown`: not recognizable HLS content.
+ */
+export type M3u8PlaylistKind = 'vod' | 'live' | 'event' | 'master' | 'unknown'
+
+export interface M3u8PlaylistInfo {
+  kind: M3u8PlaylistKind
+  /** True when the content contains any `#EXT` HLS tags. */
+  isHls: boolean
+  /** True when `#EXT-X-ENDLIST` is present (finite VOD playlist). */
+  hasEndList: boolean
+  /** True when `#EXT-X-STREAM-INF` is present (multi-variant master). */
+  hasStreamInf: boolean
+  /** True when `#EXT-X-PLAYLIST-TYPE:EVENT` is declared. */
+  isEvent: boolean
+  /** Raw value of `#EXT-X-PLAYLIST-TYPE` (e.g. `EVENT`/`VOD`) or null. */
+  playlistType: string | null
+  /** For master playlists: the variant playlist URLs following STREAM-INF tags. */
+  variantUrls: string[]
+}
+
+/**
+ * Classify an m3u8 playlist string by its HLS structure tags so the caller can
+ * reject unsupported stream types (master playlists, live/event streams)
+ * before attempting a segment download.
+ *
+ * @param playlistContent The raw text of the m3u8 playlist.
+ */
+export function inspectM3u8Playlist(playlistContent: string): M3u8PlaylistInfo {
+  const info: M3u8PlaylistInfo = {
+    kind: 'unknown',
+    isHls: false,
+    hasEndList: false,
+    hasStreamInf: false,
+    isEvent: false,
+    playlistType: null,
+    variantUrls: [],
+  }
+
+  let awaitingVariant = false
+  for (const raw of playlistContent.split('\n')) {
+    const line = raw.trim()
+    if (line === '') continue
+
+    if (!line.startsWith('#')) {
+      // Non-tag line: the URI after a STREAM-INF tag is a variant playlist.
+      if (awaitingVariant) {
+        info.variantUrls.push(line)
+        awaitingVariant = false
+      }
+      continue
+    }
+
+    if (line.startsWith('#EXTM3U')) {
+      info.isHls = true
+    } else if (line.startsWith('#EXT-X-STREAM-INF')) {
+      info.hasStreamInf = true
+      info.isHls = true
+      awaitingVariant = true
+    } else if (line.startsWith('#EXT-X-ENDLIST')) {
+      info.hasEndList = true
+    } else if (line.startsWith('#EXT-X-PLAYLIST-TYPE')) {
+      const match = /#EXT-X-PLAYLIST-TYPE:\s*([A-Za-z0-9]+)/.exec(line)
+      info.playlistType = match?.[1] ?? null
+    } else if (line.startsWith('#EXT')) {
+      info.isHls = true
+    }
+  }
+
+  info.isEvent = info.playlistType?.toLowerCase() === 'event'
+
+  if (!info.isHls) {
+    info.kind = 'unknown'
+    return info
+  }
+  if (info.hasStreamInf) {
+    info.kind = 'master'
+    return info
+  }
+  if (info.isEvent) {
+    info.kind = 'event'
+    return info
+  }
+  if (info.playlistType?.toLowerCase() === 'vod') {
+    info.kind = 'vod'
+    return info
+  }
+  info.kind = info.hasEndList ? 'vod' : 'live'
+  return info
+}
+
+/**
  * Parse an m3u8 playlist string and return an array of absolute URLs for the
  * .ts segments.
  *

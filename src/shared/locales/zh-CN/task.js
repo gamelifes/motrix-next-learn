@@ -333,5 +333,7 @@ export default {
   'm3u8-failed-message': '{taskName} failed: {reason}',
   'm3u8-retry-message': '{count} segment(s) failed - retrying in 3 seconds',
   'm3u8-merge-failed': 'FFmpeg merge failed',
+'m3u8-live-stream': '不支持直播流',
+'m3u8-master-playlist': '不支持主播放列表，请使用直接的媒体播放列表链接。',
   'task-tab-segments': 'Segments',
 }

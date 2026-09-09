@@ -9,6 +9,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ref } from 'vue'
+import { setActivePinia, createPinia } from 'pinia'
 
 // ── Mock external dependencies ──────────────────────────────────────
 vi.mock('@tauri-apps/api/core', () => ({
@@ -731,6 +732,97 @@ describe('submitManualUris', () => {
       m3u8Merged: [],
     })
   })
+
+  it('rejects a master playlist (EXT-X-STREAM-INF) without submitting any segments', async () => {
+    const { invoke } = await import('@tauri-apps/api/core')
+    const master = [
+      '#EXTM3U',
+      '#EXT-X-STREAM-INF:BANDWIDTH=1280000,RESOLUTION=1280x720',
+      'https://cdn.example.com/hls/720p/index.m3u8',
+      '#EXT-X-STREAM-INF:BANDWIDTH=640000,RESOLUTION=640x360',
+      'https://cdn.example.com/hls/360p/index.m3u8',
+    ].join('\n')
+    ;(invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce(Array.from(new TextEncoder().encode(master)))
+
+    await expect(
+      submitManualUris({ ...baseForm, uris: 'https://cdn.example.com/hls/master.m3u8' }, { dir: '/dl' }, mockTaskStore),
+    ).rejects.toMatchObject({ name: 'M3u8SubmitFailure', reasonCode: 'master-playlist' })
+
+    expect(mockTaskStore.addUri).not.toHaveBeenCalled()
+  })
+
+  it('rejects a live stream (no EXT-X-ENDLIST) without submitting any segments', async () => {
+    const { invoke } = await import('@tauri-apps/api/core')
+    const live = [
+      '#EXTM3U',
+      '#EXT-X-VERSION:3',
+      '#EXT-X-TARGETDURATION:6',
+      '#EXT-X-MEDIA-SEQUENCE:2680',
+      '#EXTINF:6.0,',
+      'https://cdn.example.com/live/seg-2680.ts',
+      '#EXTINF:6.0,',
+      'https://cdn.example.com/live/seg-2681.ts',
+    ].join('\n')
+    ;(invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce(Array.from(new TextEncoder().encode(live)))
+
+    await expect(
+      submitManualUris({ ...baseForm, uris: 'https://cdn.example.com/live/index.m3u8' }, { dir: '/dl' }, mockTaskStore),
+    ).rejects.toMatchObject({ name: 'M3u8SubmitFailure', reasonCode: 'live-stream' })
+
+    expect(mockTaskStore.addUri).not.toHaveBeenCalled()
+  })
+
+  it('rejects an event-live stream (PLAYLIST-TYPE:EVENT) without submitting any segments', async () => {
+    const { invoke } = await import('@tauri-apps/api/core')
+    const event = [
+      '#EXTM3U',
+      '#EXT-X-PLAYLIST-TYPE:EVENT',
+      '#EXTINF:6.006,',
+      'https://cdn.example.com/event/seg-0.ts',
+    ].join('\n')
+    ;(invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce(Array.from(new TextEncoder().encode(event)))
+
+    await expect(
+      submitManualUris(
+        { ...baseForm, uris: 'https://cdn.example.com/event/index.m3u8' },
+        { dir: '/dl' },
+        mockTaskStore,
+      ),
+    ).rejects.toMatchObject({ name: 'M3u8SubmitFailure', reasonCode: 'live-stream' })
+
+    expect(mockTaskStore.addUri).not.toHaveBeenCalled()
+  })
+
+  it('downloads and merges a VOD playlist (EXT-X-ENDLIST present)', async () => {
+    const { invoke } = await import('@tauri-apps/api/core')
+    setActivePinia(createPinia())
+    const vod = [
+      '#EXTM3U',
+      '#EXT-X-TARGETDURATION:10',
+      '#EXTINF:10,',
+      'https://cdn.example.com/movie/seg-0.ts',
+      '#EXTINF:10,',
+      'https://cdn.example.com/movie/seg-1.ts',
+      '#EXT-X-ENDLIST',
+    ].join('\n')
+    ;(invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce(Array.from(new TextEncoder().encode(vod)))
+
+    const result = await submitManualUris(
+      { ...baseForm, uris: 'https://cdn.example.com/movie.m3u8' },
+      { dir: '/dl' },
+      mockTaskStore,
+    )
+
+    // Two segments submitted to aria2 as individual tasks.
+    const addUriCalls = (mockTaskStore.addUri as ReturnType<typeof vi.fn>).mock.calls
+    expect(addUriCalls).toHaveLength(2)
+    for (const call of addUriCalls) {
+      expect(call[0].options['auto-file-renaming']).toBe('false')
+    }
+
+    expect(invoke).toHaveBeenCalledWith('merge_m3u8_segments', expect.anything())
+    expect(result.m3u8Merged).toEqual([{ taskName: 'movie.mp4', outputPath: '/dl/movie.mp4' }])
+  })
 })
 
 describe('useAddTaskSubmit', () => {
@@ -911,6 +1003,8 @@ describe('M3u8SubmitFailure', () => {
     const known: Record<string, string> = {
       'task.m3u8-max-retries': 'Max retries reached',
       'task.m3u8-merge-failed': 'FFmpeg merge failed',
+      'task.m3u8-master-playlist': 'Master playlists are not supported',
+      'task.m3u8-live-stream': 'Live streams are not supported',
     }
     return known[key] ?? key
   })
@@ -926,6 +1020,12 @@ describe('M3u8SubmitFailure', () => {
   it('localizes known reason codes', () => {
     expect(new M3u8SubmitFailure('movie.mp4', 'max-retries').reasonText(t as never)).toBe('Max retries reached')
     expect(new M3u8SubmitFailure('movie.mp4', 'merge-failed').reasonText(t as never)).toBe('FFmpeg merge failed')
+    expect(new M3u8SubmitFailure('movie.mp4', 'master-playlist').reasonText(t as never)).toBe(
+      'Master playlists are not supported',
+    )
+    expect(new M3u8SubmitFailure('movie.mp4', 'live-stream').reasonText(t as never)).toBe(
+      'Live streams are not supported',
+    )
   })
 
   it('falls back to the max-retries message for unknown reason codes', () => {

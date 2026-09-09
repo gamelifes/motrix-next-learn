@@ -333,5 +333,7 @@ export default {
   'm3u8-failed-message': '{taskName} failed: {reason}',
   'm3u8-retry-message': '{count} segment(s) failed - retrying in 3 seconds',
   'm3u8-merge-failed': 'FFmpeg merge failed',
+'m3u8-live-stream': 'Streamingul live nu este acceptat',
+'m3u8-master-playlist': 'Playlistele master nu sunt acceptate. Folosiți un URL direct de playlist media.',
   'task-tab-segments': 'Segments',
 }

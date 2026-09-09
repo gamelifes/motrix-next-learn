@@ -333,5 +333,7 @@ export default {
   'm3u8-failed-message': '{taskName} failed: {reason}',
   'm3u8-retry-message': '{count} segment(s) failed - retrying in 3 seconds',
   'm3u8-merge-failed': 'FFmpeg merge failed',
+'m3u8-live-stream': 'Transmissões ao vivo não são suportadas',
+'m3u8-master-playlist': 'Listas de reprodução mestras não são suportadas. Use uma URL de lista de reprodução de mídia direta.',
   'task-tab-segments': 'Segments',
 }
