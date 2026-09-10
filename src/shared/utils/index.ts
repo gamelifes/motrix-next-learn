@@ -3,6 +3,7 @@
 export * from './format'
 export * from './peer'
 export * from './task'
+export * from './m3u8GroupTask'
 export * from './file'
 export * from './config'
 export * from './resource'

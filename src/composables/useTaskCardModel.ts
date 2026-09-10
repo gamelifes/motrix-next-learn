@@ -3,6 +3,7 @@ import { computed, type ComputedRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { TASK_STATUS } from '@shared/constants'
 import { useM3u8GroupStore } from '@/stores/task/m3u8Group'
+import { getGroupIdFromM3u8MainGid, isM3u8MainGid, isM3u8MainTask } from '@shared/utils/m3u8GroupTask'
 import {
   bytesToSize,
   calcProgress,
@@ -60,31 +61,61 @@ export function useTaskCardModel(task: ComputedRef<Aria2Task>): TaskCardModel {
   })
   const isMetadataFetching = computed(() => isBtMetadataTask(task.value))
 
-  /** True if this aria2 task is one segment of an m3u8 group. */
+  /**
+   * Resolves the m3u8 group this task belongs to. Works for both a real aria2
+   * segment task (matched through its gid) and a synthetic main-task row
+   * (matched through the `m3u8:{groupId}` gid prefix).
+   */
   const m3u8GroupRef = computed(() => {
     const gid = task.value.gid
     if (!gid) return null
+    if (isM3u8MainGid(gid)) return m3u8GroupStore.getGroup(getGroupIdFromM3u8MainGid(gid)) ?? null
     for (const group of Object.values(m3u8GroupStore.groups)) {
       if (group.segmentGids.includes(gid)) return group
     }
     return null
   })
-  const isM3u8Segment = computed(() => !!m3u8GroupRef.value)
+  const isM3u8GroupRow = computed(() => isM3u8MainTask(task.value))
 
   const taskStatus = computed(() => (isSharing.value ? TASK_STATUS.SHARING : task.value.status))
   const statusBadge = computed<TaskCardStatusBadge | null>(() => {
-    if (isM3u8Segment.value) {
+    if (m3u8GroupRef.value) {
       const group = m3u8GroupRef.value
-      if (group) {
-        if (group.status === 'merging') {
-          return { key: 'm3u8-merging', label: t('task.m3u8-status-merging') || 'Merging', tone: 'waiting' }
+      if (isM3u8GroupRow.value) {
+        // Synthetic main-task row — surface the group-level status directly.
+        switch (group.status) {
+          case 'merging':
+            return { key: 'm3u8-merging', label: t('task.m3u8-status-merging') || 'Merging', tone: 'waiting' }
+          case 'completed':
+            return {
+              key: 'm3u8-completed',
+              label: t('task.m3u8-status-completed') || 'Completed',
+              tone: 'success',
+            }
+          case 'partial':
+            return {
+              key: 'm3u8-partial',
+              label: t('task.m3u8-status-partial') || 'Partial',
+              tone: 'error',
+            }
+          case 'failed':
+            return { key: 'm3u8-failed', label: t('task.m3u8-status-failed') || 'Failed', tone: 'error' }
+          default:
+            return {
+              key: 'm3u8-downloading',
+              label: t('task.m3u8-status-downloading') || 'Downloading',
+              tone: 'waiting',
+            }
         }
-        if (group.status === 'failed' || group.status === 'partial') {
-          return {
-            key: `m3u8-${group.status}`,
-            label: t(`task.m3u8-status-${group.status}`) || group.status,
-            tone: 'error',
-          }
+      }
+      if (group.status === 'merging') {
+        return { key: 'm3u8-merging', label: t('task.m3u8-status-merging') || 'Merging', tone: 'waiting' }
+      }
+      if (group.status === 'failed' || group.status === 'partial') {
+        return {
+          key: `m3u8-${group.status}`,
+          label: t(`task.m3u8-status-${group.status}`) || group.status,
+          tone: 'error',
         }
       }
       const seg = m3u8GroupRef.value?.segments.find((s) => s.aria2Gid === task.value.gid)

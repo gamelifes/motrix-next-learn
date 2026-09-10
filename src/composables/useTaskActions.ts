@@ -7,6 +7,8 @@
  */
 import { ref, type Ref, h } from 'vue'
 import { getTaskUri, getTaskDisplayName, resolveOpenTarget, canRestart } from '@shared/utils'
+import { getM3u8GroupIdFromTask, isM3u8MainGid } from '@shared/utils/m3u8GroupTask'
+import { useM3u8GroupStore } from '@/stores/task/m3u8Group'
 import { getErrorMessage } from '@shared/utils/errorMessage'
 import { invoke } from '@tauri-apps/api/core'
 import { deleteTaskFiles } from '@/composables/useFileDelete'
@@ -26,6 +28,9 @@ interface TaskActionsDeps {
     stopSharing: (task: Aria2Task) => Promise<unknown>
     showTaskDetail: (task: Aria2Task) => void
     fetchList: () => Promise<unknown>
+    batchRemoveTask: (gids: string[]) => Promise<unknown>
+    hideTaskDetail: () => void
+    currentTaskGid: string
     taskList: Aria2Task[]
   }
   preferenceConfig: () => AppConfig
@@ -44,6 +49,12 @@ export function useTaskActions(deps: TaskActionsDeps) {
   const { taskStore, preferenceConfig, t, dialog, message, stoppingGids } = deps
 
   function handlePauseTask(task: Aria2Task) {
+    // Main m3u8 group rows are aggregates of aria2 segment tasks — there is no
+    // single aria2 gid to pause. Segment-level control lives in the Segments tab.
+    if (isM3u8MainGid(task.gid)) {
+      logger.debug('TaskActions.pauseTask', 'skip synthetic m3u8 main task')
+      return
+    }
     const taskName = getTaskDisplayName(task, { defaultName: 'Unknown' })
     taskStore
       .pauseTask(task)
@@ -55,6 +66,10 @@ export function useTaskActions(deps: TaskActionsDeps) {
   }
 
   function handleResumeTask(task: Aria2Task) {
+    if (isM3u8MainGid(task.gid)) {
+      logger.debug('TaskActions.resumeTask', 'skip synthetic m3u8 main task')
+      return
+    }
     const taskName = getTaskDisplayName(task, { defaultName: 'Unknown' })
     const { COMPLETE, ERROR, REMOVED } = TASK_STATUS
     if (task.status === ERROR || task.status === COMPLETE || task.status === REMOVED) {
@@ -80,7 +95,57 @@ export function useTaskActions(deps: TaskActionsDeps) {
     }
   }
 
+  /**
+   * Removes an m3u8 group from the frontend state: drops the group row, removes
+   * its aria2 segment tasks best-effort (so orphans stop downloading and leave
+   * no history records), and closes the detail drawer when it is showing the
+   * group row. Segment files lives in the temp dir, which merge cleanup /
+   * auto-cleanup already removes on success.
+   */
+  async function removeM3u8GroupTask(task: Aria2Task): Promise<void> {
+    const groupId = getM3u8GroupIdFromTask(task)
+    if (!groupId) return
+    const m3u8GroupStore = useM3u8GroupStore()
+    const group = m3u8GroupStore.getGroup(groupId)
+    const segmentGids = group ? group.segmentGids.filter(Boolean) : []
+    m3u8GroupStore.removeGroup(groupId)
+    if (taskStore.currentTaskGid === task.gid) taskStore.hideTaskDetail()
+    await taskStore.batchRemoveTask(segmentGids)
+  }
+
+  function confirmAndRemoveM3u8Group(task: Aria2Task) {
+    const name = getTaskDisplayName(task, { defaultName: 'Unknown' })
+    if (preferenceConfig()?.noConfirmBeforeDeleteTask) {
+      removeM3u8GroupTask(task).catch((e) => logger.error('TaskView.deleteM3u8Group', e))
+      return
+    }
+    const d = dialog.warning({
+      title: t('task.delete-task'),
+      content: () => h('div', {}, [h('p', { class: 'technical-text-wrap', style: 'margin: 0 0 12px;' }, name)]),
+      positiveText: t('app.yes'),
+      negativeText: t('app.no'),
+      onPositiveClick: async () => {
+        d.loading = true
+        d.negativeButtonProps = { disabled: true }
+        d.closable = false
+        d.maskClosable = false
+        await new Promise((r) => setTimeout(r, 50))
+        try {
+          await removeM3u8GroupTask(task)
+          message.success(t('task.delete-task-success', { taskName: name }))
+        } catch (e) {
+          logger.error('TaskView.deleteM3u8Group', e)
+          message.error(t('task.delete-task-fail', { taskName: name }))
+        }
+      },
+    })
+  }
+
   function handleDeleteTask(task: Aria2Task) {
+    if (isM3u8MainGid(task.gid)) {
+      confirmAndRemoveM3u8Group(task)
+      return
+    }
     const noConfirm = preferenceConfig()?.noConfirmBeforeDeleteTask
     if (noConfirm) {
       const alsoDeleteFiles = preferenceConfig()?.deleteFilesWhenSkipConfirm
@@ -133,6 +198,10 @@ export function useTaskActions(deps: TaskActionsDeps) {
   }
 
   function handleDeleteRecord(task: Aria2Task) {
+    if (isM3u8MainGid(task.gid)) {
+      confirmAndRemoveM3u8Group(task)
+      return
+    }
     const noConfirm = preferenceConfig()?.noConfirmBeforeDeleteTask
     if (noConfirm) {
       const alsoDeleteFiles = preferenceConfig()?.deleteFilesWhenSkipConfirm

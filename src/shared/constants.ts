@@ -11,6 +11,15 @@ export const IS_PORTABLE = false
  */
 export const M3U8_TEMP_DIR_PREFIX = '.motrix-m3u8-'
 
+/**
+ * GID prefix for the synthetic "main task" row that groups all `.ts` segment
+ * tasks of an m3u8 playlist into a single entry in the task list. The gid is
+ * `m3u8:{groupId}` — the suffix must never collide with real aria2 gids
+ * (hexadecimal), so list actions can cheaply detect and exclude these rows
+ * from aria2 operations (pause/resume/manual order/select-all).
+ */
+export const M3U8_MAIN_GID_PREFIX = 'm3u8:'
+
 export const APP_THEME = {
   AUTO: 'auto',
   LIGHT: 'light',

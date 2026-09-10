@@ -49,6 +49,7 @@ import { usePreferenceStore } from '@/stores/preference'
 import { useTaskStore } from '@/stores/task'
 import { useHistoryStore } from '@/stores/history'
 import { useM3u8GroupStore } from '@/stores/task/m3u8Group'
+import { getM3u8GroupIdFromTask } from '@shared/utils/m3u8GroupTask'
 import { useAppMessage } from '@/composables/useAppMessage'
 import { useSystemProxyDetect } from '@/composables/useSystemProxyDetect'
 import { getAddedAt } from '@/composables/useTaskOrder'
@@ -239,6 +240,10 @@ const detailKind = computed(() => buildTaskDetailKind(props.task))
 const isURI = computed(() => detailKind.value === 'uri')
 const m3u8GroupId = computed(() => {
   if (!props.task) return ''
+  // Synthetic main-task rows carry a `m3u8:{groupId}` gid — resolve directly so
+  // the Segments tab opens without depending on display-name matching.
+  const mainGroupId = getM3u8GroupIdFromTask(props.task)
+  if (mainGroupId) return mainGroupId
   for (const group of Object.values(m3u8GroupStore.groups)) {
     if (group.videoName === getTaskDisplayName(props.task)) return group.groupId
   }

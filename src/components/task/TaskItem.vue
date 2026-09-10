@@ -19,6 +19,7 @@ import {
 } from '@vicons/ionicons5'
 import { useTaskCardModel } from '@/composables/useTaskCardModel'
 import { useTaskFileMissing } from '@/composables/useTaskFileMissing'
+import { isM3u8MainTask } from '@shared/utils/m3u8GroupTask'
 import TaskDragHandle from './TaskDragHandle.vue'
 import TaskItemActions from './TaskItemActions.vue'
 import type { Aria2Task } from '@shared/types'
@@ -107,6 +108,12 @@ const statusBadgeIcon = computed(() => {
 })
 
 function onDblClick() {
+  // An m3u8 main-task row is an aggregate of segment tasks — double-click opens
+  // the detail drawer (Segments tab) instead of pausing/resuming a fake gid.
+  if (isM3u8MainTask(props.task)) {
+    emit('show-info', props.task)
+    return
+  }
   if (isSharing.value) return
   const s = props.task.status
   if (s === TASK_STATUS.COMPLETE) {

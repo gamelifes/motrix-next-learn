@@ -19,6 +19,7 @@ import {
   SyncOutline,
 } from '@vicons/ionicons5'
 import { type Component } from 'vue'
+import { isM3u8MainTask } from '@shared/utils/m3u8GroupTask'
 import type { Aria2Task } from '@shared/types'
 
 const props = withDefaults(
@@ -95,6 +96,21 @@ const actionsMap = computed<Record<string, ActionDef[]>>(() => ({
 }))
 
 const actions = computed(() => {
+  // m3u8 main-task rows aggregate aria2 segment tasks — pausing/resuming,
+  // restarting or copying a link on the fake gid is meaningless. Only surface
+  // delete, folder (for finished/failed rows) and open-detail actions.
+  if (isM3u8MainTask(props.task)) {
+    const finished = props.status === TASK_STATUS.COMPLETE || props.status === TASK_STATUS.ERROR
+    const mainActions: ActionDef[] = [
+      ...(finished
+        ? [{ key: 'folder', icon: FolderOpenOutline, label: t('task.show-in-folder'), event: 'folder' }]
+        : []),
+      { key: 'info', icon: InformationCircleOutline, label: t('task.task-detail-title'), event: 'show-info' },
+      { key: 'delete', icon: CloseOutline, label: t('task.delete-task'), event: 'delete' },
+    ]
+    return mainActions.reverse()
+  }
+
   const primary = actionsMap.value[props.status] || []
   const primaryKeys = new Set(primary.map((a) => a.key))
 

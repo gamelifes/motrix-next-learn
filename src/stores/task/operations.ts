@@ -10,6 +10,7 @@
  */
 import { TASK_STATUS } from '@shared/constants'
 import { checkTaskIsBT, checkTaskIsSharing, getTaskSharingKind } from '@shared/utils'
+import { isM3u8MainGid } from '@shared/utils/m3u8GroupTask'
 import { logger } from '@shared/logger'
 import { buildSharingCompletionRecord } from '@/composables/useTaskLifecycle'
 import { cleanupAria2ControlFiles, deleteTaskFiles } from '@/composables/useFileDelete'
@@ -209,7 +210,10 @@ export function createTaskOperations(deps: TaskOperationsDeps) {
   async function pauseAllTask() {
     try {
       const pausableTasks = taskList.value.filter(
-        (t) => (t.status === TASK_STATUS.ACTIVE || t.status === TASK_STATUS.WAITING) && !checkTaskIsSharing(t),
+        (t) =>
+          (t.status === TASK_STATUS.ACTIVE || t.status === TASK_STATUS.WAITING) &&
+          !checkTaskIsSharing(t) &&
+          !isM3u8MainGid(t.gid),
       )
       if (pausableTasks.length > 0) {
         await Promise.allSettled(pausableTasks.map((t) => api.forcePauseTask({ gid: t.gid })))
@@ -327,19 +331,27 @@ export function createTaskOperations(deps: TaskOperationsDeps) {
   }
 
   async function batchRemoveTask(gids: string[]) {
+    // Synthetic m3u8 main-task rows have no aria2 gid — drop them so batch
+    // remove (e.g. from select-all) never talks to aria2 with a fake gid.
+    // Group rows are removed individually via the m3u8 group delete flow.
+    const realGids = gids.filter((gid) => !isM3u8MainGid(gid))
+    if (realGids.length === 0) {
+      await fetchList()
+      return
+    }
     try {
-      await api.batchRemoveTask({ gids })
+      await api.batchRemoveTask({ gids: realGids })
       // Purge each gid from aria2's stopped-result list so it is not saved again.
-      for (const gid of gids) {
+      for (const gid of realGids) {
         try {
           await api.removeTaskRecord({ gid })
         } catch (e) {
           logger.debug('TaskOps.batchRemoveTask', `removeTaskRecord gid=${gid} skipped: ${e}`)
         }
       }
-      logger.info('TaskOps.batchRemoveTask', `removed ${gids.length} task(s) gids=[${gids.join(',')}]`)
+      logger.info('TaskOps.batchRemoveTask', `removed ${realGids.length} task(s) gids=[${realGids.join(',')}]`)
     } finally {
-      await removeHistoryRecordsByGid(gids, 'TaskOps.batchRemoveTask')
+      await removeHistoryRecordsByGid(realGids, 'TaskOps.batchRemoveTask')
       await fetchList()
       await api.saveSession()
     }

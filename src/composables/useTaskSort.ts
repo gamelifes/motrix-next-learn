@@ -16,6 +16,7 @@
  * of the input array (Array.prototype.sort semantics).
  */
 import { getTaskName, getTaskCompletedLength } from '@shared/utils/task'
+import { isM3u8MainGid } from '@shared/utils/m3u8GroupTask'
 import type { Aria2Task, HistoryRecord } from '@shared/types'
 
 // ── Sort field types ────────────────────────────────────────────────
@@ -183,5 +184,8 @@ export function applyManualOrder<T extends { gid: string }>(
 }
 
 export function createManualOrderSnapshot(items: readonly { gid: string }[]): string[] {
-  return items.map((item) => item.gid)
+  // Synthetic m3u8 main-task rows are regenerated on every poll — they never
+  // belong in a persisted manual order, so exclude them to keep the stored
+  // gid list free of stale group references.
+  return items.filter((item) => !isM3u8MainGid(item.gid)).map((item) => item.gid)
 }

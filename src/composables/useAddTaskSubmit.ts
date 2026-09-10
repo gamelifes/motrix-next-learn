@@ -586,8 +586,9 @@ export async function submitManualUris(
           throw new M3u8SubmitFailure(baseName, 'merge-failed', getErrorMessage(error))
         }
 
-        // Clean up group store
-        m3u8GroupStore.removeGroup(groupId)
+        // Mark the group complete so the aggregated main-task row persists in
+        // the list (Segments tab stays accessible for the finished download).
+        m3u8GroupStore.setCompleted(groupId)
 
         // Report the merged output as a single group-level completion. The
         // caller fires one toast + native notification per playlist — the
@@ -849,8 +850,9 @@ export function useAddTaskSubmit({ form, onClose }: UseAddTaskSubmitOptions) {
             throw new M3u8SubmitFailure(retryGroup.videoName, 'merge-failed', getErrorMessage(mergeError))
           }
 
-          // Clean up group store
-          m3u8GroupStore.removeGroup(groupId)
+          // Mark the group complete so the aggregated main-task row persists in
+          // the list (Segments tab stays accessible for the finished download).
+          m3u8GroupStore.setCompleted(groupId)
 
           // Group-level completion notification for the merged playlist
           handleM3u8MergeComplete(mergedFileName, mergedFilePath, {

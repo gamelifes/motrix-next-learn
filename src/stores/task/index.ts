@@ -2,7 +2,8 @@
 import { defineStore } from 'pinia'
 import { reactive, ref, watch } from 'vue'
 import { EMPTY_STRING, TASK_STATUS } from '@shared/constants'
-import { checkTaskIsEd2kSearch, intersection } from '@shared/utils'
+import { checkTaskIsEd2kSearch, intersection, isM3u8SegmentTask } from '@shared/utils'
+import { collectM3u8MainTasks, isM3u8MainGid, segmentGidSetFor } from '@shared/utils/m3u8GroupTask'
 import { logger } from '@shared/logger'
 import type { Aria2Task, Aria2File, Aria2Peer, Aria2EngineOptions, TaskApi } from '@shared/types'
 
@@ -135,6 +136,34 @@ export const useTaskStore = defineStore('task', () => {
     taskPagination[tab].loaded = true
   }
 
+  /**
+   * Presents m3u8 segment groups as a single "main task" row each, and hides
+   * the individual `.ts` segment tasks from the rendered list.
+   *
+   * Segments are identified two ways — by the temp-dir marker (covers orphaned
+   * segments after an app restart) and by the tracked segment gids (covers
+   * tasks whose aria2 dir resumed to a normalized path). Rows for groups that
+   * apply to the current tab are prepended above the aria2-sorted list; the
+   * synthetic gid prefix keeps them out of aria2 operations, manual-order
+   * snapshots, and select-all.
+   */
+  function applyM3u8GroupDecoration(data: Aria2Task[]): Aria2Task[] {
+    const m3u8GroupStore = useM3u8GroupStore()
+    const groups = Object.values(m3u8GroupStore.groups)
+    if (groups.length === 0 && !data.some(isM3u8SegmentTask)) return data
+
+    const segmentGids = segmentGidSetFor(groups)
+    const real = data.filter(
+      (task) => !isM3u8MainGid(task.gid) && !segmentGids.has(task.gid) && !isM3u8SegmentTask(task),
+    )
+    if (groups.length === 0) return real
+
+    const liveTasks = new Map(data.map((task) => [task.gid, task]))
+    const mainRows = collectM3u8MainTasks(groups, currentTaskTab(), liveTasks)
+    if (mainRows.length === 0) return real
+    return [...mainRows, ...real]
+  }
+
   function setTaskPage(tab: TaskTabKey, page: number) {
     taskPagination[tab].page = clampPage(page)
   }
@@ -243,11 +272,11 @@ export const useTaskStore = defineStore('task', () => {
         }
       }
 
-      taskList.value = data
-      updateCurrentTaskTotal(data.length)
+      taskList.value = applyM3u8GroupDecoration(data)
+      updateCurrentTaskTotal(taskList.value.length)
       clampCurrentTaskPage()
       if (currentTaskTab() === tabAtFetchStart) refreshCurrentTaskPageCount()
-      const gids = data.map((task: Aria2Task) => task.gid)
+      const gids = taskList.value.map((task: Aria2Task) => task.gid)
       selectedGidList.value = intersection(selectedGidList.value, gids)
       if (taskDetailVisible.value && currentTaskGid.value) {
         try {
@@ -255,7 +284,7 @@ export const useTaskStore = defineStore('task', () => {
           if (fresh) updateCurrentTaskItem(fresh)
         } catch (e) {
           logger.debug('TaskStore.fetchPeers', e)
-          const fresh = data.find((t: Aria2Task) => t.gid === currentTaskGid.value)
+          const fresh = taskList.value.find((t: Aria2Task) => t.gid === currentTaskGid.value)
           if (fresh) updateCurrentTaskItem(fresh)
         }
       }
@@ -324,7 +353,7 @@ export const useTaskStore = defineStore('task', () => {
   }
 
   function selectAllTask() {
-    selectedGidList.value = taskList.value.map((task) => task.gid)
+    selectedGidList.value = taskList.value.map((task) => task.gid).filter((gid) => !isM3u8MainGid(gid))
   }
 
   async function fetchItem(gid: string) {
@@ -497,6 +526,7 @@ export const useTaskStore = defineStore('task', () => {
     const gids = taskList.value
       .filter((task) => selected.has(task.gid) && task.status === TASK_STATUS.PAUSED)
       .map((task) => task.gid)
+      .filter((gid) => !isM3u8MainGid(gid))
     if (gids.length === 0) return
     return api.batchResumeTask({ gids })
   }
@@ -509,6 +539,7 @@ export const useTaskStore = defineStore('task', () => {
         return task.status === TASK_STATUS.ACTIVE || task.status === TASK_STATUS.WAITING
       })
       .map((task) => task.gid)
+      .filter((gid) => !isM3u8MainGid(gid))
     if (gids.length === 0) return
     return api.batchPauseTask({ gids })
   }

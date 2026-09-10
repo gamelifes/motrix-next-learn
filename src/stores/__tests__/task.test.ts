@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useTaskStore } from '../task'
+import { useM3u8GroupStore } from '@/stores/task/m3u8Group'
 import type { Aria2Task, Aria2Peer, TaskStatus, HistoryRecord } from '@shared/types'
 import { _resetForTesting, registerAddedAt } from '@/composables/useTaskOrder'
 
@@ -173,6 +174,66 @@ describe('TaskStore', () => {
     store.selectTasks(['gid1', 'gid_invalid'])
     await store.fetchList()
     expect(store.selectedGidList).toEqual(['gid1'])
+  })
+
+  // ─── fetchList: m3u8 group decoration ──────────────────────────
+
+  describe('fetchList m3u8 group decoration', () => {
+    it('hides segment tasks (known and orphaned) and prepends one main row per active group', async () => {
+      mockApi.fetchTaskList.mockResolvedValueOnce([
+        makeMockTask('seg-0', 'active', { dir: '/dl/.motrix-m3u8-movie-1234abcd' }),
+        makeMockTask('seg-1', 'active', { dir: '/dl/.motrix-m3u8-movie-1234abcd', downloadSpeed: '2048' }),
+        makeMockTask('orphan', 'active', { dir: '/dl/.motrix-m3u8-orphan-00000000' }),
+        makeMockTask('normal-task', 'active'),
+      ])
+      const m3u8GroupStore = useM3u8GroupStore()
+      const groupId = m3u8GroupStore.createGroup({
+        videoName: 'movie',
+        finalPath: '/dl/movie.mp4',
+        tempDir: '/dl/.motrix-m3u8-movie-1234abcd',
+        ffmpegPath: '/usr/local/bin/ffmpeg',
+        segmentUrls: ['https://cdn.example.com/movie/0.ts', 'https://cdn.example.com/movie/1.ts'],
+      })
+      m3u8GroupStore.registerSegment(groupId, 0, 'seg-0', '0.ts')
+      m3u8GroupStore.registerSegment(groupId, 1, 'seg-1', '1.ts')
+
+      await store.fetchList()
+
+      const gids = store.taskList.map((task) => task.gid)
+      expect(gids[0]).toBe(`m3u8:${groupId}`)
+      expect(gids).not.toContain('seg-0')
+      expect(gids).not.toContain('seg-1')
+      expect(gids).not.toContain('orphan')
+      expect(gids).toContain('normal-task')
+      expect(store.taskList).toHaveLength(2)
+      expect(store.taskPagination.active.total).toBe(2)
+
+      const main = store.taskList[0]
+      expect(main.files[0].path).toBe('/dl/movie.mp4')
+      expect(main.downloadSpeed).toBe('3048') // seg-0 (1000) + seg-1 (2048)
+    })
+
+    it('keeps completed groups visible in the stopped tab', async () => {
+      const m3u8GroupStore = useM3u8GroupStore()
+      const groupId = m3u8GroupStore.createGroup({
+        videoName: 'movie',
+        finalPath: '/dl/movie.mp4',
+        tempDir: '/dl/.motrix-m3u8-movie-1234abcd',
+        ffmpegPath: '/usr/local/bin/ffmpeg',
+        segmentUrls: ['https://cdn.example.com/movie/0.ts'],
+      })
+      m3u8GroupStore.registerSegment(groupId, 0, 'seg-0', '0.ts')
+      m3u8GroupStore.setCompleted(groupId)
+      mockApi.fetchTaskList.mockResolvedValueOnce([
+        makeMockTask('seg-0', 'complete', { dir: '/dl/.motrix-m3u8-movie-1234abcd' }),
+      ])
+
+      await store.changeCurrentList('stopped')
+
+      const gids = store.taskList.map((task) => task.gid)
+      expect(gids).toEqual([`m3u8:${groupId}`])
+      expect(store.taskList[0].status).toBe('complete')
+    })
   })
 
   // ─── fetchList: 'all' branch — 3-source merge ──────────────────

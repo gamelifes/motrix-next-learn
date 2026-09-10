@@ -192,7 +192,33 @@
   - `m3u8Parser.test.ts` 新增 7 用例（VOD/live/event/master/unknown/case-insensitive）
   - `useAddTaskSubmit.test.ts` 新增 4 用例（master/live/event 拒绝且 `addUri` 零调用 + VOD 全流程下载并合并，`auto-file-renaming:'false'` 断言）
 
-## Technical Details
+## 已完成 (2026-09-10): 问题 2 — 主任务聚合行（分片隐藏）
+
+### 设计
+- 在 task store 的 `fetchList` 组装层统一过滤+注入（非视图层 overlay）。
+- 合成主任务 gid 前缀 `m3u8:{groupId}`（`M3U8_MAIN_GID_PREFIX = 'm3u8:'`），与十六进制 aria2 gid 不可能冲突。
+- 过滤 = 组成员 `segmentGids` ∪ `isM3u8SegmentTask` 标记（覆盖重启后孤儿分片）；注入行置于排序后列表**最前**，不参与排序。
+- tab 映射: active→downloading/merging/partial；stopped→completed/failed；all→全部。
+- status 映射: downloading/partial→active, merging→waiting, completed→complete, failed→error。
+- 聚合长度用 group.segments 累加（completed 强制 100%）；速度从注入前的 live 任务 map 汇总；`connections`=分片数；`files[0].path = finalPath`（卡片名=`videoName.mp4`，打开/定位指向合并产物）。
+
+### 文件
+- `src/shared/constants.ts` — `M3U8_MAIN_GID_PREFIX`
+- `src/shared/utils/m3u8GroupTask.ts`（新建）— gid 助手 + `buildM3u8MainTask` / `collectM3u8MainTasks`
+- `src/stores/task/index.ts` — `applyM3u8GroupDecoration(data)`；`taskList`/详情刷新/gids 改用注入后列表；`selectAllTask`/`batchPauseSelectedTasks`/`batchResumeSelectedTasks` 过滤主 gid
+- `src/stores/task/operations.ts` — `pauseAllTask`/`batchRemoveTask` 过滤主 gid
+- `src/composables/useTaskSort.ts` — `createManualOrderSnapshot` 过滤主 gid
+- `src/composables/useTaskActions.ts` — pause/resume 对主行 no-op；新增 `removeM3u8GroupTask`/`confirmAndRemoveM3u8Group`（removeGroup + `batchRemoveTask(segmentGids)` + 详情抽屉若为该行则关闭 + 确认框复用删除任务样式，无删文件勾选）
+- `src/components/task/TaskItem.vue` — 主行双击 → show-info
+- `src/components/task/TaskItemActions.vue` — 主行仅 info + delete（finished 加 folder）
+- `src/composables/useTaskCardModel.ts` — `m3u8GroupRef` 支持主 gid 直查；主行徽章按 group.status（复用既有 `m3u8-status-*` key）
+- `src/components/task/TaskDetail.vue` — `m3u8GroupId` 优先按 gid 前缀解析
+- `src/composables/useAddTaskSubmit.ts` — 合并成功后两处 `removeGroup` → `setCompleted`（保留 completed 主行）
+
+### 测试与验证
+- 新增 `m3u8GroupTask.test.ts`（18 用例）；`task.test.ts` 新增 2 用例（active 过滤+注入+速度汇总、stopped completed 保留）
+- `vue-tsc --noEmit` 0 错误；eslint（改动文件）0 错误；`prettier --check` 通过；相关测试文件全绿（仅既有 addMagnetUri 并行 flake，单跑通过）
+- 已知限制: 主行依赖内存 Group store，应用重启后 completed 主行丢失（合并产物在，行消失），列为后续项
 
 ### M3U8 Parsing Logic
 - 处理标签: #EXTINF, #EXT-X-KEY, #EXT-X-MAP 等
