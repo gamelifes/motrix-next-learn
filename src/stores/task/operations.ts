@@ -335,10 +335,6 @@ export function createTaskOperations(deps: TaskOperationsDeps) {
     // remove (e.g. from select-all) never talks to aria2 with a fake gid.
     // Group rows are removed individually via the m3u8 group delete flow.
     const realGids = gids.filter((gid) => !isM3u8MainGid(gid))
-    if (realGids.length === 0) {
-      await fetchList()
-      return
-    }
     try {
       await api.batchRemoveTask({ gids: realGids })
       // Purge each gid from aria2's stopped-result list so it is not saved again.
