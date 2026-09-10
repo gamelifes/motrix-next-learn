@@ -121,17 +121,21 @@ const M3U8_FAILURE_REASON_KEYS: Record<string, string> = {
 export class M3u8SubmitFailure extends Error {
   readonly taskName: string
   readonly reasonCode: string
+  /** Optional concrete cause (e.g. the ffmpeg/Rust error) shown after the localized reason. */
+  readonly detail?: string
 
-  constructor(taskName: string, reasonCode: string) {
+  constructor(taskName: string, reasonCode: string, detail?: string) {
     super(`M3U8 download failed: ${taskName} (${reasonCode})`)
     this.name = 'M3u8SubmitFailure'
     this.taskName = taskName
     this.reasonCode = reasonCode
+    if (detail) this.detail = detail
   }
 
   /** Returns the localized failure reason text for this error. */
   reasonText(t: (key: string) => string): string {
-    return t(M3U8_FAILURE_REASON_KEYS[this.reasonCode] ?? 'task.m3u8-max-retries')
+    const reason = t(M3U8_FAILURE_REASON_KEYS[this.reasonCode] ?? 'task.m3u8-max-retries')
+    return this.detail ? `${reason}: ${this.detail}` : reason
   }
 }
 
@@ -457,6 +461,24 @@ export async function submitManualUris(
           throw new M3u8SubmitFailure(baseName, 'live-stream')
         }
 
+        // Resolve ffmpeg BEFORE spending bandwidth on segments. The merge step
+        // cannot succeed without an executable ffmpeg, so an unset or broken
+        // path should fail fast with the concrete reason instead of surfacing a
+        // generic "FFmpeg merge failed" after every segment has downloaded.
+        const ffmpegPath = (preferenceStore.config.ffmpegPath ?? '').trim()
+        if (!ffmpegPath) {
+          throw new M3u8SubmitFailure(
+            baseName,
+            'merge-failed',
+            'no ffmpeg configured — set a valid ffmpeg path in Preferences → Advanced first',
+          )
+        }
+        try {
+          await invoke<{ versionLine: string }>('check_ffmpeg', { path: ffmpegPath })
+        } catch (probeError) {
+          throw new M3u8SubmitFailure(baseName, 'merge-failed', `ffmpeg check failed: ${getErrorMessage(probeError)}`)
+        }
+
         // Parse the m3u8 playlist to extract .ts segment URLs
         const tsUris = parseM3U8Playlist(playlistContent, uri)
 
@@ -475,7 +497,7 @@ export async function submitManualUris(
           videoName: baseName,
           finalPath: mergedFilePath,
           tempDir,
-          ffmpegPath: preferenceStore.config.ffmpegPath,
+          ffmpegPath,
           segmentUrls: tsUris,
         })
 
@@ -556,12 +578,12 @@ export async function submitManualUris(
           await invoke('merge_m3u8_segments', {
             tempDir,
             finalPath: mergedFilePath,
-            ffmpegPath: preferenceStore.config.ffmpegPath,
+            ffmpegPath,
             cleanup: m3u8Runtime.autoCleanup,
           })
         } catch (error) {
           logger.error('submitManualUris.m3u8.merge', error)
-          throw new M3u8SubmitFailure(baseName, 'merge-failed')
+          throw new M3u8SubmitFailure(baseName, 'merge-failed', getErrorMessage(error))
         }
 
         // Clean up group store
@@ -824,7 +846,7 @@ export function useAddTaskSubmit({ form, onClose }: UseAddTaskSubmitOptions) {
             })
           } catch (mergeError) {
             logger.error('AddTask.submit.m3u8retry.merge', mergeError)
-            throw new M3u8SubmitFailure(retryGroup.videoName, 'merge-failed')
+            throw new M3u8SubmitFailure(retryGroup.videoName, 'merge-failed', getErrorMessage(mergeError))
           }
 
           // Clean up group store

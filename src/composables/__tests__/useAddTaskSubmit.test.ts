@@ -59,6 +59,12 @@ const mockPreferenceStore = {
     proxy: { mode: 'direct', server: '', scope: [], bypass: '' },
     fileCategoryEnabled: false,
     fileCategories: [],
+    ffmpegPath: '/usr/local/bin/ffmpeg',
+    m3u8MaxRetries: 5,
+    m3u8RetryDelaySec: 3,
+    m3u8SegmentTimeoutSec: 300,
+    m3u8Concurrency: 6,
+    m3u8AutoCleanup: true,
   },
 }
 
@@ -821,7 +827,64 @@ describe('submitManualUris', () => {
     }
 
     expect(invoke).toHaveBeenCalledWith('merge_m3u8_segments', expect.anything())
+    expect(invoke).toHaveBeenCalledWith('check_ffmpeg', { path: '/usr/local/bin/ffmpeg' })
     expect(result.m3u8Merged).toEqual([{ taskName: 'movie.mp4', outputPath: '/dl/movie.mp4' }])
+  })
+
+  it('fails fast before submitting any segments when ffmpeg is not configured', async () => {
+    const { invoke } = await import('@tauri-apps/api/core')
+    setActivePinia(createPinia())
+    const vod = [
+      '#EXTM3U',
+      '#EXT-X-TARGETDURATION:10',
+      '#EXTINF:10,',
+      'https://cdn.example.com/movie/seg-0.ts',
+      '#EXT-X-ENDLIST',
+    ].join('\n')
+    ;(invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce(Array.from(new TextEncoder().encode(vod)))
+
+    const originalFfmpegPath = mockPreferenceStore.config.ffmpegPath
+    mockPreferenceStore.config.ffmpegPath = ''
+    try {
+      await expect(
+        submitManualUris({ ...baseForm, uris: 'https://cdn.example.com/movie.m3u8' }, { dir: '/dl' }, mockTaskStore),
+      ).rejects.toMatchObject({
+        name: 'M3u8SubmitFailure',
+        reasonCode: 'merge-failed',
+        detail: expect.stringContaining('no ffmpeg configured'),
+      })
+    } finally {
+      mockPreferenceStore.config.ffmpegPath = originalFfmpegPath
+    }
+
+    expect(mockTaskStore.addUri).not.toHaveBeenCalled()
+    expect(invoke).not.toHaveBeenCalledWith('merge_m3u8_segments', expect.anything())
+  })
+
+  it('fails fast when the configured ffmpeg path fails the check_ffmpeg probe', async () => {
+    const { invoke } = await import('@tauri-apps/api/core')
+    setActivePinia(createPinia())
+    const vod = [
+      '#EXTM3U',
+      '#EXT-X-TARGETDURATION:10',
+      '#EXTINF:10,',
+      'https://cdn.example.com/movie/seg-0.ts',
+      '#EXT-X-ENDLIST',
+    ].join('\n')
+    ;(invoke as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce(Array.from(new TextEncoder().encode(vod)))
+      .mockRejectedValueOnce(new Error('path does not exist: /usr/local/bin/ffmpeg'))
+
+    await expect(
+      submitManualUris({ ...baseForm, uris: 'https://cdn.example.com/movie.m3u8' }, { dir: '/dl' }, mockTaskStore),
+    ).rejects.toMatchObject({
+      name: 'M3u8SubmitFailure',
+      reasonCode: 'merge-failed',
+      detail: expect.stringContaining('ffmpeg check failed'),
+    })
+
+    expect(mockTaskStore.addUri).not.toHaveBeenCalled()
+    expect(invoke).not.toHaveBeenCalledWith('merge_m3u8_segments', expect.anything())
   })
 })
 
@@ -1030,5 +1093,13 @@ describe('M3u8SubmitFailure', () => {
 
   it('falls back to the max-retries message for unknown reason codes', () => {
     expect(new M3u8SubmitFailure('movie.mp4', 'bogus').reasonText(t as never)).toBe('Max retries reached')
+  })
+
+  it('appends the optional diagnostic detail after the localized reason', () => {
+    expect(new M3u8SubmitFailure('movie.mp4', 'merge-failed', 'no ffmpeg configured').reasonText(t as never)).toBe(
+      'FFmpeg merge failed: no ffmpeg configured',
+    )
+    // detail is optional — absent detail keeps the plain localized text.
+    expect(new M3u8SubmitFailure('movie.mp4', 'merge-failed').reasonText(t as never)).toBe('FFmpeg merge failed')
   })
 })
