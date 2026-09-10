@@ -826,7 +826,17 @@ describe('submitManualUris', () => {
       expect(call[0].options['auto-file-renaming']).toBe('false')
     }
 
-    expect(invoke).toHaveBeenCalledWith('merge_m3u8_segments', expect.anything())
+    expect(invoke).toHaveBeenCalledWith(
+      'merge_m3u8_segments',
+      expect.objectContaining({
+        params: expect.objectContaining({
+          tempDir: expect.stringContaining('.motrix-m3u8-movie-'),
+          finalPath: '/dl/movie.mp4',
+          ffmpegPath: '/usr/local/bin/ffmpeg',
+          cleanup: true,
+        }),
+      }),
+    )
     expect(invoke).toHaveBeenCalledWith('check_ffmpeg', { path: '/usr/local/bin/ffmpeg' })
     expect(result.m3u8Merged).toEqual([{ taskName: 'movie.mp4', outputPath: '/dl/movie.mp4' }])
   })

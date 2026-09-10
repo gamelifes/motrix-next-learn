@@ -574,12 +574,16 @@ export async function submitManualUris(
         const mergedFileName = `${baseName}.mp4` // Output as MP4
 
         try {
-          // Invoke ffmpeg merge command
+          // Invoke ffmpeg merge command. The Rust signature takes the whole
+          // payload as a single `params` struct — Tauri requires the key, not
+          // the fields spread at the top level.
           await invoke('merge_m3u8_segments', {
-            tempDir,
-            finalPath: mergedFilePath,
-            ffmpegPath,
-            cleanup: m3u8Runtime.autoCleanup,
+            params: {
+              tempDir,
+              finalPath: mergedFilePath,
+              ffmpegPath,
+              cleanup: m3u8Runtime.autoCleanup,
+            },
           })
         } catch (error) {
           logger.error('submitManualUris.m3u8.merge', error)
@@ -838,12 +842,16 @@ export function useAddTaskSubmit({ form, onClose }: UseAddTaskSubmitOptions) {
           const mergedFilePath = retryGroup.finalPath
 
           try {
-            // Invoke ffmpeg merge command
+            // Invoke ffmpeg merge command. The Rust signature takes the whole
+            // payload as a single `params` struct — Tauri requires the key, not
+            // the fields spread at the top level.
             await invoke('merge_m3u8_segments', {
-              tempDir: retryGroup.tempDir,
-              finalPath: mergedFilePath,
-              ffmpegPath: preferenceStore.config.ffmpegPath,
-              cleanup: m3u8Runtime.autoCleanup,
+              params: {
+                tempDir: retryGroup.tempDir,
+                finalPath: mergedFilePath,
+                ffmpegPath: preferenceStore.config.ffmpegPath,
+                cleanup: m3u8Runtime.autoCleanup,
+              },
             })
           } catch (mergeError) {
             logger.error('AddTask.submit.m3u8retry.merge', mergeError)

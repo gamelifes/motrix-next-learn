@@ -24,6 +24,7 @@ import { ref, reactive, computed, watch, type Ref } from 'vue'
 import { isEngineReady } from '@/api/aria2'
 import { sanitizeHeaderValue, sanitizeHttpHeaderOptions } from '@shared/utils/headerSanitize'
 import { TASK_STATUS } from '@shared/constants'
+import { isM3u8MainGid } from '@shared/utils/m3u8GroupTask'
 import type { Aria2Task, Aria2EngineOptions, ProxyConfig } from '@shared/types'
 import { logger } from '@shared/logger'
 import { buildTaskProxyOptions, hasInvalidManualProxy, type TaskProxyMode } from '@shared/utils/proxyPolicy'
@@ -227,6 +228,13 @@ export function useTaskDetailOptions(config: UseTaskDetailOptionsConfig) {
   }
 
   async function loadOptions(gid: string) {
+    // Synthetic m3u8 main-task rows aggregate real aria2 tasks — they have no
+    // per-task option to load. Skip the fetch so the detail drawer does not
+    // spam aria2 with an invalid gid on every poll.
+    if (isM3u8MainGid(gid)) {
+      resetForm()
+      return
+    }
     try {
       const opts = await getTaskOption(gid)
       populateFormFromResponse(opts, form)

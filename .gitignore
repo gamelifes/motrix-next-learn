@@ -65,3 +65,7 @@ src-tauri/gen/
 *.seed
 *.pid.lock
 .omx/
+
+# Local ffmpeg binary used for m3u8 merging (downloaded by the user)
+ffmpeg-9.0.1-full_build/
+ffmpeg-9.0.1-full_build.7z

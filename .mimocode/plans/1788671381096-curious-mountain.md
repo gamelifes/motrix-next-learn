@@ -220,6 +220,12 @@
 - `vue-tsc --noEmit` 0 错误；eslint（改动文件）0 错误；`prettier --check` 通过；相关测试文件全绿（仅既有 addMagnetUri 并行 flake，单跑通过）
 - 已知限制: 主行依赖内存 Group store，应用重启后 completed 主行丢失（合并产物在，行消失），列为后续项
 
+### Bug 修复 (2026-09-10, 来自 motrix-next.log)
+- **根因**: 前端 `invoke('merge_m3u8_segments', { tempDir, finalPath, ffmpegPath, cleanup })` 直接铺开字段，但 Rust 签名是单个 struct 参数 `params`，Tauri 校验报 `missing required key params`，命令从未执行 → 用户每次合并都得到 (merge-failed)，且 detail 是 Tauri 参数错误而非 ffmpeg stderr。
+  - **修复**: 两处调用（主流程 + retry 流程）包裹为 `{ params: { ... } }`；测试断言 payload 形状防止回归。
+- **次要**: 失败/进行中组的主行详情抽屉持续轮询 aria2 报 `Invalid GID m3u8:...`（每 ~5s）：`useTaskDetailOptions.loadOptions` 对主 gid 直接 reset 跳过；task store `fetchList` 刷新分支对主 gid 改用任务列表装饰行、不发 IPC。
+- 日志线索: 分片完成通知全部正确抑制（`TaskNotify.complete ... suppressed (m3u8 segment)`），ffmpeg 探测通过（gyan.dev 9.0.1）。
+
 ### M3U8 Parsing Logic
 - 处理标签: #EXTINF, #EXT-X-KEY, #EXT-X-MAP 等
 - 支持相对路径解析 (new URL(trimmed, baseUrl))

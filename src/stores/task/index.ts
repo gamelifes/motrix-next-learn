@@ -279,13 +279,20 @@ export const useTaskStore = defineStore('task', () => {
       const gids = taskList.value.map((task: Aria2Task) => task.gid)
       selectedGidList.value = intersection(selectedGidList.value, gids)
       if (taskDetailVisible.value && currentTaskGid.value) {
-        try {
-          const fresh = await api.fetchTaskItemWithPeers({ gid: currentTaskGid.value })
-          if (fresh) updateCurrentTaskItem(fresh)
-        } catch (e) {
-          logger.debug('TaskStore.fetchPeers', e)
+        // Synthetic m3u8 main-task rows have no aria2 gid for peer data — use
+        // the (decorated) list row directly instead of polling aria2.
+        if (isM3u8MainGid(currentTaskGid.value)) {
           const fresh = taskList.value.find((t: Aria2Task) => t.gid === currentTaskGid.value)
           if (fresh) updateCurrentTaskItem(fresh)
+        } else {
+          try {
+            const fresh = await api.fetchTaskItemWithPeers({ gid: currentTaskGid.value })
+            if (fresh) updateCurrentTaskItem(fresh)
+          } catch (e) {
+            logger.debug('TaskStore.fetchPeers', e)
+            const fresh = taskList.value.find((t: Aria2Task) => t.gid === currentTaskGid.value)
+            if (fresh) updateCurrentTaskItem(fresh)
+          }
         }
       }
     } catch (e) {
