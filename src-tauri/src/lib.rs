@@ -5,6 +5,7 @@ mod engine;
 mod error;
 mod gpu_guard;
 mod history;
+mod portable_migration;
 #[cfg(target_os = "macos")]
 mod menu;
 mod services;
@@ -655,19 +656,37 @@ pub fn run() {
     {
         if let Ok(exe) = std::env::current_exe() {
             if let Some(exe_dir) = exe.parent() {
-                if exe_dir.join("portable.txt").exists() {
-                    let data_dir = exe_dir.join("data");
+                let portable_forced = exe_dir.join("portable.txt").exists();
+                let data_dir = exe_dir.join("data");
+                // D1: writable-follows-exe. `portable.txt` still forces the
+                // mode; otherwise we follow the exe only when the target data
+                // directory is writable, falling back to the system default
+                // when it is read-only (e.g. installed under Program Files).
+                let writable = std::fs::create_dir_all(&data_dir).is_ok();
+                if portable_forced || writable {
                     if let Err(e) = std::fs::create_dir_all(&data_dir) {
                         log::warn!(
                             "Portable mode: failed to create data directory {}: {e}",
                             data_dir.display()
                         );
                     }
+                    // Capture the pre-override root so the one-time migration
+                    // can locate data previously stored under %APPDATA%.
+                    let old_root = std::env::var_os("APPDATA")
+                        .map(std::path::PathBuf::from)
+                        .map(|p| p.join("com.motrix.next"));
                     // Override APPDATA/LOCALAPPDATA so dirs::data_dir()
                     // and Tauri's PathResolver point to the portable location.
                     std::env::set_var("APPDATA", &data_dir);
                     std::env::set_var("LOCALAPPDATA", &data_dir);
                     log::info!("Portable mode: data directory = {}", data_dir.display());
+                    // D2: one-time migration from the previous data root.
+                    if let Some(old_root) = old_root {
+                        portable_migration::migrate_once(
+                            &old_root,
+                            &data_dir.join("com.motrix.next"),
+                        );
+                    }
                 }
             }
         }
