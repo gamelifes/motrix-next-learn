@@ -10,7 +10,8 @@
  */
 import { TASK_STATUS } from '@shared/constants'
 import { checkTaskIsBT, checkTaskIsSharing, getTaskSharingKind } from '@shared/utils'
-import { isM3u8MainGid } from '@shared/utils/m3u8GroupTask'
+import { getGroupIdFromM3u8MainGid, isM3u8MainGid } from '@shared/utils/m3u8GroupTask'
+import { useM3u8GroupStore } from '@/stores/task/m3u8Group'
 import { logger } from '@shared/logger'
 import { buildSharingCompletionRecord } from '@/composables/useTaskLifecycle'
 import { cleanupAria2ControlFiles, deleteTaskFiles } from '@/composables/useFileDelete'
@@ -331,10 +332,34 @@ export function createTaskOperations(deps: TaskOperationsDeps) {
   }
 
   async function batchRemoveTask(gids: string[]) {
-    // Synthetic m3u8 main-task rows have no aria2 gid — drop them so batch
-    // remove (e.g. from select-all) never talks to aria2 with a fake gid.
-    // Group rows are removed individually via the m3u8 group delete flow.
-    const realGids = gids.filter((gid) => !isM3u8MainGid(gid))
+    // Synthetic m3u8 main-task rows are memory-only aggregates, not aria2
+    // tasks: drop their group from the store and include the group's segment
+    // gids in the aria2 batch removal so hidden segment tasks (and their
+    // stopped-list records) don't leak after a queue clear.
+    const m3u8GroupStore = useM3u8GroupStore()
+    const realGids: string[] = []
+    const seen = new Set<string>()
+    const removedMainGids: string[] = []
+    for (const gid of gids) {
+      if (isM3u8MainGid(gid)) {
+        const groupId = getGroupIdFromM3u8MainGid(gid)
+        const group = m3u8GroupStore.getGroup(groupId)
+        if (group) {
+          for (const segGid of group.segmentGids) {
+            if (segGid && !seen.has(segGid)) {
+              seen.add(segGid)
+              realGids.push(segGid)
+            }
+          }
+          m3u8GroupStore.removeGroup(groupId)
+        }
+        removedMainGids.push(gid)
+      } else if (!seen.has(gid)) {
+        seen.add(gid)
+        realGids.push(gid)
+      }
+    }
+    if (removedMainGids.includes(currentTaskGid.value)) hideTaskDetail()
     try {
       await api.batchRemoveTask({ gids: realGids })
       // Purge each gid from aria2's stopped-result list so it is not saved again.

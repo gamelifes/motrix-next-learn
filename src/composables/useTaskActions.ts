@@ -8,7 +8,6 @@
 import { ref, type Ref, h } from 'vue'
 import { getTaskUri, getTaskDisplayName, resolveOpenTarget, canRestart } from '@shared/utils'
 import { getM3u8GroupIdFromTask, isM3u8MainGid } from '@shared/utils/m3u8GroupTask'
-import { useM3u8GroupStore } from '@/stores/task/m3u8Group'
 import { getErrorMessage } from '@shared/utils/errorMessage'
 import { invoke } from '@tauri-apps/api/core'
 import { deleteTaskFiles } from '@/composables/useFileDelete'
@@ -96,21 +95,16 @@ export function useTaskActions(deps: TaskActionsDeps) {
   }
 
   /**
-   * Removes an m3u8 group from the frontend state: drops the group row, removes
-   * its aria2 segment tasks best-effort (so orphans stop downloading and leave
-   * no history records), and closes the detail drawer when it is showing the
-   * group row. Segment files lives in the temp dir, which merge cleanup /
+   * Removes an m3u8 group from the frontend state. Delegates to
+   * `taskStore.batchRemoveTask` which already drops the group row, best-effort
+   * removes its aria2 segment tasks (so orphans stop downloading and leave no
+   * history records), and closes the detail drawer when it is showing the
+   * group row. Segment files live in the temp dir, which merge cleanup /
    * auto-cleanup already removes on success.
    */
   async function removeM3u8GroupTask(task: Aria2Task): Promise<void> {
-    const groupId = getM3u8GroupIdFromTask(task)
-    if (!groupId) return
-    const m3u8GroupStore = useM3u8GroupStore()
-    const group = m3u8GroupStore.getGroup(groupId)
-    const segmentGids = group ? group.segmentGids.filter(Boolean) : []
-    m3u8GroupStore.removeGroup(groupId)
-    if (taskStore.currentTaskGid === task.gid) taskStore.hideTaskDetail()
-    await taskStore.batchRemoveTask(segmentGids)
+    if (!getM3u8GroupIdFromTask(task)) return
+    await taskStore.batchRemoveTask([task.gid])
   }
 
   function confirmAndRemoveM3u8Group(task: Aria2Task) {

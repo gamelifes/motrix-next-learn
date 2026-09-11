@@ -31,6 +31,16 @@ vi.mock('@/stores/history', () => ({
   }),
 }))
 
+// ── Mock m3u8 group store ──────────────────────────────────────────
+const mockM3u8Groups = new Map<string, { segmentGids: string[] }>()
+const mockRemoveGroup = vi.fn()
+vi.mock('@/stores/task/m3u8Group', () => ({
+  useM3u8GroupStore: () => ({
+    getGroup: (id: string) => mockM3u8Groups.get(id) ?? null,
+    removeGroup: (...args: unknown[]) => mockRemoveGroup(...args),
+  }),
+}))
+
 // ── Mock cleanupAria2ControlFiles + cleanupAria2MetadataFiles ───────
 const mockCleanupAria2ControlFiles = vi.fn().mockResolvedValue(undefined)
 const mockDeleteTaskFiles = vi.fn().mockResolvedValue(undefined)
@@ -823,6 +833,10 @@ describe('purgeTaskRecord', () => {
 // ═══════════════════════════════════════════════════════════════════
 
 describe('batchRemoveTask', () => {
+  beforeEach(() => {
+    mockM3u8Groups.clear()
+    mockRemoveGroup.mockClear()
+  })
   it('calls api.batchRemoveTask with gid array', async () => {
     const api = createMockApi()
     const deps = createDeps(api)
@@ -858,6 +872,51 @@ describe('batchRemoveTask', () => {
     const deps = createDeps(api)
     const ops = createTaskOperations(deps)
     await ops.batchRemoveTask([])
+    expect(api.batchRemoveTask).toHaveBeenCalledWith({ gids: [] })
+  })
+
+  it('drops the m3u8 group and forwards its segment gids to aria2', async () => {
+    mockM3u8Groups.clear()
+    mockM3u8Groups.set('grp-1', { segmentGids: ['seg-1', 'seg-2'] })
+    const api = createMockApi()
+    const deps = createDeps(api)
+    const ops = createTaskOperations(deps)
+    await ops.batchRemoveTask(['m3u8:grp-1'])
+    expect(mockRemoveGroup).toHaveBeenCalledWith('grp-1')
+    expect(api.batchRemoveTask).toHaveBeenCalledWith({ gids: ['seg-1', 'seg-2'] })
+    expect(api.removeTaskRecord).toHaveBeenCalledWith({ gid: 'seg-1' })
+    expect(api.removeTaskRecord).toHaveBeenCalledWith({ gid: 'seg-2' })
+  })
+
+  it('merges segment gids into the batch and de-dupes overlap with main gids', async () => {
+    mockM3u8Groups.clear()
+    mockM3u8Groups.set('grp-2', { segmentGids: ['seg-1', 'seg-3'] })
+    const api = createMockApi()
+    const deps = createDeps(api)
+    const ops = createTaskOperations(deps)
+    await ops.batchRemoveTask(['m3u8:grp-2', 'seg-3', 'plain-1'])
+    expect(mockRemoveGroup).toHaveBeenCalledWith('grp-2')
+    expect(api.batchRemoveTask).toHaveBeenCalledWith({ gids: ['seg-1', 'seg-3', 'plain-1'] })
+  })
+
+  it('hides the detail drawer when the removed group row is the current task', async () => {
+    mockM3u8Groups.clear()
+    mockM3u8Groups.set('grp-3', { segmentGids: ['seg-1'] })
+    const api = createMockApi()
+    const deps = createDeps(api)
+    deps.currentTaskGid.value = 'm3u8:grp-3'
+    const ops = createTaskOperations(deps)
+    await ops.batchRemoveTask(['m3u8:grp-3'])
+    expect(deps.hideTaskDetail).toHaveBeenCalledOnce()
+  })
+
+  it('does not remove an unregistered m3u8 group, but still excludes the fake gid', async () => {
+    mockM3u8Groups.clear()
+    const api = createMockApi()
+    const deps = createDeps(api)
+    const ops = createTaskOperations(deps)
+    await ops.batchRemoveTask(['m3u8:ghost'])
+    expect(mockRemoveGroup).not.toHaveBeenCalled()
     expect(api.batchRemoveTask).toHaveBeenCalledWith({ gids: [] })
   })
 
