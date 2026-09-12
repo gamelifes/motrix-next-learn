@@ -273,6 +273,7 @@ export const useTaskStore = defineStore('task', () => {
       }
 
       taskList.value = applyM3u8GroupDecoration(data)
+      logger.info('TaskStore.fetchList', `tab=${currentList.value} count=${taskList.value.length}`)
       updateCurrentTaskTotal(taskList.value.length)
       clampCurrentTaskPage()
       if (currentTaskTab() === tabAtFetchStart) refreshCurrentTaskPageCount()
@@ -296,7 +297,7 @@ export const useTaskStore = defineStore('task', () => {
         }
       }
     } catch (e) {
-      logger.debug('TaskStore.fetchList', e instanceof Error ? e.message : String(e))
+      logger.error('TaskStore.fetchList', e instanceof Error ? e.message : String(e))
     }
   }
 

@@ -194,6 +194,7 @@ function onDeleteAll() {
       // If file deletion fails, tasks are already cleaned up from aria2;
       // the reverse order would leave orphaned tasks with missing files.
       await taskStore.batchRemoveTask(gids)
+      await taskStore.fetchList()
       for (const task of tasksToDelete) {
         await deleteTaskFiles(task)
       }

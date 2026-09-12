@@ -371,6 +371,7 @@ export function createTaskOperations(deps: TaskOperationsDeps) {
       await removeHistoryRecordsByGid(realGids, 'TaskOps.batchRemoveTask')
       await fetchList()
       await api.saveSession()
+      logger.info('TaskOps.batchRemoveTask', 'finally: fetchList completed')
     }
   }
 
