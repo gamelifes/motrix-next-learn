@@ -108,3 +108,31 @@ pub fn get_engine_conf_path(app: AppHandle) -> Result<String, AppError> {
         .map_err(|e| AppError::Io(e.to_string()))?;
     Ok(engine::path_to_safe_string(&conf_path))
 }
+
+/// Returns the absolute path to the aria2 session file.
+///
+/// Resolves via `app_data_dir()` so the path follows the portable-mode
+/// override when `APPDATA` is redirected to `exe_dir/data/`.
+#[tauri::command]
+pub fn get_session_path(app: AppHandle) -> Result<String, AppError> {
+    let session_path = app
+        .path()
+        .app_data_dir()
+        .map_err(|e| AppError::Io(e.to_string()))?
+        .join("download.session");
+    Ok(engine::path_to_safe_string(&session_path))
+}
+
+/// Returns the absolute path to the application log file.
+///
+/// Resolves via `app_log_dir()` so the path follows the portable-mode
+/// override when `LOCALAPPDATA` is redirected to `exe_dir/data/`.
+#[tauri::command]
+pub fn get_log_path(app: AppHandle) -> Result<String, AppError> {
+    let log_path = app
+        .path()
+        .app_log_dir()
+        .map_err(|e| AppError::Io(e.to_string()))?
+        .join("motrix-next.log");
+    Ok(engine::path_to_safe_string(&log_path))
+}
