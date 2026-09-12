@@ -310,11 +310,7 @@ export function createTaskOperations(deps: TaskOperationsDeps) {
     if ([ERROR, COMPLETE, REMOVED].indexOf(status) === -1) return
     const historyStore = useHistoryStore()
     await historyStore.removeRecord(gid)
-    try {
-      await api.removeTaskRecord({ gid })
-    } catch (e) {
-      logger.debug('TaskStore.removeTaskRecord.aria2', e)
-    }
+    await removeTaskRecordWithRetry(gid, 'TaskOps.removeTaskRecord')
     await fetchList()
     await api.saveSession()
   }
