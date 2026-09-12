@@ -723,7 +723,10 @@ fn attempt_webview_recovery(app: &tauri::AppHandle) -> bool {
     use std::time::Duration;
 
     if let Some(w) = app.get_webview_window("main") {
-        log::warn!("webview-recovery: destroying broken window label={}", w.label());
+        log::warn!(
+            "webview-recovery: destroying broken window label={}",
+            w.label()
+        );
         let _ = w.destroy();
     }
 
