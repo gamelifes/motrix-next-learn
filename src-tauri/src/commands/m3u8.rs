@@ -330,7 +330,8 @@ mod tests {
     fn collect_segments_rejects_missing_file_in_playlist_order() {
         let dir = tempfile::tempdir().unwrap();
         touch(dir.path(), "ok.ts", b"x");
-        let err = collect_and_validate_segments(dir.path(), &["ok.ts".into(), "missing.ts".into()]).unwrap_err();
+        let err = collect_and_validate_segments(dir.path(), &["ok.ts".into(), "missing.ts".into()])
+            .unwrap_err();
         assert!(matches!(err, AppError::M3u8(_)));
     }
 
