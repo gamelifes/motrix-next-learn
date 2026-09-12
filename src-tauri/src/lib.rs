@@ -332,6 +332,25 @@ fn setup_app(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
         });
     }
 
+    // ── WebView2 health check (Windows only) ─────────────────────
+    //
+    // When WebView2 creation fails during Builder.build() (e.g.
+    // ERROR_BUSY from a locked user-data directory), the window object
+    // exists but the browser engine is non-functional.  Detect this
+    // and attempt one automatic recovery before falling back to a
+    // native error dialog.
+    #[cfg(target_os = "windows")]
+    {
+        if !is_webview_healthy(app.handle()) {
+            log::warn!("setup: webview health check failed — attempting recovery");
+            if attempt_webview_recovery(app.handle()) {
+                log::info!("setup: webview recovery succeeded");
+            } else {
+                show_webview_error_dialog();
+            }
+        }
+    }
+
     // The window-state plugin is registered with skip_initial_state("main"),
     // so initial and lightweight-recreated windows both restore through the
     // same explicit helper.
@@ -649,6 +668,83 @@ fn show_portable_not_writable_dialog(data_dir: &std::path::Path) {
             title.as_ptr(),
             MB_ICONWARNING | MB_OK,
         );
+    }
+}
+
+/// Checks whether the main window's webview is functional.
+///
+/// When WebView2 creation fails during `Builder.build()` (e.g. `ERROR_BUSY`
+/// from a locked user-data directory), the window object exists in Tauri but
+/// the underlying browser engine is non-functional.  Evaluating minimal JS
+/// detects that condition.
+#[cfg(target_os = "windows")]
+fn is_webview_healthy(app: &tauri::AppHandle) -> bool {
+    let Some(window) = app.get_webview_window("main") else {
+        return false;
+    };
+    window.eval("1").is_ok()
+}
+
+/// Shows a native Windows MessageBox when WebView2 fails to initialise
+/// after all retries are exhausted.
+#[cfg(target_os = "windows")]
+fn show_webview_error_dialog() {
+    use windows_sys::Win32::UI::WindowsAndMessaging::{MessageBoxW, MB_ICONERROR, MB_OK};
+
+    let title: Vec<u16> = "Motrix Next\0".encode_utf16().collect();
+    let msg_raw = "\
+WebView2 failed to initialise (resource in use).\n\n\
+This usually means a previous instance has not fully exited.\n\n\
+Please:\n\
+  1. Open Task Manager\n\
+  2. End any \"motrix-next-engine.exe\" processes\n\
+  3. End any \"MicrosoftEdgeWebView2\" processes\n\
+  4. Restart Motrix Next";
+    let msg: Vec<u16> = msg_raw.encode_utf16().chain(std::iter::once(0)).collect();
+
+    log::error!("webview-recovery: showing error dialog — all retries exhausted");
+
+    unsafe {
+        MessageBoxW(
+            std::ptr::null_mut(),
+            msg.as_ptr(),
+            title.as_ptr(),
+            MB_ICONERROR | MB_OK,
+        );
+    }
+}
+
+/// Attempts to recover from a broken WebView2 by destroying the main window
+/// and recreating it after a short delay.
+///
+/// Returns `true` if the recreated webview is healthy.
+#[cfg(target_os = "windows")]
+fn attempt_webview_recovery(app: &tauri::AppHandle) -> bool {
+    use std::time::Duration;
+
+    if let Some(w) = app.get_webview_window("main") {
+        log::warn!("webview-recovery: destroying broken window label={}", w.label());
+        let _ = w.destroy();
+    }
+
+    // Wait for zombie WebView2 browser processes to release the user-data lock.
+    std::thread::sleep(Duration::from_secs(2));
+
+    match crate::tray::get_or_create_main_window(app) {
+        Some(new_window) => {
+            crate::restore_window_state_if_enabled(app, &new_window);
+            let healthy = new_window.eval("1").is_ok();
+            if healthy {
+                log::info!("webview-recovery: succeeded — new webview is healthy");
+            } else {
+                log::error!("webview-recovery: recreated window still unhealthy");
+            }
+            healthy
+        }
+        None => {
+            log::error!("webview-recovery: failed to recreate window");
+            false
+        }
     }
 }
 
