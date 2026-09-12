@@ -152,14 +152,26 @@ export const useTaskStore = defineStore('task', () => {
     const groups = Object.values(m3u8GroupStore.groups)
     if (groups.length === 0 && !data.some(isM3u8SegmentTask)) return data
 
+    // Auto-remove completed groups — merge finished, user notified via toast
+    // and native notification. Keeping them causes ghost tasks that "Delete All"
+    // cannot reach (liveGids excludes completed status on the "all" tab).
+    for (const group of groups) {
+      if (group.status === 'completed') {
+        m3u8GroupStore.removeGroup(group.groupId)
+      }
+    }
+
     const segmentGids = segmentGidSetFor(groups)
     const real = data.filter(
       (task) => !isM3u8MainGid(task.gid) && !segmentGids.has(task.gid) && !isM3u8SegmentTask(task),
     )
-    if (groups.length === 0) return real
+
+    // Re-read after cleanup to get only active groups
+    const activeGroups = Object.values(m3u8GroupStore.groups)
+    if (activeGroups.length === 0) return real
 
     const liveTasks = new Map(data.map((task) => [task.gid, task]))
-    const mainRows = collectM3u8MainTasks(groups, currentTaskTab(), liveTasks)
+    const mainRows = collectM3u8MainTasks(activeGroups, currentTaskTab(), liveTasks)
     if (mainRows.length === 0) return real
     return [...mainRows, ...real]
   }
