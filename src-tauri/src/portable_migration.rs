@@ -14,7 +14,9 @@
 //! - A completion marker is written so the migration runs at most once.
 
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
+#[cfg(test)]
+use std::path::PathBuf;
 
 use log::{info, warn};
 
