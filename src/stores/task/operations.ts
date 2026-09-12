@@ -323,6 +323,14 @@ export function createTaskOperations(deps: TaskOperationsDeps) {
     } catch (e) {
       logger.debug('TaskStore.purgeTaskRecord.aria2', e)
     }
+    // Remove completed m3u8 groups — they live in an in-memory Pinia store and
+    // would be re-emitted as synthetic main-task rows on the next fetchList.
+    const m3u8GroupStore = useM3u8GroupStore()
+    for (const group of Object.values(m3u8GroupStore.groups)) {
+      if (group.status === 'completed') {
+        m3u8GroupStore.removeGroup(group.groupId)
+      }
+    }
     await fetchList()
     await api.saveSession()
   }
