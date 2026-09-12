@@ -643,7 +643,12 @@ fn show_portable_not_writable_dialog(data_dir: &std::path::Path) {
     );
 
     unsafe {
-        MessageBoxW(std::ptr::null_mut(), msg.as_ptr(), title.as_ptr(), MB_ICONWARNING | MB_OK);
+        MessageBoxW(
+            std::ptr::null_mut(),
+            msg.as_ptr(),
+            title.as_ptr(),
+            MB_ICONWARNING | MB_OK,
+        );
     }
 }
 
