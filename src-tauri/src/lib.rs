@@ -7,6 +7,7 @@ mod gpu_guard;
 mod history;
 #[cfg(target_os = "macos")]
 mod menu;
+#[cfg(target_os = "windows")]
 mod portable_migration;
 mod services;
 mod tray;
