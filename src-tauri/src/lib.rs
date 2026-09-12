@@ -819,8 +819,8 @@ pub fn run() {
                             .map(|p| p.join("com.motrix.next"));
                         // Capture the original LOCALAPPDATA before overriding it
                         // so WebView2 can be redirected to a writable location.
-                        let orig_local_appdata = std::env::var_os("LOCALAPPDATA")
-                            .map(std::path::PathBuf::from);
+                        let orig_local_appdata =
+                            std::env::var_os("LOCALAPPDATA").map(std::path::PathBuf::from);
                         // Override APPDATA/LOCALAPPDATA so the patched dirs-sys
                         // crate and Tauri's PathResolver point to the portable
                         // location. Requires the dirs-sys patch in patches/.
