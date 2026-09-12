@@ -26,13 +26,11 @@ const BINARIES_DIR = resolve(__dirname, '..', '..', '..', 'src-tauri', 'binaries
 const EXPECTED_TARGETS = [
   // macOS
   'aarch64-apple-darwin',
-  'x86_64-apple-darwin',
   // Windows
   'x86_64-pc-windows-msvc',
   'aarch64-pc-windows-msvc',
   // Linux
   'x86_64-unknown-linux-gnu',
-  'aarch64-unknown-linux-gnu',
 ] as const
 
 /** Minimum valid sidecar size in bytes (1 MB). Anything smaller is likely corrupt. */
