@@ -24,6 +24,7 @@
 import { invoke } from '@tauri-apps/api/core'
 import { logger } from '@shared/logger'
 import { resolveOpenTarget } from '@shared/utils'
+import { M3U8_TEMP_DIR_PREFIX } from '@shared/constants'
 import { cleanupAria2MetadataFiles } from '@/composables/useDownloadCleanup'
 import type { Aria2Task } from '@shared/types'
 
@@ -152,6 +153,12 @@ export async function deleteTaskFiles(task: Aria2Task): Promise<void> {
   if (task.dir && task.infoHash) {
     await trashPath(`${task.dir}/${task.infoHash}.aria2`)
     await cleanupAria2MetadataFiles(task.dir, task.infoHash)
+  }
+
+  // M3U8 tasks: also trash the temp directory containing .ts segments
+  // (resolveOpenTarget resolves to the merged MP4, not the temp dir)
+  if (task.dir && task.dir.includes(M3U8_TEMP_DIR_PREFIX)) {
+    await trashPath(task.dir)
   }
 }
 

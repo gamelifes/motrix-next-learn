@@ -102,20 +102,36 @@ export function useTaskActions(deps: TaskActionsDeps) {
    * group row. Segment files live in the temp dir, which merge cleanup /
    * auto-cleanup already removes on success.
    */
-  async function removeM3u8GroupTask(task: Aria2Task): Promise<void> {
+  async function removeM3u8GroupTask(task: Aria2Task, deleteFiles = false): Promise<void> {
     if (!getM3u8GroupIdFromTask(task)) return
     await taskStore.batchRemoveTask([task.gid])
+    if (deleteFiles) await deleteTaskFiles(task)
   }
 
   function confirmAndRemoveM3u8Group(task: Aria2Task) {
     const name = getTaskDisplayName(task, { defaultName: 'Unknown' })
     if (preferenceConfig()?.noConfirmBeforeDeleteTask) {
-      removeM3u8GroupTask(task).catch((e) => logger.error('TaskView.deleteM3u8Group', e))
+      const alsoDeleteFiles = preferenceConfig()?.deleteFilesWhenSkipConfirm
+      removeM3u8GroupTask(task, alsoDeleteFiles).catch((e) => logger.error('TaskView.deleteM3u8Group', e))
       return
     }
+    const deleteFiles = ref(false)
     const d = dialog.warning({
       title: t('task.delete-task'),
-      content: () => h('div', {}, [h('p', { class: 'technical-text-wrap', style: 'margin: 0 0 12px;' }, name)]),
+      content: () =>
+        h('div', {}, [
+          h('p', { class: 'technical-text-wrap', style: 'margin: 0 0 12px;' }, name),
+          h(
+            NCheckbox,
+            {
+              checked: deleteFiles.value,
+              'onUpdate:checked': (v: boolean) => {
+                deleteFiles.value = v
+              },
+            },
+            { default: () => t('task.delete-task-label') },
+          ),
+        ]),
       positiveText: t('app.yes'),
       negativeText: t('app.no'),
       onPositiveClick: async () => {
@@ -125,7 +141,7 @@ export function useTaskActions(deps: TaskActionsDeps) {
         d.maskClosable = false
         await new Promise((r) => setTimeout(r, 50))
         try {
-          await removeM3u8GroupTask(task)
+          await removeM3u8GroupTask(task, deleteFiles.value)
           message.success(t('task.delete-task-success', { taskName: name }))
         } catch (e) {
           logger.error('TaskView.deleteM3u8Group', e)
