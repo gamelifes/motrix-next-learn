@@ -10,6 +10,12 @@ use crate::error::AppError;
 use std::path::Path;
 use std::process::Command;
 
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
+
+#[cfg(target_os = "windows")]
+const CREATE_NO_WINDOW: u32 = 0x08000000;
+
 /// Result returned to the frontend on a successful probe.
 #[derive(Debug, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -39,10 +45,18 @@ pub async fn check_ffmpeg(path: String) -> Result<FfmpegProbeResult, AppError> {
     // in <100ms on every platform we ship.
     let path_clone = path.clone();
     let output =
-        tokio::task::spawn_blocking(move || Command::new(&path_clone).arg("-version").output())
-            .await
-            .map_err(|e| AppError::Ffmpeg(format!("failed to spawn probe task: {e}")))?
-            .map_err(|e| AppError::Ffmpeg(format!("failed to execute {path}: {e}")))?;
+        tokio::task::spawn_blocking(move || {
+            let mut cmd = Command::new(&path_clone);
+            cmd.arg("-version");
+
+            #[cfg(target_os = "windows")]
+            cmd.creation_flags(CREATE_NO_WINDOW);
+
+            cmd.output()
+        })
+        .await
+        .map_err(|e| AppError::Ffmpeg(format!("failed to spawn probe task: {e}")))?
+        .map_err(|e| AppError::Ffmpeg(format!("failed to execute {path}: {e}")))?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();

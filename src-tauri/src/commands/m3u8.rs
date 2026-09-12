@@ -16,6 +16,14 @@ use serde::Deserialize;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
+
+/// Windows `CREATE_NO_WINDOW` flag — prevents a console window from popping
+/// up when spawning child processes. Required for headless ffmpeg merges.
+#[cfg(target_os = "windows")]
+const CREATE_NO_WINDOW: u32 = 0x08000000;
+
 /// Parameters for `merge_m3u8_segments`.
 ///
 /// All paths are absolute, native-separated. Tauri IPC delivers camelCase
@@ -147,14 +155,19 @@ fn run_ffmpeg_concat(
     filelist: &Path,
     final_path: &Path,
 ) -> Result<(), AppError> {
-    let output = Command::new(ffmpeg_path)
-        .args([
-            "-y", // overwrite output without prompting
-            "-f", "concat", "-safe", "0", "-i",
-        ])
-        .arg(filelist)
-        .args(["-c", "copy"]) // remux only, no re-encode
-        .arg(final_path)
+    let mut cmd = Command::new(ffmpeg_path);
+    cmd.args([
+        "-y", // overwrite output without prompting
+        "-f", "concat", "-safe", "0", "-i",
+    ])
+    .arg(filelist)
+    .args(["-c", "copy"]) // remux only, no re-encode
+    .arg(final_path);
+
+    #[cfg(target_os = "windows")]
+    cmd.creation_flags(CREATE_NO_WINDOW);
+
+    let output = cmd
         .output()
         .map_err(|e| AppError::Ffmpeg(format!("failed to spawn ffmpeg: {e}")))?;
 
