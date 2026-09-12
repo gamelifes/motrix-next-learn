@@ -19,9 +19,6 @@ jobs:
           - platform: macos-latest
             args: --target aarch64-apple-darwin
             label: macos-aarch64
-          - platform: macos-13
-            args: --target x86_64-apple-darwin
-            label: macos-x86_64
           - platform: windows-latest
             args: --target x86_64-pc-windows-msvc --bundles nsis
             label: windows-x86_64
@@ -34,9 +31,7 @@ jobs:
           - platform: ubuntu-22.04
             args: --target x86_64-unknown-linux-gnu
             label: linux-x86_64
-          - platform: ubuntu-22.04
-            args: --target aarch64-unknown-linux-gnu
-            label: linux-aarch64
+
 
     runs-on: ${{ matrix.platform }}
 
@@ -53,7 +48,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Add cross-compilation target
-        if: contains(matrix.args, 'aarch64-pc-windows-msvc') || contains(matrix.args, 'aarch64-unknown-linux-gnu')
+        if: contains(matrix.args, 'aarch64-pc-windows-msvc')
         shell: bash
         run: |
           TARGET=$(echo '${{ matrix.args }}' | sed 's/.*--target \([^ ]*\).*/\1/')
@@ -72,18 +67,6 @@ jobs:
           sudo -E apt-get install -y \
             libwebkit2gtk-4.1-dev libayatana-appindicator3-dev \
             librsvg2-dev patchelf xdg-utils
-
-      - name: Install cross-compilation toolchain (Linux ARM64)
-        if: contains(matrix.args, 'aarch64-unknown-linux-gnu')
-        run: |
-          sudo dpkg --add-architecture arm64
-          sudo apt-get update
-          sudo -E apt-get install -y \
-            libwebkit2gtk-4.1-dev:arm64 \
-            libayatana-appindicator3-dev:arm64 \
-            librsvg2-dev:arm64 \
-            gcc-aarch64-linux-gnu \
-            g++-aarch64-linux-gnu
 
       - run: pnpm install
 
@@ -137,15 +120,12 @@ jobs:
 
           gh release download "$TAG" \
             -R "${{ github.repository }}" \
-            -p "MotrixNext_aarch64.app.tar.gz" \
-            -p "MotrixNext_x64.app.tar.gz"
+            -p "MotrixNext_aarch64.app.tar.gz"
 
           ARM_SHA=$(shasum -a 256 MotrixNext_aarch64.app.tar.gz | cut -d ' ' -f1)
-          INTEL_SHA=$(shasum -a 256 MotrixNext_x64.app.tar.gz | cut -d ' ' -f1)
 
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
           echo "ARM_SHA=$ARM_SHA" >> "$GITHUB_ENV"
-          echo "INTEL_SHA=$INTEL_SHA" >> "$GITHUB_ENV"
 
       - name: Update Homebrew Cask
         env:
@@ -155,18 +135,15 @@ jobs:
           cd homebrew-motrix-next
 
           # Generate the entire cask file from a template instead of using
-          # fragile sed replacements. Shell expands $VERSION, $ARM_SHA, and
-          # $INTEL_SHA; Ruby interpolations (#{version}, #{arch}) pass through
-          # literally because #{ is not shell syntax.
+          # fragile sed replacements. Shell expands $VERSION and $ARM_SHA;
+          # Ruby interpolations (#{version}, #{arch}) pass through literally
+          # because #{ is not shell syntax.
           cat > Casks/motrix-next.rb << CASK_EOF
           cask "motrix-next" do
-            arch arm: "aarch64", intel: "x64"
-
             version "$VERSION"
-            sha256 arm:   "$ARM_SHA",
-                   intel: "$INTEL_SHA"
+            sha256 "$ARM_SHA"
 
-            url "https://github.com/gamelifes/motrix-next-learn/releases/download/v#{version}/MotrixNext_#{arch}.app.tar.gz"
+            url "https://github.com/gamelifes/motrix-next-learn/releases/download/v#{version}/MotrixNext_aarch64.app.tar.gz"
             name "Motrix Next"
             desc "Full-featured download manager built with Tauri"
             homepage "https://github.com/gamelifes/motrix-next-learn"
