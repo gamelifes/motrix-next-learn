@@ -620,6 +620,36 @@ fn handle_run_event(app: &tauri::AppHandle, event: tauri::RunEvent) {
     }
 }
 
+/// Shows a native Windows MessageBox when portable.txt exists but the
+/// installation directory is read-only. Logs a warning and returns without
+/// blocking — the caller should fall back to the default data directory.
+#[cfg(target_os = "windows")]
+fn show_portable_not_writable_dialog(data_dir: &std::path::Path) {
+    use std::os::windows::ffi::OsStrExt;
+    use windows_sys::Win32::UI::WindowsAndMessaging::{
+        MessageBoxW, MB_ICONWARNING, MB_OK,
+    };
+
+    let title: Vec<u16> = "Motrix Next\0".encode_utf16().collect();
+    let msg_raw = format!(
+        "Motrix Next detected portable.txt but cannot write to:\n{}\n\n\
+         The installation directory is read-only.\n\
+         Data will be stored in the default location (%%APPDATA%%/com.motrix.next).",
+        data_dir.display()
+    );
+    let msg: Vec<u16> = msg_raw.encode_utf16().chain(std::iter::once(0)).collect();
+
+    log::warn!(
+        "Portable mode: data directory {} is not writable, \
+         falling back to default location",
+        data_dir.display()
+    );
+
+    unsafe {
+        MessageBoxW(0, msg.as_ptr(), title.as_ptr(), MB_ICONWARNING | MB_OK);
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     // ── Linux: GPU rendering guard ──────────────────────────────────
@@ -650,6 +680,10 @@ pub fn run() {
     // (config, database, logs) is stored in a `data/` subdirectory
     // alongside the exe instead of %APPDATA%.
     //
+    // Requires the patched dirs-sys crate (see patches/dirs-sys/) so
+    // that dirs::data_dir() / dirs::data_local_dir() respect the
+    // overridden APPDATA / LOCALAPPDATA environment variables.
+    //
     // SAFETY: `set_var` is unsafe since Rust 1.83. Safe here because
     // it runs at the very start of `main()`, before Tauri's thread
     // pool, async runtime, or any plugin initialisation.
@@ -665,28 +699,36 @@ pub fn run() {
                 // when it is read-only (e.g. installed under Program Files).
                 let writable = std::fs::create_dir_all(&data_dir).is_ok();
                 if portable_forced || writable {
-                    if let Err(e) = std::fs::create_dir_all(&data_dir) {
-                        log::warn!(
-                            "Portable mode: failed to create data directory {}: {e}",
-                            data_dir.display()
-                        );
-                    }
-                    // Capture the pre-override root so the one-time migration
-                    // can locate data previously stored under %APPDATA%.
-                    let old_root = std::env::var_os("APPDATA")
-                        .map(std::path::PathBuf::from)
-                        .map(|p| p.join("com.motrix.next"));
-                    // Override APPDATA/LOCALAPPDATA so dirs::data_dir()
-                    // and Tauri's PathResolver point to the portable location.
-                    std::env::set_var("APPDATA", &data_dir);
-                    std::env::set_var("LOCALAPPDATA", &data_dir);
-                    log::info!("Portable mode: data directory = {}", data_dir.display());
-                    // D2: one-time migration from the previous data root.
-                    if let Some(old_root) = old_root {
-                        portable_migration::migrate_once(
-                            &old_root,
-                            &data_dir.join("com.motrix.next"),
-                        );
+                    if !writable && portable_forced {
+                        // portable.txt exists but the installation directory
+                        // is read-only (e.g. Program Files). Show a native
+                        // MessageBox and fall back to %LOCALAPPDATA%.
+                        show_portable_not_writable_dialog(&data_dir);
+                    } else {
+                        if let Err(e) = std::fs::create_dir_all(&data_dir) {
+                            log::warn!(
+                                "Portable mode: failed to create data directory {}: {e}",
+                                data_dir.display()
+                            );
+                        }
+                        // Capture the pre-override root so the one-time migration
+                        // can locate data previously stored under %APPDATA%.
+                        let old_root = std::env::var_os("APPDATA")
+                            .map(std::path::PathBuf::from)
+                            .map(|p| p.join("com.motrix.next"));
+                        // Override APPDATA/LOCALAPPDATA so the patched dirs-sys
+                        // crate and Tauri's PathResolver point to the portable
+                        // location. Requires the dirs-sys patch in patches/.
+                        std::env::set_var("APPDATA", &data_dir);
+                        std::env::set_var("LOCALAPPDATA", &data_dir);
+                        log::info!("Portable mode: data directory = {}", data_dir.display());
+                        // D2: one-time migration from the previous data root.
+                        if let Some(old_root) = old_root {
+                            portable_migration::migrate_once(
+                                &old_root,
+                                &data_dir.join("com.motrix.next"),
+                            );
+                        }
                     }
                 }
             }

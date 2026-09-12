@@ -88,3 +88,9 @@ system-configuration = "0.7.0"
 [lints.clippy]
 unwrap_used = "deny"
 redundant_closure_for_method_calls = "warn"
+
+# Patched dirs-sys: adds env var fallback for APPDATA/LOCALAPPDATA on
+# Windows so that portable mode's set_var("APPDATA", ...) actually
+# redirects dirs::data_dir() and dirs::data_local_dir().
+[patch.crates-io]
+dirs-sys = { path = "patches/dirs-sys" }
