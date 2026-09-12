@@ -106,7 +106,9 @@ const actions = computed(() => {
         ? [{ key: 'folder', icon: FolderOpenOutline, label: t('task.show-in-folder'), event: 'folder' }]
         : []),
       { key: 'info', icon: InformationCircleOutline, label: t('task.task-detail-title'), event: 'show-info' },
-      { key: 'delete', icon: CloseOutline, label: t('task.delete-task'), event: 'delete' },
+      finished
+        ? { key: 'trash', icon: TrashOutline, label: t('task.delete-task'), event: 'delete-record' }
+        : { key: 'delete', icon: CloseOutline, label: t('task.delete-task'), event: 'delete' },
     ]
     return mainActions.reverse()
   }

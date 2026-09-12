@@ -14,7 +14,7 @@ import { useAdvancedActions } from '@/composables/useAdvancedActions'
 import { useProtocolHandlers, type ProtocolKey } from '@/composables/useProtocolHandlers'
 import { relaunch } from '@tauri-apps/plugin-process'
 import { useIpc } from '@/composables/useIpc'
-import { appDataDir, appLogDir, join, tempDir } from '@tauri-apps/api/path'
+import { tempDir } from '@tauri-apps/api/path'
 import { APP_LOG_LEVELS, ARIA2_LOG_LEVELS } from '@shared/constants'
 import {
   generateSecret,
@@ -269,14 +269,12 @@ async function loadPaths() {
     logger.debug('Advanced.loadConf', e)
   }
   try {
-    const dataDir = await appDataDir()
-    sessionPath.value = await join(dataDir, 'download.session')
+    sessionPath.value = await invoke<string>('get_session_path')
   } catch (e) {
     logger.debug('Advanced.loadPaths', e)
   }
   try {
-    const logDir = await appLogDir()
-    logPath.value = await join(logDir, 'motrix-next.log')
+    logPath.value = await invoke<string>('get_log_path')
   } catch (e) {
     logger.debug('Advanced.loadLogPath', e)
   }

@@ -8,6 +8,7 @@ import { useTaskStore } from '@/stores/task'
 import { isEngineReady } from '@/api/aria2'
 import { TASK_STATUS } from '@shared/constants'
 import { checkTaskIsSharing } from '@shared/utils/task'
+import { isM3u8MainGid } from '@shared/utils/m3u8GroupTask'
 import type { Aria2Task } from '@shared/types'
 import { deleteTaskFiles } from '@/composables/useFileDelete'
 
@@ -118,15 +119,21 @@ const showActiveActions = computed(() => currentList.value === 'active' || curre
 /** stopped and all views show Purge Records button */
 const showStoppedActions = computed(() => currentList.value === 'stopped' || currentList.value === 'all')
 
-/** GIDs of live (aria2-managed) tasks only — used by Delete All in 'all' view */
+/** GIDs of live (aria2-managed) tasks + m3u8 synthetic main tasks — used by Delete All in 'all' view */
 const LIVE_STATUSES = new Set([TASK_STATUS.ACTIVE, TASK_STATUS.WAITING, TASK_STATUS.PAUSED])
 const TERMINAL_STATUSES = new Set([TASK_STATUS.COMPLETE, TASK_STATUS.ERROR, TASK_STATUS.REMOVED])
-const liveGids = computed(() =>
-  taskStore.taskList.filter((t: { status: string }) => LIVE_STATUSES.has(t.status)).map((t: { gid: string }) => t.gid),
-)
+const liveGids = computed(() => {
+  const gids: string[] = []
+  for (const t of taskStore.taskList) {
+    if (LIVE_STATUSES.has(t.status) || isM3u8MainGid(t.gid)) {
+      gids.push(t.gid)
+    }
+  }
+  return gids
+})
 const terminalTasks = computed(() => taskStore.taskList.filter((t: Aria2Task) => TERMINAL_STATUSES.has(t.status)))
 
-/** Queue clear disabled state: in 'all' view, check live tasks; otherwise check all tasks */
+/** Queue clear disabled state: in 'all' view, check live + m3u8 tasks; otherwise check all tasks */
 const deleteAllDisabled = computed(() =>
   currentList.value === 'all' ? liveGids.value.length === 0 : allGids.value.length === 0,
 )
