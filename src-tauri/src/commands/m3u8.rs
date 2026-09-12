@@ -30,6 +30,11 @@ pub struct MergeM3u8SegmentsParams {
     pub final_path: String,
     /// Absolute path to the user-configured ffmpeg executable.
     pub ffmpeg_path: String,
+    /// Ordered list of segment filenames (relative to `temp_dir`) in
+    /// playlist order. When provided, segments are concatenated in this
+    /// exact order instead of lexicographic filesystem order.
+    #[serde(default)]
+    pub segment_files: Vec<String>,
     /// Whether to remove the temp directory after a successful merge. The
     /// frontend forwards the user's `m3u8.autoCleanup` preference; `false`
     /// keeps the `.ts` sources for manual inspection.
@@ -52,13 +57,39 @@ pub struct MergeM3u8SegmentsResult {
 
 /// Validates preconditions without launching ffmpeg. Split out so unit
 /// tests can exercise the parser/validator without spawning processes.
-fn collect_and_validate_segments(temp_dir: &Path) -> Result<Vec<PathBuf>, AppError> {
+///
+/// When `segment_files` is non-empty, segments are resolved in playlist
+/// order (the provided filenames are joined to `temp_dir` and each must
+/// exist). Otherwise falls back to reading the directory and sorting
+/// lexicographically — kept for backward compatibility and tests.
+fn collect_and_validate_segments(
+    temp_dir: &Path,
+    segment_files: &[String],
+) -> Result<Vec<PathBuf>, AppError> {
     if !temp_dir.is_dir() {
         return Err(AppError::M3u8(format!(
             "temp_dir is not a directory: {}",
             temp_dir.display()
         )));
     }
+
+    if !segment_files.is_empty() {
+        // Playlist-order path: resolve each filename relative to temp_dir.
+        let mut segments = Vec::with_capacity(segment_files.len());
+        for name in segment_files {
+            let path = temp_dir.join(name);
+            if !path.is_file() {
+                return Err(AppError::M3u8(format!(
+                    "segment file not found: {}",
+                    path.display()
+                )));
+            }
+            segments.push(path);
+        }
+        return Ok(segments);
+    }
+
+    // Fallback: read directory and sort lexicographically (for tests / legacy).
     let mut segments: Vec<PathBuf> = std::fs::read_dir(temp_dir)
         .map_err(|e| AppError::Io(format!("read_dir({}): {e}", temp_dir.display())))?
         .filter_map(Result::ok)
@@ -71,7 +102,6 @@ fn collect_and_validate_segments(temp_dir: &Path) -> Result<Vec<PathBuf>, AppErr
                 .unwrap_or(false)
         })
         .collect();
-    // Sort by filename to guarantee stable concat order across runs.
     segments.sort();
     if segments.is_empty() {
         return Err(AppError::M3u8(format!(
@@ -192,7 +222,7 @@ pub async fn merge_m3u8_segments(
         }
     }
 
-    let segments = collect_and_validate_segments(&temp_dir)?;
+    let segments = collect_and_validate_segments(&temp_dir, &params.segment_files)?;
     let filelist = write_filelist(&temp_dir, &segments)?;
 
     // Run ffmpeg on a blocking thread so the Tauri runtime stays responsive.
@@ -241,7 +271,7 @@ mod tests {
         touch(dir.path(), "seg-10.ts", b"x");
         touch(dir.path(), "seg-2.ts", b"x");
         touch(dir.path(), "seg-1.ts", b"x");
-        let segs = collect_and_validate_segments(dir.path()).unwrap();
+        let segs = collect_and_validate_segments(dir.path(), &[]).unwrap();
         let names: Vec<String> = segs
             .iter()
             .map(|p| p.file_name().unwrap().to_string_lossy().into_owned())
@@ -254,12 +284,31 @@ mod tests {
     }
 
     #[test]
+    fn collect_segments_uses_playlist_order_when_provided() {
+        let dir = tempfile::tempdir().unwrap();
+        touch(dir.path(), "seg-10.ts", b"x");
+        touch(dir.path(), "seg-2.ts", b"y");
+        touch(dir.path(), "seg-1.ts", b"z");
+        let segs = collect_and_validate_segments(
+            dir.path(),
+            &["seg-2.ts".into(), "seg-10.ts".into(), "seg-1.ts".into()],
+        )
+        .unwrap();
+        let names: Vec<String> = segs
+            .iter()
+            .map(|p| p.file_name().unwrap().to_string_lossy().into_owned())
+            .collect();
+        // Playlist order is preserved exactly.
+        assert_eq!(names, vec!["seg-2.ts", "seg-10.ts", "seg-1.ts"]);
+    }
+
+    #[test]
     fn collect_segments_skips_non_ts_files() {
         let dir = tempfile::tempdir().unwrap();
         touch(dir.path(), "ok.ts", b"x");
         touch(dir.path(), "garbage.txt", b"x");
         touch(dir.path(), "control.aria2", b"x");
-        let segs = collect_and_validate_segments(dir.path()).unwrap();
+        let segs = collect_and_validate_segments(dir.path(), &[]).unwrap();
         assert_eq!(segs.len(), 1);
         assert!(segs[0].ends_with("ok.ts"));
     }
@@ -267,13 +316,21 @@ mod tests {
     #[test]
     fn collect_segments_rejects_empty_dir() {
         let dir = tempfile::tempdir().unwrap();
-        let err = collect_and_validate_segments(dir.path()).unwrap_err();
+        let err = collect_and_validate_segments(dir.path(), &[]).unwrap_err();
         assert!(matches!(err, AppError::M3u8(_)));
     }
 
     #[test]
     fn collect_segments_rejects_missing_dir() {
-        let err = collect_and_validate_segments(Path::new("/no/such/dir")).unwrap_err();
+        let err = collect_and_validate_segments(Path::new("/no/such/dir"), &[]).unwrap_err();
+        assert!(matches!(err, AppError::M3u8(_)));
+    }
+
+    #[test]
+    fn collect_segments_rejects_missing_file_in_playlist_order() {
+        let dir = tempfile::tempdir().unwrap();
+        touch(dir.path(), "ok.ts", b"x");
+        let err = collect_and_validate_segments(dir.path(), &["ok.ts".into(), "missing.ts".into()]).unwrap_err();
         assert!(matches!(err, AppError::M3u8(_)));
     }
 

@@ -577,11 +577,14 @@ export async function submitManualUris(
           // Invoke ffmpeg merge command. The Rust signature takes the whole
           // payload as a single `params` struct — Tauri requires the key, not
           // the fields spread at the top level.
+          // segmentFiles contains full paths; extract basenames for playlist-order merge.
+          const segmentNames = segmentFiles.map((f: string) => f.split('/').pop()!)
           await invoke('merge_m3u8_segments', {
             params: {
               tempDir,
               finalPath: mergedFilePath,
               ffmpegPath,
+              segmentFiles: segmentNames,
               cleanup: m3u8Runtime.autoCleanup,
             },
           })

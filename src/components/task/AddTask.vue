@@ -586,18 +586,47 @@ async function handleSubmit() {
       await submitBatchItems(batch.value, options, taskStore)
     }
     if (form.value.uris.trim()) {
+      // Detect m3u8 URLs — they require long-running background processing
+      // (segment download + merge). Fire-and-forget so the dialog closes immediately.
+      const allUris = normalizeUriLines(form.value.uris)
+      const hasM3u8 = allUris.some((uri) => uri.toLowerCase().endsWith('.m3u8'))
+
       // User's custom path takes highest priority — skip classification when overridden
       const shouldClassify = preferenceStore.config.fileCategoryEnabled && !dirUserModified.value
-      manualResult = await submitManualUris(
-        effectiveForm,
-        options,
-        taskStore,
-        {
-          enabled: shouldClassify,
-          categories: preferenceStore.config.fileCategories,
-        },
-        getDownloadProxy(preferenceStore.config.proxy),
-      )
+      if (hasM3u8) {
+        // Fire-and-forget: submit and let m3u8 processing run in the background.
+        // The dialog closes immediately; progress is visible in the task list.
+        submitManualUris(
+          effectiveForm,
+          options,
+          taskStore,
+          {
+            enabled: shouldClassify,
+            categories: preferenceStore.config.fileCategories,
+          },
+          getDownloadProxy(preferenceStore.config.proxy),
+        ).catch((e: unknown) => {
+          logger.error('AddTask.submit.m3u8-background', e)
+          message.error(getErrorMessage(e, { fallback: t('task.error-unknown') }), { closable: true })
+        })
+        // Build minimal result for the success path below.
+        manualResult = {
+          submittedTaskNames: allUris.map((u) => u.split('/').pop() || u),
+          magnetGids: [],
+          magnetFailures: [],
+        }
+      } else {
+        manualResult = await submitManualUris(
+          effectiveForm,
+          options,
+          taskStore,
+          {
+            enabled: shouldClassify,
+            categories: preferenceStore.config.fileCategories,
+          },
+          getDownloadProxy(preferenceStore.config.proxy),
+        )
+      }
     }
 
     const failedCount = batch.value.filter((i) => i.status === 'failed').length + manualResult.magnetFailures.length
