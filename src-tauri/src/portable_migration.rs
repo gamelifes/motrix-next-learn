@@ -43,7 +43,7 @@ pub fn migrate_once(old_root: &Path, new_root: &Path) {
     }
 
     if new_root.join(MIGRATION_MARKER).exists() {
-        return walk_cache;
+        return;
     }
 
     if let Err(e) = fs::create_dir_all(new_root) {
@@ -165,7 +165,10 @@ mod tests {
         // Re-run after removing a target file: marker must suppress copy.
         fs::remove_file(new.join("config.json")).unwrap();
         migrate_once(&old, &new);
-        assert!(!new.join("config.json").exists(), "no repeat copy after marker");
+        assert!(
+            !new.join("config.json").exists(),
+            "no repeat copy after marker"
+        );
 
         cleanup(&[&old, &new]);
     }
@@ -174,7 +177,7 @@ mod tests {
     fn never_overwrites_existing_target() {
         let (old, new) = make_old_root();
         write_file(&new, "config.json", r#"{"kept":"existing"}"#);
-        migrate_once(&old, &new3);
+        migrate_once(&old, &new);
 
         let kept = fs::read_to_string(new.join("config.json")).unwrap();
         assert!(kept.contains("existing"), "existing target data wins");

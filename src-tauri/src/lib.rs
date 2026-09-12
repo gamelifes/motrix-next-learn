@@ -5,9 +5,9 @@ mod engine;
 mod error;
 mod gpu_guard;
 mod history;
-mod portable_migration;
 #[cfg(target_os = "macos")]
 mod menu;
+mod portable_migration;
 mod services;
 mod tray;
 mod upnp;
