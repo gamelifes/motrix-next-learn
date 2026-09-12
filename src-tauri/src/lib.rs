@@ -817,11 +817,28 @@ pub fn run() {
                         let old_root = std::env::var_os("APPDATA")
                             .map(std::path::PathBuf::from)
                             .map(|p| p.join("com.motrix.next"));
+                        // Capture the original LOCALAPPDATA before overriding it
+                        // so WebView2 can be redirected to a writable location.
+                        let orig_local_appdata = std::env::var_os("LOCALAPPDATA")
+                            .map(std::path::PathBuf::from);
                         // Override APPDATA/LOCALAPPDATA so the patched dirs-sys
                         // crate and Tauri's PathResolver point to the portable
                         // location. Requires the dirs-sys patch in patches/.
                         std::env::set_var("APPDATA", &data_dir);
                         std::env::set_var("LOCALAPPDATA", &data_dir);
+                        // Redirect WebView2 user-data to the *original* system
+                        // LOCALAPPDATA (before the override above).  WebView2
+                        // needs a writable directory; portable installs under
+                        // Program Files are read-only even when elevated.
+                        if let Some(orig_local) = orig_local_appdata {
+                            let wv_dir = orig_local.join("com.motrix.next");
+                            let _ = std::fs::create_dir_all(&wv_dir);
+                            std::env::set_var("WEBVIEW2_USER_DATA_FOLDER", &wv_dir);
+                            log::info!(
+                                "Portable mode: WebView2 data directory = {}",
+                                wv_dir.display()
+                            );
+                        }
                         log::info!("Portable mode: data directory = {}", data_dir.display());
                         // D2: one-time migration from the previous data root.
                         if let Some(old_root) = old_root {
