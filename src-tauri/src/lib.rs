@@ -626,9 +626,7 @@ fn handle_run_event(app: &tauri::AppHandle, event: tauri::RunEvent) {
 #[cfg(target_os = "windows")]
 fn show_portable_not_writable_dialog(data_dir: &std::path::Path) {
     use std::os::windows::ffi::OsStrExt;
-    use windows_sys::Win32::UI::WindowsAndMessaging::{
-        MessageBoxW, MB_ICONWARNING, MB_OK,
-    };
+    use windows_sys::Win32::UI::WindowsAndMessaging::{MessageBoxW, MB_ICONWARNING, MB_OK};
 
     let title: Vec<u16> = "Motrix Next\0".encode_utf16().collect();
     let msg_raw = format!(

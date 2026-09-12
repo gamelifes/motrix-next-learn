@@ -44,19 +44,18 @@ pub async fn check_ffmpeg(path: String) -> Result<FfmpegProbeResult, AppError> {
     // Run synchronously inside spawn_blocking — ffmpeg -version completes
     // in <100ms on every platform we ship.
     let path_clone = path.clone();
-    let output =
-        tokio::task::spawn_blocking(move || {
-            let mut cmd = Command::new(&path_clone);
-            cmd.arg("-version");
+    let output = tokio::task::spawn_blocking(move || {
+        let mut cmd = Command::new(&path_clone);
+        cmd.arg("-version");
 
-            #[cfg(target_os = "windows")]
-            cmd.creation_flags(CREATE_NO_WINDOW);
+        #[cfg(target_os = "windows")]
+        cmd.creation_flags(CREATE_NO_WINDOW);
 
-            cmd.output()
-        })
-        .await
-        .map_err(|e| AppError::Ffmpeg(format!("failed to spawn probe task: {e}")))?
-        .map_err(|e| AppError::Ffmpeg(format!("failed to execute {path}: {e}")))?;
+        cmd.output()
+    })
+    .await
+    .map_err(|e| AppError::Ffmpeg(format!("failed to spawn probe task: {e}")))?
+    .map_err(|e| AppError::Ffmpeg(format!("failed to execute {path}: {e}")))?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
