@@ -36,6 +36,7 @@ const mockM3u8Groups = new Map<string, { segmentGids: string[] }>()
 const mockRemoveGroup = vi.fn()
 vi.mock('@/stores/task/m3u8Group', () => ({
   useM3u8GroupStore: () => ({
+    groups: Object.fromEntries(mockM3u8Groups),
     getGroup: (id: string) => mockM3u8Groups.get(id) ?? null,
     removeGroup: (...args: unknown[]) => mockRemoveGroup(...args),
   }),
